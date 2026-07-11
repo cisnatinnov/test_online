@@ -44,6 +44,7 @@
         </table>
     </div>
 
+    <script src="history-utils.js"></script>
     <script>
         function getToken() { return localStorage.getItem('token'); }
         function authHeaders() { return { 'Authorization': 'Bearer ' + getToken() }; }
@@ -65,8 +66,10 @@
                 fetch('/api/history/' + identityId + '/bmi', { headers: authHeaders() }),
                 fetch('/api/history/' + identityId + '/bloodsugar', { headers: authHeaders() })
             ]);
-            const bmiData = await bmiRes.json();
-            const sugarData = await sugarRes.json();
+            const bmiJson = await bmiRes.json();
+            const sugarJson = await sugarRes.json();
+            const bmiData = bmiJson.data || [];
+            const sugarData = sugarJson.data || [];
 
             if (bmiData.length > 0) {
                 document.getElementById('hist-name').textContent = bmiData[0].name || '-';
@@ -78,7 +81,7 @@
             const bmiTbody = document.getElementById('hist-bmi');
             bmiData.forEach(row => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${row.created_at ? new Date(row.created_at).toLocaleDateString('id-ID') : '-'}</td>
+                tr.innerHTML = `<td>${window.getHistoryDate(row)}</td>
                     <td>${row.weight || '-'}</td>
                     <td>${row.age || '-'}</td>
                     <td>${row.result || '-'}</td>
@@ -89,7 +92,7 @@
             const sugarTbody = document.getElementById('hist-sugar');
             sugarData.forEach(row => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${row.created_at ? new Date(row.created_at).toLocaleDateString('id-ID') : '-'}</td>
+                tr.innerHTML = `<td>${window.getHistoryDate(row)}</td>
                     <td>${row.age || '-'}</td>
                     <td>${row.result || '-'}</td>
                     <td>${row.conclusion || '-'}</td>

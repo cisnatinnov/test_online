@@ -49,7 +49,8 @@
 
         async function muatSummary() {
             const res = await fetch('/api/dashboard/summary', { headers: authHeaders() });
-            const data = await res.json();
+            const json = await res.json();
+            const data = json.data || {};
             document.getElementById('stat-total').textContent = data.totalPatients || 0;
             document.getElementById('stat-bmi').textContent = data.totalBmi || 0;
             document.getElementById('stat-normal').textContent = data.normalBmi || 0;

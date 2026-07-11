@@ -170,6 +170,8 @@
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
+            localStorage.removeItem('tempToken');
+            localStorage.removeItem('channels');
             window.location.href = 'login.html';
         }
 
@@ -198,23 +200,59 @@
         }
 
         async function loadIdentities(cb) {
-            const res = await fetch('/api/identities', { headers: authHeaders() });
-            identitiesList = await res.json();
+            try {
+                const res = await fetch('/api/identities', { headers: authHeaders() });
+                const json = await res.json();
+                if (json.success) {
+                    identitiesList = json.data || [];
+                } else {
+                    if (res.status === 401 || res.status === 403) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    identitiesList = [];
+                    alert('Gagal memuat data identitas: ' + (json.error || 'Unknown error'));
+                }
+            } catch (err) {
+                identitiesList = [];
+                alert('Terjadi kesalahan saat memuat data identitas');
+            }
             populateSelect('bmi-identity');
             populateSelect('sugar-identity');
             populateSelect('vitals-identity');
             if (cb) cb();
         }
 
+        function calculateAge(birthdate) {
+            if (!birthdate) return null;
+            const birth = new Date(birthdate);
+            if (isNaN(birth.getTime())) return null;
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return age;
+        }
+
         function populateSelect(selectId) {
             const select = document.getElementById(selectId);
             select.innerHTML = '<option value="">-- Pilih --</option>';
-            identitiesList.forEach(i => {
+            if (identitiesList.length === 0) {
                 const opt = document.createElement('option');
-                opt.value = i.id;
-                opt.textContent = i.name + (i.nik ? ' (NIK: ' + i.nik + ')' : '');
+                opt.value = '';
+                opt.textContent = 'Belum ada data identitas';
+                opt.disabled = true;
                 select.appendChild(opt);
-            });
+            } else {
+                identitiesList.forEach(i => {
+                    const opt = document.createElement('option');
+                    opt.value = i.id;
+                    opt.textContent = i.name + (i.nik ? ' (NIK: ' + i.nik + ')' : '');
+                    select.appendChild(opt);
+                });
+            }
             const infoId = selectId.replace('identity', 'identity-info');
             const infoDiv = document.getElementById(infoId);
             if (infoDiv) infoDiv.style.display = 'none';
@@ -228,7 +266,7 @@
             if (identity) {
                 document.getElementById('bmi-info-name').innerText = identity.name || '-';
                 document.getElementById('bmi-info-nik').innerText = identity.nik || '-';
-                document.getElementById('bmi-info-age').innerText = '-';
+                document.getElementById('bmi-info-age').innerText = calculateAge(identity.birthdate) ?? '-';
                 document.getElementById('bmi-info-height').innerText = identity.height || '-';
                 infoDiv.style.display = 'block';
             }
@@ -241,7 +279,7 @@
             const identity = identitiesList.find(i => i.id == id);
             if (identity) {
                 document.getElementById('sugar-info-name').innerText = identity.name || '-';
-                document.getElementById('sugar-info-age').innerText = '-';
+                document.getElementById('sugar-info-age').innerText = calculateAge(identity.birthdate) ?? '-';
                 infoDiv.style.display = 'block';
             }
         }
@@ -253,7 +291,7 @@
             const identity = identitiesList.find(i => i.id == id);
             if (identity) {
                 document.getElementById('vitals-info-name').innerText = identity.name || '-';
-                document.getElementById('vitals-info-age').innerText = '-';
+                document.getElementById('vitals-info-age').innerText = calculateAge(identity.birthdate) ?? '-';
                 infoDiv.style.display = 'block';
             }
         }
@@ -271,32 +309,36 @@
             }
             if (!hasAny) return alert('Isi minimal satu tanda vital!');
 
-            const res = await fetch('/api/vital-signs', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
-            const saved = await res.json();
-            if (!saved.success) return alert(saved.error || 'Gagal menyimpan');
+            try {
+                const res = await fetch('/api/vital-signs', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+                const saved = await res.json();
+                if (!saved.success) return alert(saved.error || 'Gagal menyimpan');
 
-            showAllScreens();
-            document.getElementById('screen-hasil-vitals').classList.remove('hidden');
-            document.getElementById('hasil-vitals-title').innerText = 'Tanda Vital - ' + (saved.data.name || '');
+                showAllScreens();
+                document.getElementById('screen-hasil-vitals').classList.remove('hidden');
+                document.getElementById('hasil-vitals-title').innerText = 'Tanda Vital - ' + (saved.data.name || '');
 
-            const vs = saved.data.vitalSigns;
-            const ev = saved.data.evaluation;
-            let html = '<div style="padding:10px;background:#f5f5f5;border-radius:8px;">';
-            html += '<p><strong>Pasien:</strong> ' + saved.data.name + '</p>';
-            html += '<p><strong>Usia:</strong> ' + (saved.data.age ?? '-') + ' tahun</p><hr>';
-            const labels = { systolic: 'Sistolik', diastolic: 'Diastolik', heart_rate: 'Denyut Jantung', temperature: 'Suhu', spo2: 'SpO2', respiratory_rate: 'Pernapasan' };
-            const units = { systolic: 'mmHg', diastolic: 'mmHg', heart_rate: 'bpm', temperature: 'C', spo2: '%', respiratory_rate: '/menit' };
-            for (const [key, label] of Object.entries(labels)) {
-                if (vs[key] != null) {
-                    const evalData = ev[key === 'heart_rate' ? 'heartRate' : key === 'spo2' ? 'spo2' : key === 'respiratory_rate' ? 'respiratoryRate' : key === 'temperature' ? 'temperature' : 'bloodPressure'];
-                    const badge = evalData ? '<span style="color:' + (evalData.colorClass === 'sugar-normal' ? '#28a745' : evalData.colorClass === 'sugar-low' ? '#007bff' : '#dc3545') + ';font-weight:bold"> (' + evalData.label + ')</span>' : '';
-                    html += '<p><strong>' + label + ':</strong> ' + vs[key] + ' ' + units[key] + badge + '</p>';
-                    if (evalData) html += '<p style="font-size:13px;color:#666;margin:-5px 0 8px 0">' + evalData.description + '</p>';
+                const vs = saved.data.vitalSigns;
+                const ev = saved.data.evaluation;
+                let html = '<div style="padding:10px;background:#f5f5f5;border-radius:8px;">';
+                html += '<p><strong>Pasien:</strong> ' + saved.data.name + '</p>';
+                html += '<p><strong>Usia:</strong> ' + (saved.data.age ?? '-') + ' tahun</p><hr>';
+                const labels = { systolic: 'Sistolik', diastolic: 'Diastolik', heart_rate: 'Denyut Jantung', temperature: 'Suhu', spo2: 'SpO2', respiratory_rate: 'Pernapasan' };
+                const units = { systolic: 'mmHg', diastolic: 'mmHg', heart_rate: 'bpm', temperature: 'C', spo2: '%', respiratory_rate: '/menit' };
+                for (const [key, label] of Object.entries(labels)) {
+                    if (vs[key] != null) {
+                        const evalData = ev[key === 'heart_rate' ? 'heartRate' : key === 'spo2' ? 'spo2' : key === 'respiratory_rate' ? 'respiratoryRate' : key === 'temperature' ? 'temperature' : 'bloodPressure'];
+                        const badge = evalData ? '<span style="color:' + (evalData.colorClass === 'sugar-normal' ? '#28a745' : evalData.colorClass === 'sugar-low' ? '#007bff' : '#dc3545') + ';font-weight:bold"> (' + evalData.label + ')</span>' : '';
+                        html += '<p><strong>' + label + ':</strong> ' + vs[key] + ' ' + units[key] + badge + '</p>';
+                        if (evalData) html += '<p style="font-size:13px;color:#666;margin:-5px 0 8px 0">' + evalData.description + '</p>';
+                    }
                 }
+                html += '<p style="margin-top:10px;font-weight:bold;color:' + (ev.overall === 'Semua normal' ? '#28a745' : '#dc3545') + '">' + ev.overall + '</p>';
+                html += '</div>';
+                document.getElementById('hasil-vitals-content').innerHTML = html;
+            } catch (err) {
+                alert('Terjadi kesalahan saat menyimpan tanda vital');
             }
-            html += '<p style="margin-top:10px;font-weight:bold;color:' + (ev.overall === 'Semua normal' ? '#28a745' : '#dc3545') + '">' + ev.overall + '</p>';
-            html += '</div>';
-            document.getElementById('hasil-vitals-content').innerHTML = html;
         }
 
         async function prosesBmi() {
@@ -307,13 +349,18 @@
                 return alert('Pilih identitas dan isi berat badan!');
             }
 
-            const res = await fetch('/api/bmi', {
-                method: 'POST',
-                headers: authHeaders(),
-                body: JSON.stringify({ identity_id: Number(identityId), weight: Number(weight) })
-            });
-            const saved = await res.json();
-            tampilkanHasil(saved.data);
+            try {
+                const res = await fetch('/api/bmi', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ identity_id: Number(identityId), weight: Number(weight) })
+                });
+                const saved = await res.json();
+                if (!saved.success) return alert(saved.error || 'Gagal menyimpan');
+                tampilkanHasil(saved.data);
+            } catch (err) {
+                alert('Terjadi kesalahan saat menghitung IMT');
+            }
         }
 
         async function prosesSugar() {
@@ -324,13 +371,18 @@
                 return alert('Pilih identitas dan isi kadar gula!');
             }
 
-            const res = await fetch('/api/bloodsugar', {
-                method: 'POST',
-                headers: authHeaders(),
-                body: JSON.stringify({ identity_id: Number(identityId), sugar: Number(sugar) })
-            });
-            const saved = await res.json();
-            tampilkanHasil(saved.data);
+            try {
+                const res = await fetch('/api/bloodsugar', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ identity_id: Number(identityId), sugar: Number(sugar) })
+                });
+                const saved = await res.json();
+                if (!saved.success) return alert(saved.error || 'Gagal menyimpan');
+                tampilkanHasil(saved.data);
+            } catch (err) {
+                alert('Terjadi kesalahan saat menghitung gula darah');
+            }
         }
 
         function tampilkanHasil(data) {
@@ -340,12 +392,12 @@
             document.getElementById('screen-hasil').classList.remove('hidden');
 
             document.getElementById('hasil-title').innerText = 'Hasil penghitungan ' + (data.name || '');
-            document.getElementById('res-name').innerText = data.name;
+            document.getElementById('res-name').innerText = data.name || '-';
             document.getElementById('res-age').innerText = data.age ?? '-';
             document.getElementById('res-address').innerText = data.address || '-';
-            document.getElementById('res-height').innerText = data.height;
+            document.getElementById('res-height').innerText = data.height || '-';
             document.getElementById('res-weight').innerText = data.weight || '-';
-            document.getElementById('res-kesimpulan').innerText = data.weight ? 'Kategori BMI: ' + (data.result || '-') + ' (Skor: ' + (data.bmi || '-') + ')' : '-';
+            document.getElementById('res-kesimpulan').innerText = data.weight ? 'Kategori BMI: ' + (data.result || '-') + ' (Skor: ' + (data.bmi || '-') + ')' : 'Belum ada data IMT';
             tampilkanKriteriaGula(data);
         }
 
@@ -364,6 +416,11 @@
             container.className = 'sugar-badge ' + gula.colorClass;
             detail.innerText = gula.description;
         }
+
+        (function init() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            document.getElementById('welcome-name').innerText = user.username || user.email || '';
+        })();
     </script>
 </body>
 </html>

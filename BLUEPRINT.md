@@ -36,8 +36,16 @@
 
 - Minimum 8 characters
 - Minimum 1 uppercase letter
+- Minimum 1 lowercase letter
+- Minimum 1 digit
 - Minimum 1 symbol
-- Visual progress bar with color coding (red/yellow/green)
+- Visual progress bar with color coding (red/orange/green)
+
+## Email Validation
+
+- Format: `user@domain.tld` (regex: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`)
+- Validated on both backend (authController.register) and frontend (register.html, login.html)
+- Login page only validates when input contains `@` (allows plain username login)
 
 ## Architecture
 
@@ -105,8 +113,8 @@
 ## Frontend Pages
 
 ### Core Pages
-- `login.html` - Login with username/email + password
-- `register.html` - Registration with account data + optional patient identity
+- `login.html` - Login with username/email + password, real-time email format validation, password strength progress bar
+- `register.html` - Registration with account data + optional patient identity, real-time email & password validation with strength progress bar
 - `verify-2fa.html` - 2FA verification (email or WhatsApp)
 - `dashboard.html` - Main hub with BMI, blood sugar, and vital signs check forms
 - `list.html` - Patient data list with tabbed BMI/blood sugar view and search

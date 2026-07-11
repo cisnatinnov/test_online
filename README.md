@@ -15,6 +15,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 
 ### System & Auth
 - **Authentication**: Register, Login with 2FA (Email / WhatsApp)
+- **Email Validation**: Format validated on both backend and frontend (`user@domain.tld`)
+- **Password Validation**: Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 symbol — enforced on backend (register) and frontend (register + login) with strength progress bar
 - **System Health Monitoring**: Server uptime, DB connectivity, memory/CPU usage, readiness/liveness probes
 - **Rate Limiting**: Protection against API abuse
 - **Role-based Access**: Admin and user roles with data isolation
@@ -383,8 +385,8 @@ Returns HTTP 200 when healthy, 503 when database is unreachable (degraded).
 
 | Page | Description |
 |------|-------------|
-| `login.html` | Login page |
-| `register.html` | Registration with patient data |
+| `login.html` | Login page with real-time email format validation (when input contains `@`) and password strength progress bar |
+| `register.html` | Registration with patient data, real-time email validation, and password strength progress bar (5 rules) |
 | `verify-2fa.html` | 2FA code verification |
 | `dashboard.html` | Main hub: BMI check, blood sugar check, vital signs check |
 | `list.html` | Patient data list with tabs (BMI, blood sugar) and search |

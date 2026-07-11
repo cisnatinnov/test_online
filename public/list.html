@@ -156,8 +156,9 @@
         }
 
         async function muatDataList() {
-            const res = await fetch('/api/bmi-list', { headers: authHeaders() });
-            allData = await res.json();
+            const res = await fetch('/api/bmi/list', { headers: authHeaders() });
+            const json = await res.json();
+            allData = json.data || [];
             renderBmiTable(allData);
             renderSugarTable(allData);
         }

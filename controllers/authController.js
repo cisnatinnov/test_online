@@ -12,17 +12,28 @@ const SALT_ROUNDS = 10;
 
 const userSafeFields = ['id', 'username', 'email', 'phone', 'role'];
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 exports.register = async (req, res) => {
   const { username, email, password, phone, nik, name, birthplace, birthdate, height, address } = req.body;
   try {
     if (!username || !email || !password) {
       return apiResponse(res, { error: 'Username, email, dan password harus diisi', status: 400 });
     }
+    if (!EMAIL_REGEX.test(email)) {
+      return apiResponse(res, { error: 'Format email tidak valid', status: 400 });
+    }
     if (password.length < 8) {
       return apiResponse(res, { error: 'Password minimal 8 karakter', status: 400 });
     }
     if (!/[A-Z]/.test(password)) {
       return apiResponse(res, { error: 'Password harus memiliki minimal 1 huruf kapital', status: 400 });
+    }
+    if (!/[a-z]/.test(password)) {
+      return apiResponse(res, { error: 'Password harus memiliki minimal 1 huruf kecil', status: 400 });
+    }
+    if (!/[0-9]/.test(password)) {
+      return apiResponse(res, { error: 'Password harus memiliki minimal 1 angka', status: 400 });
     }
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
       return apiResponse(res, { error: 'Password harus memiliki minimal 1 simbol', status: 400 });
