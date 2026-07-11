@@ -1,23 +1,53 @@
 # BMI App
 
-A health monitoring web application with BMI tracking, blood sugar monitoring, patient health risk assessment, and money management features. Built with Node.js, Express, Sequelize ORM, and PostgreSQL.
+A health monitoring web application with BMI tracking, blood sugar monitoring, vital signs monitoring, patient health risk assessment, money management, interactive games, math tools, and text analysis. Built with Node.js, Express, Sequelize ORM, and PostgreSQL.
 
 ## Features
 
-- **Authentication**: Register, Login with 2FA (Email / WhatsApp)
+### Health Monitoring
 - **BMI Calculator**: Calculate and track Body Mass Index with category classification
 - **Blood Sugar Monitor**: Track blood sugar levels with age-based threshold evaluation
-- **Health Risk Assessment**: Composite risk scoring from BMI, blood sugar, and age factors
-- **Health Trend Analysis**: Track BMI and blood sugar trends over time per patient
+- **Vital Signs Monitor**: Blood pressure (systolic/diastolic), heart rate, body temperature, SpO2, respiratory rate with clinical evaluation
+- **Health Risk Assessment**: Composite risk scoring from BMI, blood sugar, vital signs, and age factors
+- **Health Trend Analysis**: Track BMI, blood sugar, and vital signs trends over time per patient
 - **Health Alerts**: Flag patients with high-risk health status
-- **Population Statistics**: BMI, blood sugar, and risk distribution across all patients
+- **Population Statistics**: BMI, blood sugar, vital signs, and risk distribution across all patients
+
+### System & Auth
+- **Authentication**: Register, Login with 2FA (Email / WhatsApp)
 - **System Health Monitoring**: Server uptime, DB connectivity, memory/CPU usage, readiness/liveness probes
-- **Money Management**: Track expenses and savings with chart visualization (weekly, monthly, yearly)
-- **Patient Data List**: View all patient data with current BMI and blood sugar status
-- **History**: View historical BMI and blood sugar records per patient
-- **Dashboard Summary**: Aggregate statistics for patients, BMI, and blood sugar
-- **PDF Export**: Download patient examination reports as PDF
 - **Rate Limiting**: Protection against API abuse
+- **Role-based Access**: Admin and user roles with data isolation
+
+### Patient Management
+- **Patient Data List**: View all patient data with current BMI, blood sugar, and vital signs status
+- **History**: View historical BMI, blood sugar, and vital signs records per patient
+- **Dashboard Summary**: Aggregate statistics for patients, BMI, blood sugar, and vital signs
+- **PDF Export**: Download patient examination reports as PDF
+
+### Money Management
+- **Expense/Saving Tracking**: CRUD with category and description
+- **Chart Visualization**: Weekly, monthly, yearly expense vs saving charts
+- **Financial Summary**: Total expense, saving, and balance
+
+### Games (6 games)
+- **Hangman**: Guess the word letter by letter with tech-themed vocabulary
+- **Coin Catcher**: Catch falling coins, avoid bombs, 30s timer
+- **Roleplay Adventure**: Text-based dungeon RPG with combat, gold, and leveling
+- **Turtle Racing**: Bet coins on animated turtle races
+- **Aim Trainer**: Click shrinking targets, track accuracy and score
+- **Rock Paper Scissors**: Classic game vs computer with scoreboard
+
+### Math Tools (5 tools)
+- **Shapes Calculator**: 2D shapes (circle, rectangle, triangle, square, ellipse, trapezoid, parallelogram) and 3D shapes (cube, sphere, cylinder, cone, rectangular prism, pyramid, torus) with canvas visualization
+- **Equation Grapher**: Plot multiple functions (sin, cos, tan, log, sqrt, x^n) with color legend
+- **Scientific Calculator**: Full calculator with trigonometric, logarithmic, and power functions
+- **Statistics Calculator**: Mean, median, mode, std dev, variance, quartiles, IQR, histogram
+- **Quadratic Function**: Graph and solve ax^2+bx+c with vertex, roots, and step-by-step solution
+
+### Text Analysis (NER)
+- **Text Summarizer**: Extractive summarization with adjustable ratio and sentence scoring
+- **Sentiment Analysis**: Lexicon-based sentiment detection with word-level coloring
 
 ## Tech Stack
 
@@ -26,6 +56,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, p
 - **ORM**: Sequelize
 - **Database**: PostgreSQL
 - **Auth**: JWT with 2FA (Nodemailer / WhatsApp API)
+- **Frontend**: Vanilla HTML/CSS/JS
 - **Testing**: Jest + Supertest
 
 ## Project Structure
@@ -41,12 +72,14 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, p
 │   ├── Identity.js
 │   ├── BMI.js
 │   ├── BloodSugar.js
+│   ├── VitalSigns.js            # BP, heart rate, temp, SpO2, respiratory rate
 │   ├── Expense.js
 │   └── Saving.js
 ├── controllers/
 │   ├── authController.js        # Register, Login, 2FA
 │   ├── bmiController.js         # BMI CRUD, list, summary, history
 │   ├── bloodSugarController.js  # Blood sugar CRUD, history
+│   ├── vitalSignsController.js  # Vital signs CRUD, history, list
 │   ├── identityController.js    # Identity CRUD
 │   ├── moneyController.js       # Expense/Saving CRUD, chart, summary
 │   ├── reportController.js      # PDF export
@@ -62,6 +95,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, p
 │   ├── authRoutes.js
 │   ├── bmiRoutes.js
 │   ├── bloodSugarRoutes.js
+│   ├── vitalSignsRoutes.js      # Vital signs CRUD + history
 │   ├── identityRoutes.js
 │   ├── moneyRoutes.js
 │   ├── reportRoutes.js
@@ -69,15 +103,38 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, p
 │   ├── healthRoutes.js          # /api/health, /ready, /live, /stats
 │   └── patientHealthRoutes.js   # /api/patient-health/risk, /trend, /alerts, /population
 ├── utils/
-│   └── helpers.js               # BMI calc, blood sugar eval, risk scoring, trend analysis
+│   └── helpers.js               # BMI calc, blood sugar eval, vital sign eval, risk scoring, trend analysis
 ├── __tests__/
 │   ├── helpers.test.js
 │   ├── apiResponse.test.js
 │   ├── authenticate.test.js
 │   └── authorize.test.js
 ├── public/                      # Frontend static files
+│   ├── index.html, login.html, register.html, verify-2fa.html
+│   ├── dashboard.html, list.html, history.html, summary.html
+│   ├── tools.html               # Navigation hub for games, math, NER
+│   ├── style.css
+│   ├── games/                   # 6 interactive browser games
+│   │   ├── hangman.html
+│   │   ├── coin-catcher.html
+│   │   ├── roleplay-adventure.html
+│   │   ├── turtle-racing.html
+│   │   ├── aim-trainer.html
+│   │   └── rock-paper-scissors.html
+│   ├── math/                    # 5 math tools
+│   │   ├── shapes.html          # 2D & 3D shape calculator
+│   │   ├── equation-grapher.html
+│   │   ├── scientific-calculator.html
+│   │   ├── statistics.html
+│   │   └── quadratic.html       # Quadratic function grapher & solver
+│   └── ner/                     # 2 text analysis tools
+│       ├── summary.html         # Text summarizer
+│       └── sentiment.html       # Sentiment analysis
 ├── .env
 ├── server.js
+├── README.md
+├── BLUEPRINT.md
+├── USAGE.md
 └── package.json
 ```
 
@@ -111,6 +168,10 @@ EMAIL_FROM=your_email
 
 WHATSAPP_API_URL=
 WHATSAPP_API_KEY=
+
+ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@bmi-app.com
+ADMIN_PASSWORD=Admin@123
 ```
 
 ### Run
@@ -160,6 +221,16 @@ Server runs at `http://localhost:3000`.
 | PUT | `/:identityId` | Update blood sugar record | Yes |
 | GET | `/history/:identityId` | Blood sugar history for an identity | Yes |
 
+### Vital Signs (`/api/vital-signs`)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/` | Create vital signs record | Yes |
+| PUT | `/:identityId` | Update vital signs record | Yes |
+| GET | `/latest/:identityId` | Get latest vital signs with evaluation | Yes |
+| GET | `/list` | List all patients with latest vital signs | Yes |
+| GET | `/history/:identityId` | Vital signs history for an identity | Yes |
+
 ### Money Management (`/api/money`)
 
 | Method | Endpoint | Description | Auth |
@@ -183,6 +254,7 @@ Server runs at `http://localhost:3000`.
 | GET | `/api/dashboard/summary` | Dashboard statistics | Yes |
 | GET | `/api/history/:identityId/bmi` | BMI history | Yes |
 | GET | `/api/history/:identityId/bloodsugar` | Blood sugar history | Yes |
+| GET | `/api/history/:identityId/vitalsigns` | Vital signs history | Yes |
 
 ### System Health (`/api/health`)
 
@@ -198,9 +270,9 @@ Server runs at `http://localhost:3000`.
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/risk/:identityId` | Health risk score for a patient | Yes |
-| GET | `/trend/:identityId` | BMI and blood sugar trend analysis | Yes |
+| GET | `/trend/:identityId` | BMI, blood sugar, and vital signs trend analysis | Yes |
 | GET | `/alerts` | List all high-risk patients | Yes |
-| GET | `/population` | BMI, sugar, and risk distribution stats | Yes |
+| GET | `/population` | BMI, sugar, vital signs, and risk distribution stats | Yes |
 
 ## BMI Categories
 
@@ -219,9 +291,56 @@ Server runs at `http://localhost:3000`.
 | < 50 | 70 - 100 mg/dL |
 | >= 50 | 70 - 110 mg/dL |
 
+## Vital Signs Reference
+
+### Blood Pressure (AHA Classification)
+
+| Category | Systolic (mmHg) | Diastolic (mmHg) |
+|----------|-----------------|-------------------|
+| Low (Hypotension) | < 90 | < 60 |
+| Normal | 90-120 | 60-80 |
+| Elevated | 121-129 | < 80 |
+| High Stage 1 | 130-139 | 80-89 |
+| High Stage 2 | 140-180 | 90-120 |
+| Crisis | > 180 | > 120 |
+
+### Heart Rate (bpm)
+
+| Age | Normal Range |
+|-----|-------------|
+| Infant (< 1 yr) | 100 - 160 |
+| Child (< 12 yrs) | 70 - 120 |
+| Adult | 60 - 100 |
+
+### Body Temperature
+
+| Range | Status |
+|-------|--------|
+| < 35.0C | Hypothermia |
+| 36.1 - 37.2C | Normal |
+| 37.3 - 38.0C | Mild fever |
+| 38.1 - 39.0C | Fever |
+| > 39.0C | High fever |
+
+### SpO2 (Oxygen Saturation)
+
+| Range | Status |
+|-------|--------|
+| < 90% | Critical |
+| 90-94% | Low |
+| 95-100% | Normal |
+
+### Respiratory Rate (breaths/min)
+
+| Age | Normal Range |
+|-----|-------------|
+| Infant (< 1 yr) | 30 - 60 |
+| Child (< 12 yrs) | 18 - 30 |
+| Adult | 12 - 20 |
+
 ## Health Risk Scoring
 
-Risk score is calculated from combined BMI, blood sugar, and age factors:
+Risk score is calculated from combined BMI, blood sugar, vital signs, and age factors:
 
 | Factor | Points |
 |--------|--------|
@@ -231,6 +350,7 @@ Risk score is calculated from combined BMI, blood sugar, and age factors:
 | BMI: Obesitas | +4 |
 | Blood sugar: Rendah | +2 |
 | Blood sugar: Tinggi | +3 |
+| Vital signs: abnormal reading | +2 |
 | Age >= 50 | +1 |
 | Age >= 65 | +1 |
 
@@ -258,6 +378,22 @@ Risk score is calculated from combined BMI, blood sugar, and age factors:
 ```
 
 Returns HTTP 200 when healthy, 503 when database is unreachable (degraded).
+
+## Frontend Pages
+
+| Page | Description |
+|------|-------------|
+| `login.html` | Login page |
+| `register.html` | Registration with patient data |
+| `verify-2fa.html` | 2FA code verification |
+| `dashboard.html` | Main hub: BMI check, blood sugar check, vital signs check |
+| `list.html` | Patient data list with tabs (BMI, blood sugar) and search |
+| `history.html` | Patient BMI and blood sugar history |
+| `summary.html` | Dashboard statistics cards |
+| `tools.html` | Navigation hub for all games, math, and NER tools |
+| `games/*.html` | 6 interactive browser games |
+| `math/*.html` | 5 math calculation and graphing tools |
+| `ner/*.html` | 2 text analysis tools |
 
 ## Testing
 

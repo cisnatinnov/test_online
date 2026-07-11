@@ -144,6 +144,103 @@ const analisisTren = (bmiHistory, sugarHistory, heightCm) => {
   };
 };
 
+const evalBloodPressure = (systolic, diastolic) => {
+  const sys = Number(systolic);
+  const dia = Number(diastolic);
+  if (!Number.isFinite(sys) || !Number.isFinite(dia)) return null;
+
+  if (sys < 90 || dia < 60) {
+    return { label: 'Rendah', colorClass: 'sugar-low', description: 'Tekanan darah Anda rendah (hipotensi).' };
+  }
+  if (sys <= 120 && dia <= 80) {
+    return { label: 'Normal', colorClass: 'sugar-normal', description: 'Tekanan darah Anda normal.' };
+  }
+  if (sys <= 129 && dia <= 80) {
+    return { label: 'Elevated', colorClass: 'sugar-normal', description: 'Tekanan darah sedikit tinggi (elevated).' };
+  }
+  if (sys <= 139 || dia <= 89) {
+    return { label: 'Tinggi Stage 1', colorClass: 'sugar-high', description: 'Tekanan darah tinggi stage 1 (hipertensi).' };
+  }
+  if (sys <= 180 || dia <= 120) {
+    return { label: 'Tinggi Stage 2', colorClass: 'sugar-high', description: 'Tekanan darah tinggi stage 2 (hipertensi berat).' };
+  }
+  return { label: 'Krisis', colorClass: 'sugar-high', description: 'Tekanan darah sangat tinggi! Segera cari pertolongan medis.' };
+};
+
+const evalHeartRate = (bpm, age) => {
+  const rate = Number(bpm);
+  if (!Number.isFinite(rate)) return null;
+
+  const isChild = age && age < 12;
+  const isInfant = age && age < 1;
+
+  let normalLow, normalHigh;
+  if (isInfant) { normalLow = 100; normalHigh = 160; }
+  else if (isChild) { normalLow = 70; normalHigh = 120; }
+  else { normalLow = 60; normalHigh = 100; }
+
+  if (rate < normalLow) {
+    return { label: 'Rendah (Bradikardia)', colorClass: 'sugar-low', description: `Detak jantung rendah: ${rate} bpm (normal: ${normalLow}-${normalHigh}).` };
+  }
+  if (rate > normalHigh) {
+    return { label: 'Tinggi (Takikardia)', colorClass: 'sugar-high', description: `Detak jantung tinggi: ${rate} bpm (normal: ${normalLow}-${normalHigh}).` };
+  }
+  return { label: 'Normal', colorClass: 'sugar-normal', description: `Detak jantung normal: ${rate} bpm.` };
+};
+
+const evalTemperature = (celsius) => {
+  const temp = Number(celsius);
+  if (!Number.isFinite(temp)) return null;
+
+  if (temp < 35.0) {
+    return { label: 'Rendah (Hipotermia)', colorClass: 'sugar-low', description: `Suhu tubuh rendah: ${temp}C (normal: 36.1-37.2C).` };
+  }
+  if (temp <= 37.2) {
+    return { label: 'Normal', colorClass: 'sugar-normal', description: `Suhu tubuh normal: ${temp}C.` };
+  }
+  if (temp <= 38.0) {
+    return { label: 'Sedikit Demam', colorClass: 'sugar-normal', description: `Suhu sedikit tinggi: ${temp}C (demam ringan).` };
+  }
+  if (temp <= 39.0) {
+    return { label: 'Demam', colorClass: 'sugar-high', description: `Demam: ${temp}C. Perlu istirahat dan minum banyak air.` };
+  }
+  return { label: 'Demam Tinggi', colorClass: 'sugar-high', description: `Demam tinggi: ${temp}C. Segera konsultasi ke dokter.` };
+};
+
+const evalSpO2 = (percent) => {
+  const val = Number(percent);
+  if (!Number.isFinite(val)) return null;
+
+  if (val < 90) {
+    return { label: 'Kritis', colorClass: 'sugar-high', description: `Saturasi oksigen sangat rendah: ${val}%. Segera cari pertolongan medis!` };
+  }
+  if (val < 95) {
+    return { label: 'Rendah', colorClass: 'sugar-high', description: `Saturasi oksigen rendah: ${val}% (normal: 95-100%).` };
+  }
+  return { label: 'Normal', colorClass: 'sugar-normal', description: `Saturasi oksigen normal: ${val}%.` };
+};
+
+const evalRespiratoryRate = (rate, age) => {
+  const val = Number(rate);
+  if (!Number.isFinite(val)) return null;
+
+  const isChild = age && age < 12;
+  const isInfant = age && age < 1;
+
+  let normalLow, normalHigh;
+  if (isInfant) { normalLow = 30; normalHigh = 60; }
+  else if (isChild) { normalLow = 18; normalHigh = 30; }
+  else { normalLow = 12; normalHigh = 20; }
+
+  if (val < normalLow) {
+    return { label: 'Rendah (Bradipnea)', colorClass: 'sugar-low', description: `Frekuensi pernapasan rendah: ${val}/menit (normal: ${normalLow}-${normalHigh}).` };
+  }
+  if (val > normalHigh) {
+    return { label: 'Tinggi (Takipnea)', colorClass: 'sugar-high', description: `Frekuensi pernapasan tinggi: ${val}/menit (normal: ${normalLow}-${normalHigh}).` };
+  }
+  return { label: 'Normal', colorClass: 'sugar-normal', description: `Frekuensi pernapasan normal: ${val}/menit.` };
+};
+
 module.exports = {
   calculateAge,
   hitungKesimpulan,
@@ -153,4 +250,9 @@ module.exports = {
   sendWhatsApp,
   hitungRisikoKesehatan,
   analisisTren,
+  evalBloodPressure,
+  evalHeartRate,
+  evalTemperature,
+  evalSpO2,
+  evalRespiratoryRate,
 };

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Coin Catcher</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+#ccCanvas{display:block;margin:0 auto;border:2px solid #444;border-radius:8px;background:#1a1a2e}
+.cc-hud{display:flex;justify-content:space-between;margin:10px 0;font-size:18px}
+</style>
+</head>
+<body>
+<div class="container" style="max-width:600px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<button class="link-btn" onclick="location.href='../tools.html'">Back</button>
+<button class="link-btn" onclick="location.href='../dashboard.html'">Dashboard</button>
+</div>
+<h2 style="text-align:center">Coin Catcher</h2>
+<div class="cc-hud">
+<span>Score: <strong id="ccScore">0</strong></span>
+<span>Lives: <strong id="ccLives">3</strong></span>
+<span>Time: <strong id="ccTime">30</strong>s</span>
+</div>
+<canvas id="ccCanvas" width="500" height="400"></canvas>
+<div style="text-align:center;margin-top:10px">
+<button onclick="startCC()" id="ccStartBtn">Start</button>
+<p style="color:#aaa;font-size:13px">Move mouse or use arrow keys to catch coins. Avoid bombs!</p>
+</div>
+</div>
+<script>
+const canvas=document.getElementById("ccCanvas"),ctx=canvas.getContext("2d");
+let player={x:230,w:60,h:14},items=[],score,lives,timer,running=false,animId;
+document.addEventListener("keydown",e=>{
+if(!running)return;
+if(e.key==="ArrowLeft")player.x=Math.max(0,player.x-20);
+if(e.key==="ArrowRight")player.x=Math.min(canvas.width-player.w,player.x+20);
+});
+canvas.addEventListener("mousemove",e=>{
+if(!running)return;
+const rect=canvas.getBoundingClientRect();
+player.x=Math.max(0,Math.min(canvas.width-player.w,(e.clientX-rect.left)*(canvas.width/rect.width)-player.w/2));
+});
+function startCC(){
+score=0;lives=3;timer=30;running=true;items=[];
+document.getElementById("ccScore").textContent=0;
+document.getElementById("ccLives").textContent=3;
+document.getElementById("ccTime").textContent=30;
+document.getElementById("ccStartBtn").disabled=true;
+if(animId)cancelAnimationFrame(animId);
+tick();spawnLoop();timeLoop();gameLoop();
+}
+function spawn(){
+const isBomb=Math.random()<0.25;
+items.push({x:Math.random()*(canvas.width-20),y:-20,speed:2+Math.random()*3,bomb:isBomb,r:isBomb?14:12});
+}
+function spawnLoop(){if(!running)return;spawn();setTimeout(spawnLoop,600-Math.min(score*5,400));}
+function timeLoop(){if(!running)return;timer--;document.getElementById("ccTime").textContent=timer;
+if(timer<=0){running=false;endCC();return;}setTimeout(timeLoop,1000);}
+function gameLoop(){
+if(!running)return;
+ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle="#ffd700";
+ctx.fillRect(player.x,canvas.height-30,player.w,player.h);
+for(let i=items.length-1;i>=0;i--){
+const it=items[i];it.y+=it.speed;
+ctx.fillStyle=it.bomb?"#e74c3c":"#ffd700";
+ctx.beginPath();ctx.arc(it.x,it.y,it.r,0,Math.PI*2);ctx.fill();
+ctx.fillStyle="#fff";ctx.font="bold 14px sans-serif";ctx.textAlign="center";
+ctx.fillText(it.bomb?"*":"$",it.x,it.y+5);
+if(it.y+it.r>=canvas.height-30&&it.y-it.speed+it.r<canvas.height-30&&
+it.x+it.r>player.x&&it.x-it.r<player.x+player.w){
+if(it.bomb){lives--;document.getElementById("ccLives").textContent=lives;if(lives<=0){running=false;endCC();return;}}
+else{score++;document.getElementById("ccScore").textContent=score;}
+items.splice(i,1);continue;
+}
+if(it.y>canvas.height+20)items.splice(i,1);
+}
+animId=requestAnimationFrame(gameLoop);
+}
+function endCC(){
+running=false;document.getElementById("ccStartBtn").disabled=false;
+alert("Game Over! Score: "+score);
+}
+</script>
+</body>
+</html>

@@ -11,12 +11,14 @@
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <button class="link-btn" onclick="location.href='list.html'">Lihat data lain</button>
             <button class="link-btn" onclick="location.href='summary.html'">Ringkasan</button>
+            <button class="link-btn" onclick="location.href='tools.html'">Tools & Games</button>
             <button class="link-btn" onclick="logout()" style="float: none;">Logout</button>
         </div>
         <h2>Selamat datang, <span id="welcome-name"></span></h2>
         <div style="display:flex;gap:10px;margin-top:20px;">
             <button style="flex:1;padding:15px;" onclick="showForm('bmi')">Cek IMT (Berat Badan)</button>
             <button style="flex:1;padding:15px;" onclick="showForm('sugar')">Cek Gula Darah</button>
+            <button style="flex:1;padding:15px;" onclick="showForm('vitals')">Cek Tanda Vital</button>
         </div>
     </div>
 
@@ -68,6 +70,51 @@
         <button type="button" onclick="prosesSugar()">HITUNG</button>
     </div>
 
+    <div id="screen-form-vitals" class="container hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="link-btn" onclick="showMenu()">Kembali</button>
+            <button class="link-btn" onclick="logout()" style="float: none;">Logout</button>
+        </div>
+        <h2>Cek Tanda Vital</h2>
+        <div class="form-group">
+            <label>Pilih Identitas</label>
+            <select id="vitals-identity" onchange="onVitalsIdentityChange()">
+                <option value="">-- Pilih --</option>
+            </select>
+        </div>
+        <div id="vitals-identity-info" style="display:none;margin-bottom:15px;padding:10px;background:#f5f5f5;border-radius:8px;">
+            <p><strong>Nama:</strong> <span id="vitals-info-name"></span></p>
+            <p><strong>Usia:</strong> <span id="vitals-info-age"></span> tahun</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="form-group">
+                <label>Tekanan Darah Sistolik (mmHg)</label>
+                <input type="number" id="vs-systolic" min="0" placeholder="120">
+            </div>
+            <div class="form-group">
+                <label>Tekanan Darah Diastolik (mmHg)</label>
+                <input type="number" id="vs-diastolic" min="0" placeholder="80">
+            </div>
+            <div class="form-group">
+                <label>Denyut Jantung (bpm)</label>
+                <input type="number" id="vs-heartrate" min="0" placeholder="72">
+            </div>
+            <div class="form-group">
+                <label>Suhu Tubuh (C)</label>
+                <input type="number" id="vs-temp" min="0" step="0.1" placeholder="36.5">
+            </div>
+            <div class="form-group">
+                <label>Saturasi Oksigen (%)</label>
+                <input type="number" id="vs-spo2" min="0" max="100" placeholder="98">
+            </div>
+            <div class="form-group">
+                <label>Frekuensi Pernapasan (/menit)</label>
+                <input type="number" id="vs-resp" min="0" placeholder="16">
+            </div>
+        </div>
+        <button type="button" onclick="prosesVitals()">SIMPAN</button>
+    </div>
+
     <div id="screen-hasil" class="container hidden">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <button class="link-btn" onclick="showMenu()">Kembali</button>
@@ -84,6 +131,20 @@
         <p id="res-kesimpulan" style="font-size: 1.2em; font-weight: bold; color: #007BFF;"></p>
         <p id="res-gula-status" class="sugar-badge"></p>
         <p id="res-gula-keterangan"></p>
+        <div id="res-vitals" style="display:none;margin-top:15px;padding:15px;background:#f8f9fa;border-radius:8px;">
+            <h3>Tanda Vital:</h3>
+            <div id="res-vitals-list"></div>
+        </div>
+        <button onclick="showMenu()">Kembali</button>
+    </div>
+
+    <div id="screen-hasil-vitals" class="container hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="link-btn" onclick="showMenu()">Kembali</button>
+            <button class="link-btn" onclick="logout()" style="float: none;">Logout</button>
+        </div>
+        <h2 id="hasil-vitals-title">Hasil Tanda Vital</h2>
+        <div id="hasil-vitals-content"></div>
         <button onclick="showMenu()">Kembali</button>
     </div>
 
@@ -113,7 +174,7 @@
         }
 
         function showAllScreens() {
-            ['screen-menu', 'screen-form-bmi', 'screen-form-sugar', 'screen-hasil'].forEach(id => {
+            ['screen-menu', 'screen-form-bmi', 'screen-form-sugar', 'screen-form-vitals', 'screen-hasil', 'screen-hasil-vitals'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             });
         }
@@ -128,8 +189,10 @@
             loadIdentities(() => {
                 if (type === 'bmi') {
                     document.getElementById('screen-form-bmi').classList.remove('hidden');
-                } else {
+                } else if (type === 'sugar') {
                     document.getElementById('screen-form-sugar').classList.remove('hidden');
+                } else if (type === 'vitals') {
+                    document.getElementById('screen-form-vitals').classList.remove('hidden');
                 }
             });
         }
@@ -139,6 +202,7 @@
             identitiesList = await res.json();
             populateSelect('bmi-identity');
             populateSelect('sugar-identity');
+            populateSelect('vitals-identity');
             if (cb) cb();
         }
 
@@ -180,6 +244,59 @@
                 document.getElementById('sugar-info-age').innerText = '-';
                 infoDiv.style.display = 'block';
             }
+        }
+
+        function onVitalsIdentityChange() {
+            const id = document.getElementById('vitals-identity').value;
+            const infoDiv = document.getElementById('vitals-identity-info');
+            if (!id) { infoDiv.style.display = 'none'; return; }
+            const identity = identitiesList.find(i => i.id == id);
+            if (identity) {
+                document.getElementById('vitals-info-name').innerText = identity.name || '-';
+                document.getElementById('vitals-info-age').innerText = '-';
+                infoDiv.style.display = 'block';
+            }
+        }
+
+        async function prosesVitals() {
+            const identityId = document.getElementById('vitals-identity').value;
+            if (!identityId) return alert('Pilih identitas!');
+
+            const payload = { identity_id: Number(identityId) };
+            const fields = { systolic: 'vs-systolic', diastolic: 'vs-diastolic', heart_rate: 'vs-heartrate', temperature: 'vs-temp', spo2: 'vs-spo2', respiratory_rate: 'vs-resp' };
+            let hasAny = false;
+            for (const [key, elId] of Object.entries(fields)) {
+                const val = document.getElementById(elId).value;
+                if (val !== '') { payload[key] = Number(val); hasAny = true; }
+            }
+            if (!hasAny) return alert('Isi minimal satu tanda vital!');
+
+            const res = await fetch('/api/vital-signs', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+            const saved = await res.json();
+            if (!saved.success) return alert(saved.error || 'Gagal menyimpan');
+
+            showAllScreens();
+            document.getElementById('screen-hasil-vitals').classList.remove('hidden');
+            document.getElementById('hasil-vitals-title').innerText = 'Tanda Vital - ' + (saved.data.name || '');
+
+            const vs = saved.data.vitalSigns;
+            const ev = saved.data.evaluation;
+            let html = '<div style="padding:10px;background:#f5f5f5;border-radius:8px;">';
+            html += '<p><strong>Pasien:</strong> ' + saved.data.name + '</p>';
+            html += '<p><strong>Usia:</strong> ' + (saved.data.age ?? '-') + ' tahun</p><hr>';
+            const labels = { systolic: 'Sistolik', diastolic: 'Diastolik', heart_rate: 'Denyut Jantung', temperature: 'Suhu', spo2: 'SpO2', respiratory_rate: 'Pernapasan' };
+            const units = { systolic: 'mmHg', diastolic: 'mmHg', heart_rate: 'bpm', temperature: 'C', spo2: '%', respiratory_rate: '/menit' };
+            for (const [key, label] of Object.entries(labels)) {
+                if (vs[key] != null) {
+                    const evalData = ev[key === 'heart_rate' ? 'heartRate' : key === 'spo2' ? 'spo2' : key === 'respiratory_rate' ? 'respiratoryRate' : key === 'temperature' ? 'temperature' : 'bloodPressure'];
+                    const badge = evalData ? '<span style="color:' + (evalData.colorClass === 'sugar-normal' ? '#28a745' : evalData.colorClass === 'sugar-low' ? '#007bff' : '#dc3545') + ';font-weight:bold"> (' + evalData.label + ')</span>' : '';
+                    html += '<p><strong>' + label + ':</strong> ' + vs[key] + ' ' + units[key] + badge + '</p>';
+                    if (evalData) html += '<p style="font-size:13px;color:#666;margin:-5px 0 8px 0">' + evalData.description + '</p>';
+                }
+            }
+            html += '<p style="margin-top:10px;font-weight:bold;color:' + (ev.overall === 'Semua normal' ? '#28a745' : '#dc3545') + '">' + ev.overall + '</p>';
+            html += '</div>';
+            document.getElementById('hasil-vitals-content').innerHTML = html;
         }
 
         async function prosesBmi() {
