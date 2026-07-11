@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Scientific Calculator</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+.calc-display{background:#1a1a2e;color:#2ecc71;font-size:28px;padding:15px;border-radius:8px;text-align:right;word-break:break-all;min-height:60px;margin-bottom:10px;font-family:monospace}
+.calc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.calc-grid button{padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer}
+.calc-grid button:hover{background:#3a3a5e}
+.calc-grid button.op{background:#007BFF;border-color:#007BFF}
+.calc-grid button.fn{background:#444;border-color:#555}
+.calc-grid button.eq{background:#2ecc71;border-color:#2ecc71;font-size:18px}
+.calc-grid button.del{background:#e74c3c;border-color:#e74c3c}
+.calc-grid button.span2{grid-column:span 2}
+</style>
+</head>
+<body>
+<div class="container" style="max-width:420px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<button class="link-btn" onclick="location.href='../tools.html'">Back</button>
+<button class="link-btn" onclick="location.href='../dashboard.html'">Dashboard</button>
+</div>
+<h2 style="text-align:center">Scientific Calculator</h2>
+<div class="calc-display" id="scDisp">0</div>
+<div class="calc-grid">
+<button class="fn" onclick="scFn('sin')">sin</button>
+<button class="fn" onclick="scFn('cos')">cos</button>
+<button class="fn" onclick="scFn('tan')">tan</button>
+<button class="fn" onclick="scFn('asin')">sin-1</button>
+<button class="fn" onclick="scFn('acos')">cos-1</button>
+<button class="fn" onclick="scFn('atan')">tan-1</button>
+<button class="fn" onclick="scFn('log')">log</button>
+<button class="fn" onclick="scFn('ln')">ln</button>
+<button class="fn" onclick="scFn('sqrt')">sqrt</button>
+<button class="fn" onclick="scFn('cbrt')">cbrt</button>
+<button class="op" onclick="scIns('(')">(</button>
+<button class="op" onclick="scIns(')')">)</button>
+<button class="op" onclick="scIns('^')">^</button>
+<button class="fn" onclick="scIns('pi')">pi</button>
+<button class="fn" onclick="scIns('e')">e</button>
+<button onclick="scNum('7')">7</button>
+<button onclick="scNum('8')">8</button>
+<button onclick="scNum('9')">9</button>
+<button class="op" onclick="scOp('/')">/</button>
+<button class="del" onclick="scDel()">DEL</button>
+<button onclick="scNum('4')">4</button>
+<button onclick="scNum('5')">5</button>
+<button onclick="scNum('6')">6</button>
+<button class="op" onclick="scOp('*')">*</button>
+<button class="del" onclick="scClear()">AC</button>
+<button onclick="scNum('1')">1</button>
+<button onclick="scNum('2')">2</button>
+<button onclick="scNum('3')">3</button>
+<button class="op" onclick="scOp('-')">-</button>
+<button class="eq span2" onclick="scEval()">=</button>
+<button onclick="scNum('0')">0</button>
+<button onclick="scIns('.')">.</button>
+<button class="op" onclick="scOp('+')">+</button>
+</div>
+</div>
+<script>
+let scExpr="",scDisp="",scLastWasOp=false;
+function E(id){return document.getElementById(id);}
+function scUpdate(){E("scDisp").textContent=scDisp||"0";}
+function scNum(n){scExpr+=n;scDisp+=n;scLastWasOp=false;scUpdate();}
+function scOp(o){scExpr+=o;scDisp+=o;scLastWasOp=true;scUpdate();}
+function scIns(s){scExpr+=s;scDisp+=s;scUpdate();}
+function scFn(fn){
+const map={sin:"Math.sin(",cos:"Math.cos(",tan:"Math.tan(",asin:"Math.asin(",acos:"Math.acos(",atan:"Math.atan(",log:"Math.log10(",ln:"Math.log(",sqrt:"Math.sqrt(",cbrt:"Math.cbrt("};
+scExpr+=map[fn]||fn+"(";scDisp+=fn+"(";scUpdate();
+}
+function scDel(){
+scExpr=scExpr.slice(0,-1);scDisp=scDisp.slice(0,-1);scUpdate();
+}
+function scClear(){scExpr="";scDisp="";scUpdate();}
+function scEval(){
+try{
+const safe=scExpr.replace(/\^/g,"**").replace(/pi/g,"Math.PI").replace(/(?<![a-z])e(?![a-z])/g,"Math.E");
+const result=Function('"use strict";return ('+safe+')')();
+scDisp=String(result);scExpr=scDisp;scUpdate();
+}catch(e){E("scDisp").textContent="Error";scExpr="";scDisp="";}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Sentiment Analysis</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+.sent-area{width:100%;padding:12px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;resize:vertical;font-family:inherit;line-height:1.5}
+.sent-meter{height:30px;border-radius:15px;background:linear-gradient(to right,#e74c3c,#f39c12,#2ecc71);position:relative;margin:15px 0}
+.sent-needle{width:4px;height:40px;background:#fff;border:2px solid #333;position:absolute;top:-5px;border-radius:2px;transition:left .5s}
+.sent-labels{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:5px}
+.sent-result{text-align:center;padding:20px;background:#f8f9fa;border-radius:8px;margin:15px 0}
+.sent-result .emoji{font-size:60px;margin:10px 0}
+.sent-result .verdict{font-size:24px;font-weight:bold;margin:10px 0}
+.sent-breakdown{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:15px 0}
+.sent-bar{text-align:center;padding:12px;border-radius:8px;background:#f8f9fa;border:1px solid #dee2e6}
+.sent-bar h4{margin:0 0 5px;font-size:12px;color:#666}
+.sent-bar .val{font-size:24px;font-weight:bold}
+.sent-bar .pct{font-size:13px;color:#888}
+.sent-word{display:inline-block;padding:3px 8px;margin:2px;border-radius:4px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="container" style="max-width:700px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<button class="link-btn" onclick="location.href='../tools.html'">Back</button>
+<button class="link-btn" onclick="location.href='../dashboard.html'">Dashboard</button>
+</div>
+<h2 style="text-align:center">Sentiment Analysis</h2>
+<textarea id="sentText" class="sent-area" rows="5" placeholder="Enter text to analyze sentiment..."></textarea>
+<div style="display:flex;gap:10px;margin:10px 0">
+<button onclick="sentAnalyze()">Analyze</button>
+<button onclick="sentLoadExample()">Load Example</button>
+</div>
+<div id="sentOutput" style="display:none">
+<div class="sent-labels"><span>Negative</span><span>Neutral</span><span>Positive</span></div>
+<div class="sent-meter"><div class="sent-needle" id="sentNeedle"></div></div>
+<div class="sent-result">
+<div class="emoji" id="sentEmoji"></div>
+<div class="verdict" id="sentVerdict"></div>
+</div>
+<div class="sent-breakdown">
+<div class="sent-bar" style="border-color:#e74c3c"><h4>NEGATIVE</h4><div class="val" id="sentNeg" style="color:#e74c3c">0%</div></div>
+<div class="sent-bar" style="border-color:#f39c12"><h4>NEUTRAL</h4><div class="val" id="sentNeu" style="color:#f39c12">0%</div></div>
+<div class="sent-bar" style="border-color:#2ecc71"><h4>POSITIVE</h4><div class="val" id="sentPos" style="color:#2ecc71">0%</div></div>
+</div>
+<h3>Word Analysis</h3>
+<div id="sentWords"></div>
+</div>
+</div>
+<script>
+const POS_WORDS=new Set(["good","great","excellent","amazing","wonderful","fantastic","love","happy","beautiful","best","awesome","brilliant","perfect","nice","superb","outstanding","pleased","glad","delighted","awesome","incredible","terrific","fabulous","magnificent","positive","enjoy","enjoyed","success","successful","win","won","victory","cheerful","joy","joyful","remarkable","impressive","spectacular","triumph","benefit","improve","improved","improvement","better","strong","powerful","efficient","reliable","innovative","advanced","exceptional","pleasant","satisfy","satisfied","satisfying","thank","thanks","grateful","appreciate","love","loved","loving","adore","celebrate","celebration","exciting","excited","excitement","fun","glorious","harmonious","ideal","inspire","inspired","inspiring","marvelous","miracle","optimistic","paradise","peaceful","refresh","refreshing","relief","reward","rewarding","smooth","soothing","sparkle","splendid","stunning","superior","surprise","surprised","sweet","thrill","thrilling","treasure","triumphant","upbeat","vibrant","vivid","warm","worthy","yay","yes","bright","creative","dynamic","elegant","encourage","encouraging","energetic","engaging","enthusiasm","extraordinary","flourish","generous","grace","graceful","growth","harmony","heal","healing","healthy","honor","hope","hopeful","hug","humor","hypothesis","insight","insightful","intelligent","intuitive","justified","keen","kind","laugh","laughter","lead","leadership","lively","loyal","luck","lucky","magic","meaningful","mindful","miraculous","motivate","motivated","motivating","natural","nourish","nurturing","open","opportunity","passion","passionate","patient","peace","peacemaker","perfectly","phenomenal","pleasure","popular","praise","precious","pride","productive","proficient","progress","prosper","prosperous","proud","purpose","radiant","rational","reason","reasonable","rejoice","reliable","relief","resilient","resourceful","respect","respected","responsible","romantic","safe","satisfy","secure","sensible","sensitive","serve","service","share","shine","sincere","skill","smart","solution","soul","spirit","stable","steady","stellar","strong","support","supported","supportive","talent","talented","thankful","thrive","together","treasure","trust","trusted","truth","unified","unique","valuable","victory","virtue","vital","vivid","warmth","wealth","wisdom","wise","wonder","worthy","youthful"];
+const NEG_WORDS=new Set(["bad","terrible","horrible","awful","hate","ugly","worst","poor","sad","angry","disgusting","disappointing","disappointed","fail","failed","failure","fear","frightening","annoy","annoying","bitter","bore","boring","broken","brutal","clumsy","cold","confuse","confused","confusing","corrupt","coward","cruel","damage","damaged","danger","dangerous","dark","depress","depressed","depression","destroy","destroyed","disaster","disease","dislike","doubt","dread","dull","dump","dying","evil","explode","fear","fierce","filthy","fool","foolish","force","fraud","grief","grim","gross","guilt","guilty","harm","harsh","helpless","horror","hostile","hurt","ill","inferior","injure","insult","jail","jealous","kill","killer","lack","lame","liar","lie","loss","lost","lousy","lunch","mad","malice","meaningless","menace","misery","mistake","mock","murder","nasty","negative","neglect","never","nightmare","nobody","noise","nuisance","object","offend","pain","painful","panic","pathetic","penalty","pessimistic","plague","poison","pollute","poor","prison","problem","protest","punish","rage","refuse","reject","revenge","rotten","rude","ruin","scare","scary","severe","shame","shock","sick","silly","sin","slave","slavery","sorrow","sorry","stale","stupid","suffer","suffering","terrible","terrified","threat","toxic","tragic","trouble","ugly","unfair","unfortunately","unhappy","upset","useless","victim","violence","violent","vulgar","war","weak","weakness","weapon","wicked","worry","worse","worst","worthless","wound","wrong","yell"];
+const INTENSIFIERS=new Set(["very","really","extremely","incredibly","absolutely","totally","completely","highly","deeply","truly","utterly","so","quite","rather","remarkably"]);
+const NEGATORS=new Set(["not","no","never","neither","nobody","nothing","nowhere","nor","cannot","cant","dont","doesnt","didnt","isnt","wasnt","werent","havent","hasnt","hadnt","wont","wouldnt","shouldnt","couldnt"]);
+function E(id){return document.getElementById(id);}
+function sentLoadExample(){
+E("sentText").value="This product is absolutely amazing! The quality is excellent and I love the design. However, the delivery was quite slow and the packaging was damaged. Overall, I'm very happy with my purchase and would definitely recommend it to friends. The customer service was helpful and responsive. Great value for the price!";
+}
+function sentAnalyze(){
+const text=E("sentText").value.trim().toLowerCase();
+if(!text)return alert("Enter some text!");
+const words=text.split(/[^a-z']+/).filter(w=>w.length>1);
+let posScore=0,negScore=0,neuCount=0;
+let negator=false;
+const wordScores=[];
+words.forEach((w,i)=>{
+if(NEGATORS.has(w)){negator=true;return;}
+if(INTENSIFIERS.has(w)){negator=false;return;}
+let s=0;
+if(POS_WORDS.has(w))s=1;
+else if(NEG_WORDS.has(w))s=-1;
+if(negator&&s!==0){s=-s;negator=false;}
+if(s>0)posScore+=s;
+else if(s<0)negScore+=Math.abs(s);
+else{neuCount++;if(!NEGATORS.has(w)&&!INTENSIFIERS.has(w))s=0;}
+wordScores.push({word:w,score:s});
+});
+const total=posScore+negScore+neuCount;
+const posPct=total>0?Math.round(posScore/total*100):0;
+const negPct=total>0?Math.round(negScore/total*100):0;
+const neuPct=Math.max(0,100-posPct-negPct);
+const overall=posScore-negScore;
+const sentiment=overall>2?"positive":overall<-2?"negative":"neutral";
+const emojis={positive:"😊",negative:"😠",neutral:"😐"};
+const verdicts={positive:"Positive Sentiment",negative:"Negative Sentiment",neutral:"Neutral Sentiment"};
+const needlePos=sentiment==="neutral"?50:sentiment>0?50+Math.min(posPct,50):50-Math.min(negPct,50);
+E("sentNeedle").style.left=needlePos+"%";
+E("sentEmoji").textContent=emojis[sentiment];
+E("sentVerdict").textContent=verdicts[sentiment];
+E("sentVerdict").style.color=sentiment==="positive"?"#2ecc71":sentiment==="negative"?"#e74c3c":"#f39c12";
+E("sentNeg").textContent=negPct+"%";
+E("sentNeu").textContent=neuPct+"%";
+E("sentPos").textContent=posPct+"%";
+E("sentOutput").style.display="";
+let wordsHtml="";
+wordScores.forEach(ws=>{
+const bg=ws.score>0?"#2ecc7133":ws.score<0?"#e74c3c33":"#f39c1233";
+const color=ws.score>0?"#2ecc71":ws.score<0?"#e74c3c":"#888";
+wordsHtml+="<span class='sent-word' style='background:"+bg+";color:"+color+"' title='Score: "+ws.score+"'>"+ws.word+"</span>";
+});
+E("sentWords").innerHTML=wordsHtml;
+}
+</script>
+</body>
+</html>

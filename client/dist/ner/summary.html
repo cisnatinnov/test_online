@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Text Summarizer</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+.ner-area{width:100%;padding:12px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;resize:vertical;font-family:inherit;line-height:1.5}
+.ner-result{background:#f8f9fa;padding:15px;border-radius:8px;margin:15px 0;line-height:1.8}
+.ner-result h4{margin:0 0 10px}
+.ner-result .sentence{padding:8px 12px;margin:4px 0;border-radius:6px;border-left:4px solid #007BFF;background:#f0f7ff}
+.ner-result .sentence.top{background:#fff3cd;border-left-color:#f1c40f;font-weight:bold}
+.ner-stats{display:flex;gap:20px;margin:10px 0;font-size:13px;color:#666}
+</style>
+</head>
+<body>
+<div class="container" style="max-width:700px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<button class="link-btn" onclick="location.href='../tools.html'">Back</button>
+<button class="link-btn" onclick="location.href='../dashboard.html'">Dashboard</button>
+</div>
+<h2 style="text-align:center">Text Summarizer</h2>
+<textarea id="nerText" class="ner-area" rows="8" placeholder="Paste or type a long text to summarize..."></textarea>
+<div style="display:flex;gap:10px;margin:10px 0;align-items:center">
+<button onclick="nerSummarize()">Summarize</button>
+<label style="font-size:13px">Summary ratio: <select id="nerRatio" style="padding:4px;border-radius:4px">
+<option value="0.3">30% (Brief)</option>
+<option value="0.2" selected>20% (Medium)</option>
+<option value="0.1">10% (Detailed)</option>
+</select></label>
+<button onclick="nerLoadExample()">Load Example</button>
+</div>
+<div class="ner-stats" id="nerStats"></div>
+<div class="ner-result" id="nerResult" style="display:none"></div>
+</div>
+<script>
+function E(id){return document.getElementById(id);}
+function nerLoadExample(){
+E("nerText").value="Natural language processing (NLP) is a subfield of linguistics, computer science, and artificial intelligence concerned with the interactions between computers and human language. The goal is to enable computers to understand, interpret, and generate human language in a valuable way. NLP combines computational linguistics with statistical, machine learning, and deep learning models. These technologies enable computers to process human language in the form of text or voice data. They can understand its full meaning, complete with the speaker's intent and sentiment. NLP drives computer programs that translate text from one language to another, respond to spoken commands, and summarize large volumes of text rapidly. NLP is increasingly important in business applications. Companies use it to automate customer service, analyze customer feedback, and extract insights from documents. Modern NLP relies on machine learning, particularly deep learning using transformer architectures. Models like BERT, GPT, and T5 have revolutionized the field by achieving state-of-the-art results on many benchmarks. Despite advances, NLP still faces challenges including understanding context, handling ambiguity, and dealing with sarcasm and irony in text.";
+}
+function nerSummarize(){
+const text=E("nerText").value.trim();
+if(!text)return alert("Enter some text to summarize!");
+const sentences=text.match(/[^.!?]+[.!?]+/g)||[text];
+const ratio=parseFloat(E("nerRatio").value);
+const numSentences=Math.max(1,Math.round(sentences.length*ratio));
+const scored=sentences.map((s,i)=>{
+let score=0;
+const words=s.trim().split(/\s+/);
+score+=words.length*0.5;
+const important=/important|significant|key|main|primary|major|crucial|essential|fundamental|revolutionized|advances|challenges/i;
+if(important.test(s))score+=5;
+if(i===0)score+=3;
+if(i===sentences.length-1)score+=2;
+const stopwords=/the|a|an|is|are|was|were|in|on|at|to|for|of|and|or|but|with|by|from/;
+const contentWords=words.filter(w=>!stopwords.test(w));
+score+=contentWords.length*0.3;
+return{sentence:s.trim(),score,index:i};
+});
+scored.sort((a,b)=>b.score-a.score);
+const top=new Set(scored.slice(0,numSentences).map(s=>s.index));
+top.add(0);
+const sortedTop=[...top].sort((a,b)=>a-b);
+let html="<h4>Summary ("+top.size+" of "+sentences.length+" sentences)</h4>";
+sortedTop.forEach(i=>{
+const cls=top.has(i)&&(i===sortedTop[0]||scored.find(s=>s.index===i)?.score>scored[0].score*0.7)?"sentence top":"sentence";
+html+="<div class='"+cls+"'>"+sentences[i].trim()+"</div>";
+});
+E("nerResult").innerHTML=html;E("nerResult").style.display="";
+E("nerStats").innerHTML="Original: "+sentences.length+" sentences | Summary: "+top.size+" sentences | Reduction: "+((1-top.size/sentences.length)*100).toFixed(0)+"%";
+}
+</script>
+</body>
+</html>
