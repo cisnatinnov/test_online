@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Cek IMT & Gula Darah</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="screen-menu" class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="link-btn" onclick="location.href='list.html'">Lihat data lain</button>
+            <button class="link-btn" onclick="location.href='summary.html'">Ringkasan</button>
+            <button class="link-btn" onclick="logout()" style="float: none;">Logout</button>
+        </div>
+        <h2>Selamat datang, <span id="welcome-name"></span></h2>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+            <button style="flex:1;padding:15px;" onclick="showForm('bmi')">Cek IMT (Berat Badan)</button>
+            <button style="flex:1;padding:15px;" onclick="showForm('sugar')">Cek Gula Darah</button>
+        </div>
+    </div>
+
+    <div id="screen-form-bmi" class="container hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="link-btn" onclick="showMenu()">Kembali</button>
+            <button class="link-btn" onclick="logout()" style="float: none;">Logout</button>
+        </div>
+        <h2>Cek IMT (Berat Badan)</h2>
+        <div class="form-group">
+            <label>Pilih Identitas</label>
+            <select id="bmi-identity" onchange="onBmiIdentityChange()">
+                <option value="">-- Pilih --</option>
+            </select>
+        </div>
+        <div id="bmi-identity-info" style="display:none;margin-bottom:15px;padding:10px;background:#f5f5f5;border-radius:8px;">
+            <p><strong>Nama:</strong> <span id="bmi-info-name"></span></p>
+            <p><strong>NIK:</strong> <span id="bmi-info-nik"></span></p>
+            <p><strong>Usia:</strong> <span id="bmi-info-age"></span> tahun</p>
+            <p><strong>Tinggi:</strong> <span id="bmi-info-height"></span> cm</p>
+        </div>
+        <div class="form-group">
+            <label>Berat Badan (kg)</label>
+            <input type="number" id="bmi-weight" required>
+        </div>
+        <button type="button" onclick="prosesBmi()">HITUNG</button>
+    </div>
+
+    <div id="screen-form-sugar" class="container hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="link-btn" onclick="showMenu()">Kembali</button>
+            <button class="link-btn" onclick="logout()" style="float: none;">Logout</button>
+        </div>
+        <h2>Cek Gula Darah</h2>
+        <div class="form-group">
+            <label>Pilih Identitas</label>
+            <select id="sugar-identity" onchange="onSugarIdentityChange()">
+                <option value="">-- Pilih --</option>
+            </select>
+        </div>
+        <div id="sugar-identity-info" style="display:none;margin-bottom:15px;padding:10px;background:#f5f5f5;border-radius:8px;">
+            <p><strong>Nama:</strong> <span id="sugar-info-name"></span></p>
+            <p><strong>Usia:</strong> <span id="sugar-info-age"></span> tahun</p>
+        </div>
+        <div class="form-group">
+            <label>Kadar Gula (mg/dL)</label>
+            <input type="number" id="sugar-value" min="0" required>
+        </div>
+        <button type="button" onclick="prosesSugar()">HITUNG</button>
+    </div>
+
+    <div id="screen-hasil" class="container hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="link-btn" onclick="showMenu()">Kembali</button>
+            <button class="link-btn" onclick="logout()" style="float: none;">Logout</button>
+        </div>
+        <h2 id="hasil-title">Hasil Penghitungan</h2>
+        <p><strong>Nama:</strong> <span id="res-name"></span></p>
+        <p><strong>Usia:</strong> <span id="res-age"></span> tahun</p>
+        <p><strong>Alamat:</strong> <span id="res-address"></span></p>
+        <p><strong>Tinggi Badan:</strong> <span id="res-height"></span> cm</p>
+        <p><strong>Berat Badan:</strong> <span id="res-weight"></span> kg</p>
+        <hr>
+        <h3>Kesimpulan Skor IMT:</h3>
+        <p id="res-kesimpulan" style="font-size: 1.2em; font-weight: bold; color: #007BFF;"></p>
+        <p id="res-gula-status" class="sugar-badge"></p>
+        <p id="res-gula-keterangan"></p>
+        <button onclick="showMenu()">Kembali</button>
+    </div>
+
+    <script>
+        let identitiesList = [];
+
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+
+        function authHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + getToken()
+            };
+        }
+
+        function cekLogin() {
+            if (!getToken()) window.location.href = 'login.html';
+        }
+        cekLogin();
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        function showAllScreens() {
+            ['screen-menu', 'screen-form-bmi', 'screen-form-sugar', 'screen-hasil'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+        }
+
+        function showMenu() {
+            showAllScreens();
+            document.getElementById('screen-menu').classList.remove('hidden');
+        }
+
+        function showForm(type) {
+            showAllScreens();
+            loadIdentities(() => {
+                if (type === 'bmi') {
+                    document.getElementById('screen-form-bmi').classList.remove('hidden');
+                } else {
+                    document.getElementById('screen-form-sugar').classList.remove('hidden');
+                }
+            });
+        }
+
+        async function loadIdentities(cb) {
+            const res = await fetch('/api/identities', { headers: authHeaders() });
+            identitiesList = await res.json();
+            populateSelect('bmi-identity');
+            populateSelect('sugar-identity');
+            if (cb) cb();
+        }
+
+        function populateSelect(selectId) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">-- Pilih --</option>';
+            identitiesList.forEach(i => {
+                const opt = document.createElement('option');
+                opt.value = i.id;
+                opt.textContent = i.name + (i.nik ? ' (NIK: ' + i.nik + ')' : '');
+                select.appendChild(opt);
+            });
+            const infoId = selectId.replace('identity', 'identity-info');
+            const infoDiv = document.getElementById(infoId);
+            if (infoDiv) infoDiv.style.display = 'none';
+        }
+
+        function onBmiIdentityChange() {
+            const id = document.getElementById('bmi-identity').value;
+            const infoDiv = document.getElementById('bmi-identity-info');
+            if (!id) { infoDiv.style.display = 'none'; return; }
+            const identity = identitiesList.find(i => i.id == id);
+            if (identity) {
+                document.getElementById('bmi-info-name').innerText = identity.name || '-';
+                document.getElementById('bmi-info-nik').innerText = identity.nik || '-';
+                document.getElementById('bmi-info-age').innerText = '-';
+                document.getElementById('bmi-info-height').innerText = identity.height || '-';
+                infoDiv.style.display = 'block';
+            }
+        }
+
+        function onSugarIdentityChange() {
+            const id = document.getElementById('sugar-identity').value;
+            const infoDiv = document.getElementById('sugar-identity-info');
+            if (!id) { infoDiv.style.display = 'none'; return; }
+            const identity = identitiesList.find(i => i.id == id);
+            if (identity) {
+                document.getElementById('sugar-info-name').innerText = identity.name || '-';
+                document.getElementById('sugar-info-age').innerText = '-';
+                infoDiv.style.display = 'block';
+            }
+        }
+
+        async function prosesBmi() {
+            const identityId = document.getElementById('bmi-identity').value;
+            const weight = document.getElementById('bmi-weight').value;
+
+            if (!identityId || !weight) {
+                return alert('Pilih identitas dan isi berat badan!');
+            }
+
+            const res = await fetch('/api/bmi', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({ identity_id: Number(identityId), weight: Number(weight) })
+            });
+            const saved = await res.json();
+            tampilkanHasil(saved.data);
+        }
+
+        async function prosesSugar() {
+            const identityId = document.getElementById('sugar-identity').value;
+            const sugar = document.getElementById('sugar-value').value;
+
+            if (!identityId || !sugar) {
+                return alert('Pilih identitas dan isi kadar gula!');
+            }
+
+            const res = await fetch('/api/bloodsugar', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({ identity_id: Number(identityId), sugar: Number(sugar) })
+            });
+            const saved = await res.json();
+            tampilkanHasil(saved.data);
+        }
+
+        function tampilkanHasil(data) {
+            if (!data) return;
+
+            showAllScreens();
+            document.getElementById('screen-hasil').classList.remove('hidden');
+
+            document.getElementById('hasil-title').innerText = 'Hasil penghitungan ' + (data.name || '');
+            document.getElementById('res-name').innerText = data.name;
+            document.getElementById('res-age').innerText = data.age ?? '-';
+            document.getElementById('res-address').innerText = data.address || '-';
+            document.getElementById('res-height').innerText = data.height;
+            document.getElementById('res-weight').innerText = data.weight || '-';
+            document.getElementById('res-kesimpulan').innerText = data.weight ? 'Kategori BMI: ' + (data.result || '-') + ' (Skor: ' + (data.bmi || '-') + ')' : '-';
+            tampilkanKriteriaGula(data);
+        }
+
+        function tampilkanKriteriaGula(data) {
+            const gula = data?.sugarCriteria || null;
+            const container = document.getElementById('res-gula-status');
+            const detail = document.getElementById('res-gula-keterangan');
+
+            if (!gula) {
+                container.innerText = '';
+                detail.innerText = '';
+                return;
+            }
+
+            container.innerText = 'Kriteria Gula: ' + gula.label;
+            container.className = 'sugar-badge ' + gula.colorClass;
+            detail.innerText = gula.description;
+        }
+    </script>
+</body>
+</html>

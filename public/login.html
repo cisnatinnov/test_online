@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Cek IMT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Username / Email</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <div style="display:flex;gap:5px;">
+                    <input type="password" id="password" required style="flex:1;">
+                    <button type="button" onclick="togglePassword()" style="flex-shrink:0;">Show</button>
+                </div>
+            </div>
+            <button type="button" onclick="prosesLogin()">Login</button>
+            <p style="margin-top: 15px;">Belum punya akun? <a href="register.html">Daftar</a></p>
+        </form>
+        <p id="login-error" style="color: red; margin-top: 10px;"></p>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const el = document.getElementById('password');
+            const btn = event.target;
+            if (el.type === 'password') {
+                el.type = 'text';
+                btn.textContent = 'Hide';
+            } else {
+                el.type = 'password';
+                btn.textContent = 'Show';
+            }
+        }
+
+        function prosesLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                return alert('Semua field harus diisi!');
+            }
+
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
+                } else if (data.require2fa) {
+                    localStorage.setItem('tempToken', data.tempToken);
+                    localStorage.setItem('channels', JSON.stringify(data.channels));
+                    window.location.href = 'verify-2fa.html';
+                } else {
+                    document.getElementById('login-error').innerText = data.error;
+                }
+            })
+            .catch(err => {
+                document.getElementById('login-error').innerText = 'Terjadi kesalahan';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Data IMT & Gula Darah</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container" style="max-width: 1100px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="link-btn" onclick="location.href='dashboard.html'" style="float: none;">Kembali ke Dashboard</button>
+            <button class="link-btn" onclick="logout()" style="float: none;">Logout</button>
+        </div>
+
+        <div style="display:flex;gap:10px;margin:15px 0;">
+            <button id="tab-bmi" onclick="showTab('bmi')" style="flex:1;">Data IMT</button>
+            <button id="tab-sugar" onclick="showTab('sugar')" style="flex:1;background:#6c757d;">Data Gula Darah</button>
+        </div>
+
+        <div style="margin-bottom:15px;">
+            <input type="text" id="searchInput" placeholder="Cari berdasarkan nama atau NIK..." oninput="filterTable()" style="width:100%;padding:10px;box-sizing:border-box;border:1px solid #ccc;border-radius:4px;">
+        </div>
+
+        <div id="table-bmi">
+            <h3>Data IMT</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>NIK</th>
+                        <th>Nama</th>
+                        <th>Usia</th>
+                        <th>Tinggi (cm)</th>
+                        <th>Berat (kg)</th>
+                        <th>Skor IMT</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="list-bmi">
+                </tbody>
+            </table>
+        </div>
+
+        <div id="table-sugar" style="display:none;">
+            <h3>Data Gula Darah</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>NIK</th>
+                        <th>Nama</th>
+                        <th>Usia</th>
+                        <th>Kriteria</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="list-sugar">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let activeTab = 'bmi';
+
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+
+        function authHeaders() {
+            return { 'Authorization': 'Bearer ' + getToken() };
+        }
+
+        function cekLogin() {
+            if (!getToken()) window.location.href = 'login.html';
+        }
+        cekLogin();
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        function showTab(tab) {
+            activeTab = tab;
+            document.getElementById('table-bmi').style.display = tab === 'bmi' ? '' : 'none';
+            document.getElementById('table-sugar').style.display = tab === 'sugar' ? '' : 'none';
+            document.getElementById('tab-bmi').style.background = tab === 'bmi' ? '' : '#6c757d';
+            document.getElementById('tab-sugar').style.background = tab === 'sugar' ? '' : '#6c757d';
+            filterTable();
+        }
+
+        function filterTable() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allData.filter(item =>
+                (item.name || '').toLowerCase().includes(q) ||
+                (item.nik || '').toLowerCase().includes(q)
+            );
+            renderBmiTable(filtered);
+            renderSugarTable(filtered);
+        }
+
+        function renderBmiTable(data) {
+            const tbody = document.getElementById('list-bmi');
+            tbody.innerHTML = '';
+            const bmiData = data.filter(d => d.weight);
+            if (bmiData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Belum ada data IMT</td></tr>';
+                return;
+            }
+            bmiData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.nik || '-'}</td>
+                    <td>${item.name}</td>
+                    <td>${item.age ?? '-'}</td>
+                    <td>${item.height}</td>
+                    <td>${item.weight}</td>
+                    <td><strong>${item.bmi || '-'}</strong></td>
+                    <td>${item.result || '-'}</td>
+                    <td>
+                        <button onclick="location.href='history.html?id=${item.id}'">Riwayat</button>
+                        <button onclick="downloadPDF(${item.id})" style="background:#17a2b8;">PDF</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderSugarTable(data) {
+            const tbody = document.getElementById('list-sugar');
+            tbody.innerHTML = '';
+            const sugarData = data.filter(d => d.sugarCriteria && d.sugarCriteria.label !== 'Tidak ada');
+            if (sugarData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada data Gula Darah</td></tr>';
+                return;
+            }
+            sugarData.forEach(item => {
+                const sc = item.sugarCriteria;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.nik || '-'}</td>
+                    <td>${item.name}</td>
+                    <td>${item.age ?? '-'}</td>
+                    <td><span class="sugar-badge ${sc.colorClass}">${sc.label}</span></td>
+                    <td>${item.sugar_status || '-'}</td>
+                    <td>
+                        <button onclick="location.href='history.html?id=${item.id}'">Riwayat</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function muatDataList() {
+            const res = await fetch('/api/bmi-list', { headers: authHeaders() });
+            allData = await res.json();
+            renderBmiTable(allData);
+            renderSugarTable(allData);
+        }
+
+        function downloadPDF(id) {
+            const token = getToken();
+            fetch('/api/export/pdf/' + id, { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(res => res.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'pasien-' + id + '.pdf';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+        }
+
+        muatDataList();
+    </script>
+</body>
+</html>
