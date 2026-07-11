@@ -1,4 +1,4 @@
-const { getHistoryDate } = require('../public/history-utils');
+const { getHistoryDate } = require('../utils/history-utils');
 
 describe('getHistoryDate', () => {
   test('uses createdAt when present', () => {

@@ -132,13 +132,18 @@ exports.send2FA = async (req, res) => {
 
     const mt = await getMailTransporter();
     if (mt && decoded.email && decoded.email.includes('@')) {
-      await mt.sendMail({
-        from: process.env.EMAIL_FROM || 'noreply@bmi-app.com',
-        to: decoded.email,
-        subject: 'Kode Verifikasi 2FA - BMI App',
-        html: `<h2>Kode Verifikasi 2FA</h2><p>Gunakan kode berikut untuk masuk:</p><h1 style="letter-spacing:5px;font-size:32px;">${code}</h1><p>Kode berlaku 5 menit.</p>`,
-      });
-      return apiResponse(res, { data: { sentTo: decoded.email, channel: 'email' } });
+      try {
+        await mt.sendMail({
+          from: process.env.EMAIL_FROM || 'noreply@bmi-app.com',
+          to: decoded.email,
+          subject: 'Kode Verifikasi 2FA - BMI App',
+          html: `<h2>Kode Verifikasi 2FA</h2><p>Gunakan kode berikut untuk masuk:</p><h1 style="letter-spacing:5px;font-size:32px;">${code}</h1><p>Kode berlaku 5 menit.</p>`,
+        });
+        console.log(`[2FA] Email sent to ${decoded.email}`);
+        return apiResponse(res, { data: { sentTo: decoded.email, channel: 'email' } });
+      } catch (mailErr) {
+        console.error('[2FA] sendMail failed:', mailErr.message);
+      }
     }
 
     console.log(`[2FA] Code for ${decoded.email}: ${code}`);

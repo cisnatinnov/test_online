@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { sequelize, User } = require('./models');
 const { errorHandler } = require('./middlewares/apiResponse');
@@ -25,7 +26,25 @@ const vitalSignsRoutes = require('./routes/vitalSignsRoutes');
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+const clientDist = path.join(__dirname, 'client', 'dist');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-bmi-app-2024';
+function secureTools(req, res, next) {
+  const token = req.query.token || (req.headers.authorization && req.headers.authorization.split(' ')[1]);
+  if (!token) return res.status(401).send('Unauthorized');
+  jwt.verify(token, JWT_SECRET, (err) => {
+    if (err) return res.status(403).send('Invalid token');
+    next();
+  });
+}
+
+const securePrefixes = ['/games/', '/math/', '/ner/'];
+app.use((req, res, next) => {
+  if (securePrefixes.some((p) => req.path.startsWith(p))) return secureTools(req, res, next);
+  next();
+});
+
+app.use(express.static(clientDist));
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/bmi', apiLimiter, bmiRoutes);
@@ -42,6 +61,11 @@ app.get('/api/dashboard/summary', authenticateToken, bmiController.getSummary);
 app.get('/api/history/:identityId/bmi', authenticateToken, bmiController.getHistoryBMI);
 app.get('/api/history/:identityId/bloodsugar', authenticateToken, bloodSugarController.getHistoryBloodSugar);
 app.get('/api/history/:identityId/vitalsigns', authenticateToken, vitalSignsController.getHistoryVitalSigns);
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(clientDist, 'index.html'));
+});
 
 app.use(errorHandler);
 
