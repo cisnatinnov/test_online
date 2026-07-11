@@ -17,6 +17,8 @@ const identityRoutes = require('./routes/identityRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const moneyRoutes = require('./routes/moneyRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const healthRoutes = require('./routes/healthRoutes');
+const patientHealthRoutes = require('./routes/patientHealthRoutes');
 
 const app = express();
 app.use(cors());
@@ -30,6 +32,8 @@ app.use('/api/identities', apiLimiter, identityRoutes);
 app.use('/api/export', apiLimiter, reportRoutes);
 app.use('/api/money', apiLimiter, moneyRoutes);
 app.use('/api/admin', apiLimiter, adminRoutes);
+app.use('/api/health', healthRoutes);
+app.use('/api/patient-health', patientHealthRoutes);
 
 app.get('/api/dashboard/summary', authenticateToken, bmiController.getSummary);
 app.get('/api/history/:identityId/bmi', authenticateToken, bmiController.getHistoryBMI);

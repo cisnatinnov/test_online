@@ -75,6 +75,75 @@ const sendWhatsApp = async (phone, code) => {
   return false;
 };
 
+const hitungRisikoKesehatan = (bmiResult, sugarCriteria, age) => {
+  let score = 0;
+  const reasons = [];
+
+  if (bmiResult) {
+    const bmi = parseFloat(bmiResult.bmi);
+    if (bmiResult.status === 'Sangat kurus') { score += 3; reasons.push('BMI sangat kurus'); }
+    else if (bmiResult.status === 'Kurus') { score += 1; reasons.push('BMI kurus'); }
+    else if (bmiResult.status === 'Gemuk') { score += 2; reasons.push('BMI gemuk'); }
+    else if (bmiResult.status === 'Obesitas') { score += 4; reasons.push('BMI obesitas'); }
+  }
+
+  if (sugarCriteria) {
+    if (sugarCriteria.label === 'Tinggi') { score += 3; reasons.push('Gula darah tinggi'); }
+    else if (sugarCriteria.label === 'Rendah') { score += 2; reasons.push('Gula darah rendah'); }
+  }
+
+  if (age && age >= 50) { score += 1; reasons.push('Usia >= 50 tahun'); }
+  if (age && age >= 65) { score += 1; reasons.push('Usia >= 65 tahun'); }
+
+  let level = 'rendah';
+  if (score >= 5) level = 'tinggi';
+  else if (score >= 3) level = 'sedang';
+
+  return { score, level, reasons };
+};
+
+const analisisTren = (bmiHistory, sugarHistory, heightCm) => {
+  const bmiTrend = bmiHistory.map((row) => {
+    const heightM = Number(heightCm) / 100;
+    const bmi = Number(row.weight) / (heightM * heightM);
+    return {
+      date: row.createdAt,
+      weight: Number(row.weight),
+      bmi: parseFloat(bmi.toFixed(2)),
+      status: row.result,
+    };
+  });
+
+  const sugarTrend = sugarHistory.map((row) => ({
+    date: row.createdAt,
+    result: row.result,
+    age: row.age,
+  }));
+
+  let bmiDirection = 'stable';
+  if (bmiTrend.length >= 2) {
+    const first = bmiTrend[0].bmi;
+    const last = bmiTrend[bmiTrend.length - 1].bmi;
+    const diff = last - first;
+    if (diff > 1) bmiDirection = 'increasing';
+    else if (diff < -1) bmiDirection = 'decreasing';
+  }
+
+  let sugarDirection = 'stable';
+  const sugarMap = { Rendah: -1, Normal: 0, Tinggi: 1 };
+  if (sugarTrend.length >= 2) {
+    const firstVal = sugarMap[sugarTrend[0].result] ?? 0;
+    const lastVal = sugarMap[sugarTrend[sugarTrend.length - 1].result] ?? 0;
+    if (lastVal > firstVal) sugarDirection = 'worsening';
+    else if (lastVal < firstVal) sugarDirection = 'improving';
+  }
+
+  return {
+    bmi: { direction: bmiDirection, dataPoints: bmiTrend.length, data: bmiTrend },
+    bloodSugar: { direction: sugarDirection, dataPoints: sugarTrend.length, data: sugarTrend },
+  };
+};
+
 module.exports = {
   calculateAge,
   hitungKesimpulan,
@@ -82,4 +151,6 @@ module.exports = {
   buildSugarCriteria,
   formatPatientResponse,
   sendWhatsApp,
+  hitungRisikoKesehatan,
+  analisisTren,
 };
