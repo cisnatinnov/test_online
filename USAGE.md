@@ -37,11 +37,15 @@ npm install
 3. Start the server:
 
 ```bash
-npm run dev      # Development (auto-reload)
-npm start        # Production
+npm run dev      # Backend: http://localhost:3000
+
+# In a separate terminal, start the frontend:
+cd client
+npm install
+npm run dev      # Frontend: http://localhost:5173
 ```
 
-4. Open `http://localhost:3000` in your browser. You will be redirected to the login page.
+4. Open `http://localhost:5173` in your browser. You will be redirected to the login page.
 
 ---
 

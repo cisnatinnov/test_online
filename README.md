@@ -42,7 +42,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 
 ### Math Tools (5 tools)
 - **Shapes Calculator**: 2D shapes (circle, rectangle, triangle, square, ellipse, trapezoid, parallelogram) and 3D shapes (cube, sphere, cylinder, cone, rectangular prism, pyramid, torus) with canvas visualization
-- **Equation Grapher**: Plot multiple functions (sin, cos, tan, log, sqrt, x^n) with color legend
+- **Equation Grapher**: Plot multiple functions (sin, cos, tan, asin, acos, atan, log, sqrt, x^n) with color legend
 - **Scientific Calculator**: Full calculator with trigonometric, logarithmic, and power functions
 - **Statistics Calculator**: Mean, median, mode, std dev, variance, quartiles, IQR, histogram
 - **Quadratic Function**: Graph and solve ax^2+bx+c with vertex, roots, and step-by-step solution
@@ -58,7 +58,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **ORM**: Sequelize
 - **Database**: PostgreSQL
 - **Auth**: JWT with 2FA (Nodemailer / WhatsApp API)
-- **Frontend**: Vanilla HTML/CSS/JS
+- **Frontend**: Vue 3 SPA with Vite
 - **Testing**: Jest + Supertest
 
 ## Project Structure
@@ -105,33 +105,39 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── healthRoutes.js          # /api/health, /ready, /live, /stats
 │   └── patientHealthRoutes.js   # /api/patient-health/risk, /trend, /alerts, /population
 ├── utils/
-│   └── helpers.js               # BMI calc, blood sugar eval, vital sign eval, risk scoring, trend analysis
+│   ├── helpers.js               # BMI calc, blood sugar eval, vital sign eval, risk scoring, trend analysis
+│   └── history-utils.js         # Date formatting for history records
 ├── __tests__/
 │   ├── helpers.test.js
+│   ├── historyUtils.test.js
 │   ├── apiResponse.test.js
 │   ├── authenticate.test.js
 │   └── authorize.test.js
-├── public/                      # Frontend static files
-│   ├── index.html, login.html, register.html, verify-2fa.html
-│   ├── , list.html, history.html, summary.html
-│   ├── tools               # Navigation hub for games, math, NER
-│   ├── style.css
-│   ├── games/                   # 6 interactive browser games
-│   │   ├── hangman.html
-│   │   ├── coin-catcher.html
-│   │   ├── roleplay-adventure.html
-│   │   ├── turtle-racing.html
-│   │   ├── aim-trainer.html
-│   │   └── rock-paper-scissors.html
-│   ├── math/                    # 5 math tools
-│   │   ├── shapes.html          # 2D & 3D shape calculator
-│   │   ├── equation-grapher.html
-│   │   ├── scientific-calculator.html
-│   │   ├── statistics.html
-│   │   └── quadratic.html       # Quadratic function grapher & solver
-│   └── ner/                     # 2 text analysis tools
-│       ├── summary.html         # Text summarizer
-│       └── sentiment.html       # Sentiment analysis
+├── client/                      # Vue 3 SPA frontend (Vite)
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── src/                     # Vue source files
+│   ├── public/                  # Static assets copied to dist on build
+│   └── dist/                    # Built SPA served by Express
+│       ├── index.html           # SPA entry point
+│       ├── assets/              # Bundled JS/CSS
+│       ├── games/               # 6 interactive browser games
+│       │   ├── hangman.html
+│       │   ├── coin-catcher.html
+│       │   ├── roleplay-adventure.html
+│       │   ├── turtle-racing.html
+│       │   ├── aim-trainer.html
+│       │   └── rock-paper-scissors.html
+│       ├── math/                # 5 math tools
+│       │   ├── shapes.html      # 2D & 3D shape calculator
+│       │   ├── equation-grapher.html
+│       │   ├── scientific-calculator.html
+│       │   ├── statistics.html
+│       │   └── quadratic.html   # Quadratic function grapher & solver
+│       └── ner/                 # 2 text analysis tools
+│           ├── summary.html     # Text summarizer
+│           └── sentiment.html   # Sentiment analysis
 ├── .env
 ├── server.js
 ├── README.md
@@ -179,12 +185,18 @@ ADMIN_PASSWORD=Admin@123
 ### Run
 
 ```bash
-npm start        # Production
-npm run dev      # Development (nodemon)
+npm start        # Production (backend on :3000)
+npm run dev      # Development with nodemon (backend on :3000)
 npm test         # Run unit tests
+
+# Frontend (separate terminal)
+cd client
+npm install
+npm run dev      # Vite dev server on :5173 (proxies /api to :3000)
+npm run build    # Build SPA to client/dist/
 ```
 
-Server runs at `http://localhost:3000`.
+Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://localhost:5173`.
 
 ## API Endpoints
 
@@ -388,11 +400,11 @@ Returns HTTP 200 when healthy, 503 when database is unreachable (degraded).
 | `login.html` | Login page with real-time email format validation (when input contains `@`) and password strength progress bar |
 | `register.html` | Registration with patient data, real-time email validation, and password strength progress bar (5 rules) |
 | `verify-2fa.html` | 2FA code verification |
-| `` | Main hub: BMI check, blood sugar check, vital signs check |
+| `dashboard.html` | Main hub: BMI check, blood sugar check, vital signs check |
 | `list.html` | Patient data list with tabs (BMI, blood sugar) and search |
 | `history.html` | Patient BMI and blood sugar history |
 | `summary.html` | Dashboard statistics cards |
-| `tools` | Navigation hub for all games, math, and NER tools |
+| `tools.html` | Navigation hub for all games, math, and NER tools |
 | `games/*.html` | 6 interactive browser games |
 | `math/*.html` | 5 math calculation and graphing tools |
 | `ner/*.html` | 2 text analysis tools |
@@ -403,8 +415,9 @@ Returns HTTP 200 when healthy, 503 when database is unreachable (degraded).
 npm test
 ```
 
-Runs 35 unit tests covering:
+Runs 38 unit tests covering:
 - Helper functions (BMI calculation, blood sugar evaluation, age calculation, formatting)
+- History date formatting
 - API response middleware
 - JWT authentication middleware
 - Role-based authorization middleware

@@ -54,8 +54,8 @@
 - **Middlewares**: authenticate (JWT), authorize (role-based), apiResponse (standardized response), mailTransporter (nodemailer), rateLimiter (express-rate-limit)
 - **Models**: User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving
 - **Routes**: Separate route file per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, report, admin, health, patientHealth)
-- **Frontend**: Vanilla HTML/CSS/JS with separate pages per screen, static files served from `/public`
-- **Tests**: Jest + Supertest unit tests (helpers, apiResponse, authenticate, authorize)
+- **Frontend**: Vue 3 SPA with Vite, static files served from `client/dist`
+- **Tests**: Jest + Supertest unit tests (helpers, apiResponse, authenticate, authorize, historyUtils)
 
 ## Health Monitoring Endpoints
 
@@ -112,17 +112,17 @@
 
 ## Frontend Pages
 
-### Core Pages
+### Core Pages (Vue SPA - `client/dist/`)
 - `login.html` - Login with username/email + password, real-time email format validation, password strength progress bar
 - `register.html` - Registration with account data + optional patient identity, real-time email & password validation with strength progress bar
 - `verify-2fa.html` - 2FA verification (email or WhatsApp)
-- `` - Main hub with BMI, blood sugar, and vital signs check forms
+- `dashboard.html` - Main hub with BMI, blood sugar, and vital signs check forms
 - `list.html` - Patient data list with tabbed BMI/blood sugar view and search
 - `history.html` - Patient BMI and blood sugar history tables
 - `summary.html` - Dashboard statistics cards (total patients, BMI, sugar)
-- `tools` - Navigation hub for games, math tools, and NER tools
+- `tools.html` - Navigation hub for games, math tools, and NER tools
 
-### Games (`public/games/`)
+### Games (`client/dist/games/`)
 - `hangman.html` - Word guessing game with 20 tech-themed words and canvas hangman drawing
 - `coin-catcher.html` - Catch falling coins, avoid bombs, 30s timer, mouse/keyboard controls
 - `roleplay-adventure.html` - Text-based dungeon RPG with combat, gold, weapons, armor, branching story, boss fight
@@ -130,13 +130,13 @@
 - `aim-trainer.html` - Click shrinking targets, 30s timer, tracks score/hits/misses/accuracy
 - `rock-paper-scissors.html` - Classic RPS vs computer with emoji display and scoreboard
 
-### Math Tools (`public/math/`)
+### Math Tools (`client/dist/math/`)
 - `shapes.html` - 2D shapes (circle, rectangle, triangle, square, ellipse, trapezoid, parallelogram) and 3D shapes (cube, sphere, cylinder, cone, rectangular prism, pyramid, torus) with canvas visualization
-- `equation-grapher.html` - Plot multiple functions (sin, cos, tan, log, sqrt, x^n) on adjustable coordinate system
+- `equation-grapher.html` - Plot multiple functions (sin, cos, tan, asin, acos, atan, log, sqrt, x^n) on adjustable coordinate system
 - `scientific-calculator.html` - Full calculator with sin/cos/tan/asin/acos/atan/log/ln/sqrt/cbrt/powers
 - `statistics.html` - Mean, median, mode, std dev, variance, range, quartiles, IQR, histogram chart
 - `quadratic.html` - Graph and solve ax^2+bx+c with vertex, roots, discriminant, step-by-step solution
 
-### NER Tools (`public/ner/`)
+### NER Tools (`client/dist/ner/`)
 - `summary.html` - Extractive text summarizer with adjustable ratio (10%/20%/30%), sentence scoring, visual highlighting
 - `sentiment.html` - Lexicon-based sentiment analysis with positive/negative/neutral scoring, visual meter, word-level coloring
