@@ -37,12 +37,14 @@ npm install
 3. Start the server:
 
 ```bash
+# Backend only
 npm run dev      # Backend: http://localhost:3000
 
-# In a separate terminal, start the frontend:
-cd client
-npm install
-npm run dev      # Frontend: http://localhost:5173
+# Frontend only (in a separate terminal)
+npm run dev:fe   # Frontend: http://localhost:5173
+
+# Or both together
+npm run dev:all
 ```
 
 4. Open `http://localhost:5173` in your browser. You will be redirected to the login page.
@@ -74,9 +76,11 @@ npm run dev      # Frontend: http://localhost:5173
 |------|---------|
 | Minimum 8 characters | `MyP@ssw0rd` |
 | At least 1 uppercase letter | `A` |
+| At least 1 lowercase letter | `a` |
+| At least 1 digit | `0` |
 | At least 1 symbol | `@`, `#`, `$`, etc. |
 
-The progress bar turns red (weak) -> yellow (medium) -> green (strong) as you type.
+The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you type. Real-time validation shows errors below the field on blur.
 
 ---
 
@@ -85,8 +89,10 @@ The progress bar turns red (weak) -> yellow (medium) -> green (strong) as you ty
 **Page:** `login.html`
 
 1. Enter your **username or email** and **password**.
-2. Click **"Login"**.
-3. You will be redirected to the **2FA verification page**.
+2. If the input contains `@`, email format is validated in real-time.
+3. Password must be at least 8 characters.
+4. Click **"Login"**.
+5. You will be redirected to the **2FA verification page**.
 
 ### 2FA Verification
 

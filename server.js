@@ -24,9 +24,13 @@ const patientHealthRoutes = require('./routes/patientHealthRoutes');
 const vitalSignsRoutes = require('./routes/vitalSignsRoutes');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true,
+}));
 app.use(express.json());
 const clientDist = path.join(__dirname, 'client', 'dist');
+const fs = require('fs');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-bmi-app-2024';
 function secureTools(req, res, next) {
@@ -44,7 +48,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(clientDist));
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+}
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/bmi', apiLimiter, bmiRoutes);
@@ -64,7 +70,10 @@ app.get('/api/history/:identityId/vitalsigns', authenticateToken, vitalSignsCont
 
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
-  res.sendFile(path.join(clientDist, 'index.html'));
+  if (fs.existsSync(clientDist)) {
+    return res.sendFile(path.join(clientDist, 'index.html'));
+  }
+  return res.status(404).json({ error: 'Not found' });
 });
 
 app.use(errorHandler);

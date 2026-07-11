@@ -15,8 +15,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 
 ### System & Auth
 - **Authentication**: Register, Login with 2FA (Email / WhatsApp)
-- **Email Validation**: Format validated on both backend and frontend (`user@domain.tld`)
-- **Password Validation**: Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 symbol — enforced on backend (register) and frontend (register + login) with strength progress bar
+- **Email Validation**: Format validated on both backend and frontend (`user@domain.tld`), real-time on blur/input
+- **Password Validation**: Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 symbol — enforced on backend (register) and frontend (register + login) with real-time strength progress bar
 - **System Health Monitoring**: Server uptime, DB connectivity, memory/CPU usage, readiness/liveness probes
 - **Rate Limiting**: Protection against API abuse
 - **Role-based Access**: Admin and user roles with data isolation
@@ -161,6 +161,8 @@ npm install
 
 ### Environment Variables (`.env`)
 
+**Backend:**
+
 ```env
 DB_USER=postgres
 DB_HOST=localhost
@@ -180,21 +182,43 @@ WHATSAPP_API_KEY=
 ADMIN_USERNAME=admin
 ADMIN_EMAIL=admin@bmi-app.com
 ADMIN_PASSWORD=Admin@123
+
+CORS_ORIGIN=http://localhost:5173
+```
+
+**Frontend (`client/.env`):**
+
+```env
+VITE_API_URL=http://localhost:3000
+VITE_API_BASE=/api
 ```
 
 ### Run
 
 ```bash
-npm start        # Production (backend on :3000)
-npm run dev      # Development with nodemon (backend on :3000)
-npm test         # Run unit tests
+# Backend only (API server on :3000)
+npm run dev
 
-# Frontend (separate terminal)
-cd client
-npm install
-npm run dev      # Vite dev server on :5173 (proxies /api to :3000)
-npm run build    # Build SPA to client/dist/
+# Frontend only (Vite dev server on :5173)
+npm run dev:fe
+
+# Both together
+npm run dev:all
+
+# Build frontend SPA
+npm run build:fe
+
+# Run tests
+npm test
 ```
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Backend only (`:3000`) |
+| `npm run dev:fe` | Frontend only (`:5173`) |
+| `npm run dev:all` | Both concurrently |
+| `npm run build:fe` | Build SPA to `client/dist/` |
+| `npm test` | Run backend unit tests |
 
 Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://localhost:5173`.
 
@@ -397,8 +421,8 @@ Returns HTTP 200 when healthy, 503 when database is unreachable (degraded).
 
 | Page | Description |
 |------|-------------|
-| `login.html` | Login page with real-time email format validation (when input contains `@`) and password strength progress bar |
-| `register.html` | Registration with patient data, real-time email validation, and password strength progress bar (5 rules) |
+| `login.html` | Login page with real-time email format validation (when input contains `@`) and password minimum length check |
+| `register.html` | Registration with patient data, real-time email validation, password strength progress bar with 5 rules and color coding |
 | `verify-2fa.html` | 2FA code verification |
 | `dashboard.html` | Main hub: BMI check, blood sugar check, vital signs check |
 | `list.html` | Patient data list with tabs (BMI, blood sugar) and search |

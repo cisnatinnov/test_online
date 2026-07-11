@@ -40,12 +40,15 @@
 - Minimum 1 digit
 - Minimum 1 symbol
 - Visual progress bar with color coding (red/orange/green)
+- Real-time validation on register page with strength label (Lemah/Sedang/Kuat)
+- Login page validates minimum 8 characters
 
 ## Email Validation
 
 - Format: `user@domain.tld` (regex: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`)
-- Validated on both backend (authController.register) and frontend (register.html, login.html)
+- Validated on both backend (authController.register) and frontend (LoginView, RegisterView)
 - Login page only validates when input contains `@` (allows plain username login)
+- Real-time validation on blur and input with red border and error message
 
 ## Architecture
 
@@ -54,7 +57,9 @@
 - **Middlewares**: authenticate (JWT), authorize (role-based), apiResponse (standardized response), mailTransporter (nodemailer), rateLimiter (express-rate-limit)
 - **Models**: User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving
 - **Routes**: Separate route file per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, report, admin, health, patientHealth)
-- **Frontend**: Vue 3 SPA with Vite, static files served from `client/dist`
+- **Frontend**: Vue 3 SPA with Vite, runs independently on `:5173` (proxies `/api` to `:3000`)
+- **Backend**: Express API server on `:3000`, serves built SPA from `client/dist` when available
+- **Separation**: FE and BE can run independently via `npm run dev` (BE) and `npm run dev:fe` (FE), or together via `npm run dev:all`
 - **Tests**: Jest + Supertest unit tests (helpers, apiResponse, authenticate, authorize, historyUtils)
 
 ## Health Monitoring Endpoints
