@@ -113,8 +113,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   └── authorize.test.js
 ├── public/                      # Frontend static files
 │   ├── index.html, login.html, register.html, verify-2fa.html
-│   ├── dashboard.html, list.html, history.html, summary.html
-│   ├── tools.html               # Navigation hub for games, math, NER
+│   ├── , list.html, history.html, summary.html
+│   ├── tools               # Navigation hub for games, math, NER
 │   ├── style.css
 │   ├── games/                   # 6 interactive browser games
 │   │   ├── hangman.html
@@ -388,11 +388,11 @@ Returns HTTP 200 when healthy, 503 when database is unreachable (degraded).
 | `login.html` | Login page with real-time email format validation (when input contains `@`) and password strength progress bar |
 | `register.html` | Registration with patient data, real-time email validation, and password strength progress bar (5 rules) |
 | `verify-2fa.html` | 2FA code verification |
-| `dashboard.html` | Main hub: BMI check, blood sugar check, vital signs check |
+| `` | Main hub: BMI check, blood sugar check, vital signs check |
 | `list.html` | Patient data list with tabs (BMI, blood sugar) and search |
 | `history.html` | Patient BMI and blood sugar history |
 | `summary.html` | Dashboard statistics cards |
-| `tools.html` | Navigation hub for all games, math, and NER tools |
+| `tools` | Navigation hub for all games, math, and NER tools |
 | `games/*.html` | 6 interactive browser games |
 | `math/*.html` | 5 math calculation and graphing tools |
 | `ner/*.html` | 2 text analysis tools |

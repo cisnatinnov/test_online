@@ -116,11 +116,11 @@
 - `login.html` - Login with username/email + password, real-time email format validation, password strength progress bar
 - `register.html` - Registration with account data + optional patient identity, real-time email & password validation with strength progress bar
 - `verify-2fa.html` - 2FA verification (email or WhatsApp)
-- `dashboard.html` - Main hub with BMI, blood sugar, and vital signs check forms
+- `` - Main hub with BMI, blood sugar, and vital signs check forms
 - `list.html` - Patient data list with tabbed BMI/blood sugar view and search
 - `history.html` - Patient BMI and blood sugar history tables
 - `summary.html` - Dashboard statistics cards (total patients, BMI, sugar)
-- `tools.html` - Navigation hub for games, math tools, and NER tools
+- `tools` - Navigation hub for games, math tools, and NER tools
 
 ### Games (`public/games/`)
 - `hangman.html` - Word guessing game with 20 tech-themed words and canvas hangman drawing

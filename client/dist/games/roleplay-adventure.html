@@ -17,7 +17,7 @@
 <body>
 <div class="container" style="max-width:650px">
 <div style="display:flex;justify-content:space-between;align-items:center">
-<button class="link-btn" onclick="location.href='../tools.html'">Back</button>
+<button class="link-btn" onclick="location.href='../tools'">Back</button>
 <button class="link-btn" onclick="raReset()">New Game</button>
 </div>
 <h2 style="text-align:center">Roleplay Adventure</h2>
@@ -49,7 +49,7 @@ let M=[
 actions:[{text:"Continue",go:"treasure_room"}]},
 {id:"goblin_fight",text:"The goblin snarls and attacks!",actions:[
 {text:"Attack!",effect(){let dmg=Math.max(1,S.atk-Math.floor(Math.random()*5));
-S.hp-=Math.floor(Math.random()*15)+5;
+S.hp-=Math.max(1,Math.floor(Math.random()*15)+5-dmg);
 if(S.hp<=0){S.hp=0;return;}S.exp+=20;},
 go:"goblin_win"},
 {text:"Run away",effect(){S.hp-=10;},go:"corridor2"}
@@ -62,7 +62,7 @@ actions:[{text:"Fight the skeleton",go:"skeleton_fight"},
 {text:"Try to grab chest",go:"grab_chest"}]},
 {id:"skeleton_fight",text:"The skeleton raises its sword!",actions:[
 {text:"Strike!",effect(){let dmg=S.atk+Math.floor(Math.random()*8);
-S.hp-=Math.max(1,15-S.def);
+S.hp-=Math.max(1,15-S.def-dmg);
 if(S.hp<=0){S.hp=0;return;}S.exp+=40;S.gold+=30;},
 go:"skeleton_win"},
 {text:"Flee",effect(){S.hp-=8;},go:"final_door"}
@@ -82,7 +82,7 @@ actions:[
 actions:[{text:"Victory!",go:"victory"}]},
 {id:"dragon_fight",text:"The dragon breathes fire! This is your final battle!",actions:[
 {text:"All-out attack!",effect(){let dmg=S.atk+Math.floor(Math.random()*20);
-S.hp-=Math.max(1,30-S.def);
+S.hp-=Math.max(1,30-S.def-dmg);
 if(S.hp<=0){S.hp=0;return;}S.exp+=100;S.gold+=100;},
 go:"dragon_win"},
 {text:"Use potion",effect(){S.hp=Math.min(S.hp+40,S.maxHp);S.hp-=20;},
@@ -93,7 +93,7 @@ go:"dragon_fight2"}
 go:"dragon_win"}
 ]},
 {id:"dragon_win",text:"The dragon falls! You are the hero of the dungeon!",actions:[{text:"Victory!",go:"victory"}]},
-{id:"victory",text:"Congratulations! You conquered the dungeon!\nFinal Stats: HP:"+S.hp+" Gold:"+S.gold+" Level:"+S.lvl,actions:[{text:"Play Again",go:"start"}]}
+{id:"victory",text:"Congratulations! You conquered the dungeon!",actions:[{text:"Play Again",go:"start"}]}
 ];
 function raLog(html){const d=E("raLog");d.innerHTML+="<p>"+html+"</p>";d.scrollTop=d.scrollHeight;}
 function raUpdate(){
@@ -101,7 +101,9 @@ E("raHP").textContent=S.hp;E("raGold").textContent=S.gold;E("raLvl").textContent
 E("raHP").style.color=S.hp<=30?"#e74c3c":"#2ecc71";
 }
 function raRender(scene){
-raLog("<hr><em>"+scene.text.replace(/\n/g,"<br>")+"</em>");
+let msg=scene.text;
+if(scene.id==="victory")msg+="\nFinal Stats: HP:"+S.hp+" Gold:"+S.gold+" Level:"+S.lvl;
+raLog("<hr><em>"+msg.replace(/\n/g,"<br>")+"</em>");
 const acts=E("raActions");acts.innerHTML="";
 scene.actions.forEach(a=>{
 const b=document.createElement("button");

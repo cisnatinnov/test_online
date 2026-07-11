@@ -103,7 +103,7 @@ The progress bar turns red (weak) -> yellow (medium) -> green (strong) as you ty
 
 ## Dashboard
 
-**Page:** `dashboard.html` (Cek IMT & Gula Darah)
+**Page:** `` (Cek IMT & Gula Darah)
 
 The dashboard is the main screen after login. It shows:
 
