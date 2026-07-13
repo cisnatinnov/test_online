@@ -1,6 +1,6 @@
 # BMI App - User Guide
 
-Step-by-step guide for using the BMI health monitoring application.
+Step-by-step guide for using the BMI health monitoring application with Vue 3 frontend.
 
 ## Table of Contents
 
@@ -8,20 +8,28 @@ Step-by-step guide for using the BMI health monitoring application.
 2. [Registration](#registration)
 3. [Login & 2FA](#login--2fa)
 4. [Dashboard](#dashboard)
-5. [BMI Check](#bmi-check)
+5. [Health Monitor](#health-monitor)
+   - [Recording Vitals & BMI](#recording-vitals--bmi)
+   - [Viewing Health Metrics](#viewing-health-metrics)
+   - [Health History](#health-history)
 6. [Blood Sugar Check](#blood-sugar-check)
-7. [Viewing Patient Data](#viewing-patient-data)
-8. [Patient History](#patient-history)
-9. [Dashboard Summary](#dashboard-summary)
-10. [PDF Export](#pdf-export)
-11. [Money Management](#money-management)
-12. [Health Risk Assessment](#health-risk-assessment)
-13. [Health Trends](#health-trends)
-14. [Health Alerts](#health-alerts)
-15. [Population Statistics](#population-statistics)
-16. [Admin Features](#admin-features)
-17. [System Health Monitoring](#system-health-monitoring)
-18. [Troubleshooting](#troubleshooting)
+7. [Money Management](#money-management)
+   - [Expenses & Savings](#expenses--savings)
+   - [Category Breakdown](#category-breakdown)
+   - [Charts & Summary](#charts--summary)
+8. [Palm Oil Estate Management](#palm-oil-estate-management)
+   - [Creating Estates](#creating-estates)
+   - [Planting Trees](#planting-trees)
+   - [Estate Statistics](#estate-statistics)
+   - [Drone Planning](#drone-planning)
+9. [Health Risk Assessment](#health-risk-assessment)
+10. [Health Trends](#health-trends)
+11. [Health Alerts](#health-alerts)
+12. [Population Statistics](#population-statistics)
+13. [PDF Export](#pdf-export)
+14. [Admin Features](#admin-features)
+15. [System Health Monitoring](#system-health-monitoring)
+16. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -34,7 +42,7 @@ Step-by-step guide for using the BMI health monitoring application.
 npm install
 ```
 
-3. Start the server:
+3. Start the servers:
 
 ```bash
 # Backend only
@@ -53,7 +61,7 @@ npm run dev:all
 
 ## Registration
 
-**Page:** `register.html` (Daftar Akun Baru)
+**Page:** `/register`
 
 1. Click **"Daftar"** on the login page.
 2. Fill in the **required fields**:
@@ -80,13 +88,13 @@ npm run dev:all
 | At least 1 digit | `0` |
 | At least 1 symbol | `@`, `#`, `$`, etc. |
 
-The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you type. Real-time validation shows errors below the field on blur.
+The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you type.
 
 ---
 
 ## Login & 2FA
 
-**Page:** `login.html`
+**Page:** `/login`
 
 1. Enter your **username or email** and **password**.
 2. If the input contains `@`, email format is validated in real-time.
@@ -96,7 +104,7 @@ The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you typ
 
 ### 2FA Verification
 
-**Page:** `verify-2fa.html` (Verifikasi Dua Faktor)
+**Page:** `/verify-2fa`
 
 1. **Choose a channel** to receive your verification code:
    - **Email** - a 6-digit code sent to your registered email
@@ -105,7 +113,7 @@ The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you typ
 3. Enter the **6-digit code** you received.
 4. Click **"Verifikasi"**.
 
-> **Note:** The code expires after 5 minutes. If you do not receive it, click "Kirim Kode" again to get a new one.
+> **Note:** The code expires after 5 minutes. If you do not receive it, click "Kirim Kode" again.
 
 5. After successful verification, you will be redirected to the **Dashboard**.
 
@@ -113,238 +121,201 @@ The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you typ
 
 ## Dashboard
 
-**Page:** `` (Cek IMT & Gula Darah)
+**Page:** `/`
 
 The dashboard is the main screen after login. It shows:
 
-- **Welcome message** with your name
-- **Navigation buttons** at the top:
-  - **"Lihat data lain"** - go to the patient data list
-  - **"Ringkasan"** - go to the summary page
-  - **"Logout"** - sign out
-- **Two main actions:**
-  - **"Cek IMT (Berat Badan)"** - check BMI
-  - **"Cek Gula Darah"** - check blood sugar
+- **Navigation buttons** for quick access:
+  - **Health** - go to the Health Monitor page
+  - **Money** - go to the Money Management page
+  - **Estate** - go to the Estate Management page
+- **Welcome message** with your username
+- Links to other features (Patient List, Summary, Tools, etc.)
 
 ---
 
-## BMI Check
+## Health Monitor
 
-**From Dashboard:** Click **"Cek IMT (Berat Badan)"**
+**Page:** `/health`
 
-1. **Select a patient** from the dropdown ("Pilih Identitas").
-   - The patient's info (name, NIK, height) will appear below.
-2. Enter the **weight in kg** ("Berat Badan").
-3. Click **"HITUNG"** to calculate.
-4. The **result screen** shows:
-   - Patient name, age, address, height, weight
-   - **BMI score** (numeric value)
-   - **BMI category** (one of: Sangat kurus / Kurus / Normal / Gemuk / Obesitas)
-   - **Blood sugar status** (if available)
+The Health Monitor is the primary health recording interface. It combines vital signs recording with BMI tracking in a single view.
 
-### BMI Categories
+### Recording Vitals & BMI
 
-| BMI Range | Category |
-|-----------|----------|
-| < 17 | Sangat kurus (Severely underweight) |
-| 17 - 18.5 | Kurus (Underweight) |
-| 18.5 - 25 | Normal |
-| 25 - 27 | Gemuk (Overweight) |
-| > 27 | Obesitas (Obese) |
+**Sidebar form** on the left side:
 
-> Each new BMI reading automatically marks previous readings as "past" and saves the new one as "current".
+1. **Select a Patient** from the dropdown.
+2. Enter vital signs:
+   - **Systolic (mmHg)** - e.g., 120
+   - **Diastolic (mmHg)** - e.g., 80
+   - **Heart Rate (bpm)** - e.g., 72
+   - **Temperature (C)** - e.g., 36.5
+   - **SpO2 (%)** - e.g., 98
+   - **Respiratory Rate (/min)** - e.g., 16
+3. Enter **Weight (kg)** for BMI calculation - e.g., 65
+4. **Height (cm)** is displayed read-only from the patient's identity record
+5. Click **"Save Vitals"** to submit
+
+When you save:
+- Vital signs are saved via `POST /api/vital-signs`
+- If weight is provided, BMI is calculated and saved via `POST /api/bmi`
+- Previous readings are marked as "past", new ones as "current"
+
+### Viewing Health Metrics
+
+**Main content area** on the right:
+
+- **Metric Cards**: Color-coded cards for each recorded vital sign:
+  - **Green** = Normal
+  - **Orange** = Low / Underweight
+  - **Red** = High / Overweight / Risk
+- **BMI Card**: Shows calculated BMI value, unit (kg/m2), and status
+  - Normal: Green
+  - Underweight (Kurus / Sangat kurus): Orange
+  - Overweight (Gemuk / Obesitas): Red
+- **Overall Status Badge**: "All Normal" (green) or "Abnormal Detected" (red)
+
+### Health History
+
+Below the metric cards, a **history table** shows the last 10 vital sign readings with columns:
+
+| Column | Description |
+|--------|-------------|
+| Date | When the reading was taken |
+| BP | Blood pressure (systolic/diastolic) |
+| HR | Heart rate |
+| Temp | Body temperature |
+| SpO2 | Oxygen saturation |
+| Resp | Respiratory rate |
+| BMI | BMI category result |
+| Status | Green dot (all normal) or Red dot (abnormal) |
 
 ---
 
 ## Blood Sugar Check
 
-**From Dashboard:** Click **"Cek Gula Darah"**
-
-1. **Select a patient** from the dropdown.
-   - The patient's info (name, age) will appear below.
-2. Enter the **blood sugar level in mg/dL** ("Kadar Gula").
-3. Click **"HITUNG"** to evaluate.
-4. The **result screen** shows:
-   - Patient name, age, height
-   - **Blood sugar criteria** with a colored badge:
-     - **Rendah** (Low) - below 70 mg/dL
-     - **Normal** - within the age-appropriate range
-     - **Tinggi** (High) - above the threshold
-   - **Description** of the result
-
-### Blood Sugar Thresholds
+Blood sugar can also be recorded and tracked. The evaluation uses age-based thresholds:
 
 | Age | Normal Range |
 |-----|-------------|
 | < 50 years | 70 - 100 mg/dL |
 | >= 50 years | 70 - 110 mg/dL |
 
-> Each new blood sugar reading automatically marks previous readings as "past".
-
----
-
-## Viewing Patient Data
-
-**Page:** `list.html` (Data IMT & Gula Darah)
-
-**From Dashboard:** Click **"Lihat data lain"**
-
-This page shows all patients in a table with two tabs:
-
-### BMI Tab (Data IMT)
-
-| Column | Description |
-|--------|-------------|
-| NIK | National identity number |
-| Nama | Patient name |
-| Usia | Age |
-| Tinggi | Height in cm |
-| Berat | Weight in kg |
-| Skor IMT | BMI score |
-| Status | BMI category |
-| Aksi | Actions: "Riwayat" (history) or "PDF" (export) |
-
-### Blood Sugar Tab (Data Gula Darah)
-
-| Column | Description |
-|--------|-------------|
-| NIK | National identity number |
-| Nama | Patient name |
-| Usia | Age |
-| Kriteria | Blood sugar level (colored badge) |
-| Status | current/past |
-| Aksi | "Riwayat" button |
-
-**Features:**
-- **Search** - type in the search box to filter by name or NIK
-- **Tab switching** - click "Data IMT" or "Data Gula Darah" to switch views
-- **PDF download** - click the "PDF" button next to a patient to download their report
-
----
-
-## Patient History
-
-**Page:** `history.html` (Riwayat Pasien)
-
-**From the data list:** Click **"Riwayat"** next to a patient
-
-Shows two history tables for the selected patient:
-
-### BMI History
-
-| Column | Description |
-|--------|-------------|
-| Tanggal | Date of the record |
-| Berat | Weight in kg |
-| Usia | Age at time of measurement |
-| Hasil | BMI category |
-| Status | current or past |
-
-### Blood Sugar History
-
-| Column | Description |
-|--------|-------------|
-| Tanggal | Date of the record |
-| Usia | Age at time of measurement |
-| Hasil | Blood sugar category (Rendah/Normal/Tinggi) |
-| Kesimpulan | Description |
-| Status | current or past |
-
-> Records marked "current" are the latest readings. Older readings are marked "past".
-
----
-
-## Dashboard Summary
-
-**Page:** `summary.html` (Ringkasan Data)
-
-**From Dashboard:** Click **"Ringkasan"**
-
-Displays four stat cards:
-
-| Card | Description |
-|------|-------------|
-| Total Pasien | Number of registered patients |
-| Total IMT | Number of BMI records |
-| IMT Normal | Number of patients with normal BMI |
-| Gula Tinggi | Number of patients with high blood sugar |
-
----
-
-## PDF Export
-
-**From the data list page:** Click the **"PDF"** button next to a patient.
-
-A PDF report will be downloaded containing:
-- **Laporan Hasil Pemeriksaan** (Examination Report)
-- **Data Pasien** - name, NIK, birthplace, birthdate, address, height
-- **Hasil IMT** - BMI score and category
-- **Hasil Gula Darah** - blood sugar criteria and description
-
-The file is saved as `pasien-{id}.pdf`.
+Results:
+- **Rendah** (Low) - below 70 mg/dL
+- **Normal** - within the age-appropriate range
+- **Tinggi** (High) - above the threshold
 
 ---
 
 ## Money Management
 
-Access money management via the API (`/api/money`).
+**Page:** `/money`
 
-### Expenses
+Track your personal finances with expense and saving management.
 
-| Action | How |
-|--------|-----|
-| Create expense | `POST /api/money/expense` with `{ amount, category, description?, date? }` |
-| List expenses | `GET /api/money/expense` |
-| Update expense | `PUT /api/money/expense/:id` |
-| Delete expense | `DELETE /api/money/expense/:id` |
+### Expenses & Savings
 
-### Savings
+**Add forms** at the top of the page:
 
-| Action | How |
-|--------|-----|
-| Create saving | `POST /api/money/saving` with `{ amount, category, description?, date? }` |
-| List savings | `GET /api/money/saving` |
-| Update saving | `PUT /api/money/saving/:id` |
-| Delete saving | `DELETE /api/money/saving/:id` |
+#### Adding an Expense
+1. Enter the **amount** (e.g., 50000)
+2. Select a **category** (e.g., Makanan, Transport, Kesehatan, etc.)
+3. Optionally add a **description**
+4. Click **"Add Expense"**
 
-### Chart & Summary
+#### Adding a Saving
+1. Enter the **amount**
+2. Select a **category** (e.g., Gaji, Bonus, Investasi, etc.)
+3. Optionally add a **description**
+4. Click **"Add Saving"**
 
-| Action | How |
-|--------|-----|
-| View chart data | `GET /api/money/chart?period=monthly&year=2026` |
-| View summary | `GET /api/money/summary` |
+**Delete** any record by clicking the delete button next to it.
 
-**Chart periods:**
-- `weekly` - data grouped by week
-- `monthly` - data grouped by month (default)
-- `yearly` - single row with year totals
+### Category Breakdown
 
-**Summary returns:** totalExpense, totalSaving, balance, expenseCount, savingCount.
+Two tables below the forms show totals grouped by category:
+
+#### Expense Breakdown
+
+| Column | Description |
+|--------|-------------|
+| Category | Expense category name |
+| Total | Total amount spent in that category |
+| Count | Number of transactions |
+
+#### Saving Breakdown
+
+| Column | Description |
+|--------|-------------|
+| Category | Saving category name |
+| Total | Total amount saved in that category |
+| Count | Number of transactions |
+
+### Charts & Summary
+
+- **Trend Chart**: Visual chart showing expense vs saving over time (weekly/monthly/yearly)
+- **Financial Summary**: Total expense, total saving, and current balance
+
+---
+
+## Palm Oil Estate Management
+
+**Page:** `/estate`
+
+Manage palm oil plantation estates with interactive canvas visualization.
+
+### Creating Estates
+
+1. Enter **width** (number of columns) - must be a positive integer
+2. Enter **length** (number of rows) - must be a positive integer
+3. Click **"Create Estate"**
+
+The estate appears in the **Estate List** below. Each estate shows its dimensions and can be selected for tree planting.
+
+### Planting Trees
+
+1. **Select an estate** from the list
+2. Enter the **X coordinate** (0 to width)
+3. Enter the **Y coordinate** (0 to length)
+4. Enter the **height** (1-30 meters)
+5. Click **"Plant Tree"**
+
+Trees appear on the **canvas visualization** as colored dots at their coordinates. The canvas shows:
+- The estate grid with labeled axes
+- Tree positions with size proportional to height
+- Color coding based on tree height
+
+### Estate Statistics
+
+When an estate is selected, stats are shown:
+
+| Stat | Description |
+|------|-------------|
+| Tree Count | Total number of trees in the estate |
+| Max Height | Tallest tree (meters) |
+| Min Height | Shortest tree (meters) |
+| Median Height | Median tree height (meters) |
+
+### Drone Planning
+
+The drone plan calculates an optimal flyover path through all trees:
+
+- **Path**: Trees sorted by Y coordinate, then X (to minimize total Manhattan distance)
+- **Manhattan Distance**: |x1-x2| + |y1-y2| for each segment
+- **Sum Distance**: Total distance the drone must travel
+
+**With max_distance parameter** (`?max_distance=N`):
+- If battery >= sum_distance: drone reaches the last tree
+- If battery < sum_distance: drone makes a forced landing at the calculated point along the current segment
 
 ---
 
 ## Health Risk Assessment
 
-Assess a patient's combined health risk from BMI, blood sugar, and age.
+Assess a patient's combined health risk from BMI, blood sugar, vital signs, and age.
 
 **Endpoint:** `GET /api/patient-health/risk/:identityId` (requires login)
-
-**Response:**
-
-```json
-{
-  "patientId": 1,
-  "name": "Budi",
-  "age": 55,
-  "bmi": { "bmi": "28.50", "status": "Obesitas" },
-  "bloodSugar": { "label": "Tinggi", "colorClass": "sugar-high" },
-  "risk": {
-    "score": 7,
-    "level": "tinggi",
-    "reasons": ["BMI obesitas", "Gula darah tinggi", "Usia >= 50 tahun"]
-  }
-}
-```
 
 ### Risk Scoring
 
@@ -373,31 +344,6 @@ Track how a patient's BMI and blood sugar change over time.
 
 **Endpoint:** `GET /api/patient-health/trend/:identityId` (requires login)
 
-**Response:**
-
-```json
-{
-  "patientId": 1,
-  "name": "Budi",
-  "trend": {
-    "bmi": {
-      "direction": "increasing",
-      "dataPoints": 5,
-      "data": [
-        { "date": "2026-01-15", "weight": 70, "bmi": 25.50, "status": "Gemuk" }
-      ]
-    },
-    "bloodSugar": {
-      "direction": "worsening",
-      "dataPoints": 3,
-      "data": [
-        { "date": "2026-01-15", "result": "Normal", "age": 55 }
-      ]
-    }
-  }
-}
-```
-
 **Trend directions:**
 
 | Metric | Directions |
@@ -415,22 +361,6 @@ Get a list of all patients flagged as high risk.
 
 **Endpoint:** `GET /api/patient-health/alerts` (requires login)
 
-**Response:**
-
-```json
-{
-  "count": 2,
-  "alerts": [
-    {
-      "patientId": 3,
-      "name": "Siti",
-      "level": "tinggi",
-      "reasons": ["BMI obesitas", "Gula darah tinggi"]
-    }
-  ]
-}
-```
-
 > Only patients with risk level "tinggi" (score >= 5) appear in the alerts list.
 
 ---
@@ -441,30 +371,19 @@ View aggregate health statistics across all patients.
 
 **Endpoint:** `GET /api/patient-health/population` (requires login)
 
-**Response:**
+Returns BMI distribution, blood sugar distribution, and risk distribution across all patients.
 
-```json
-{
-  "totalPatients": 50,
-  "bmiDistribution": {
-    "Sangat kurus": 2,
-    "Kurus": 5,
-    "Normal": 30,
-    "Gemuk": 8,
-    "Obesitas": 5
-  },
-  "sugarDistribution": {
-    "Rendah": 3,
-    "Normal": 35,
-    "Tinggi": 12
-  },
-  "riskDistribution": {
-    "rendah": 25,
-    "sedang": 15,
-    "tinggi": 10
-  }
-}
-```
+---
+
+## PDF Export
+
+From the patient data list page, click the **"PDF"** button next to a patient.
+
+A PDF report will be downloaded containing:
+- **Laporan Hasil Pemeriksaan** (Examination Report)
+- **Data Pasien** - name, NIK, birthplace, birthdate, address, height
+- **Hasil IMT** - BMI score and category
+- **Hasil Gula Darah** - blood sugar criteria and description
 
 ---
 
@@ -514,7 +433,7 @@ Returns HTTP **200** when healthy, **503** when degraded.
 
 **Endpoint:** `GET /api/health/ready`
 
-Returns `{ status: "ready" }` if the database is reachable, or 503 with `{ status: "not ready" }` on failure.
+Returns `{ status: "ready" }` if the database is reachable, or 503 on failure.
 
 ### Liveness Probe
 
@@ -526,19 +445,7 @@ Always returns `{ status: "alive" }` with HTTP 200.
 
 **Endpoint:** `GET /api/health/stats`
 
-Returns aggregate counts and system info:
-
-```json
-{
-  "users": 10,
-  "patients": 25,
-  "bmiRecords": 80,
-  "bloodSugarRecords": 60,
-  "uptime": 3600,
-  "nodeVersion": "v18.17.0",
-  "platform": "win32"
-}
-```
+Returns aggregate counts: total users, patients, BMI records, blood sugar records, uptime, Node version, platform.
 
 ---
 
@@ -554,3 +461,5 @@ Returns aggregate counts and system info:
 | Cannot see patient data | Ensure you are logged in; non-admin users only see their own patients |
 | Database connection error | Verify PostgreSQL is running and `.env` DB credentials are correct |
 | Rate limit exceeded (429) | Wait 15 minutes before trying again; auth limit is 20 requests per 15 min, API limit is 100 |
+| Canvas not showing trees | Ensure you've selected an estate and planted at least one tree |
+| Drone plan returns sum_distance 0 | The estate has no trees planted yet |

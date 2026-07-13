@@ -203,6 +203,54 @@ exports.getChart = async (req, res) => {
   }
 };
 
+exports.getExpenseCategories = async (req, res) => {
+  try {
+    const userFilter = getUserIdFilter(req);
+    const expenses = await Expense.findAll({ where: userFilter, order: [['date', 'DESC']] });
+
+    const categories = {};
+    expenses.forEach((e) => {
+      const cat = e.category || 'Lainnya';
+      if (!categories[cat]) categories[cat] = { total: 0, count: 0, items: [] };
+      categories[cat].total += Number(e.amount);
+      categories[cat].count += 1;
+      categories[cat].items.push({ id: e.id, amount: Number(e.amount), description: e.description, date: e.date });
+    });
+
+    const result = Object.entries(categories).map(([name, data]) => ({
+      name, total: data.total, count: data.count, items: data.items,
+    })).sort((a, b) => b.total - a.total);
+
+    return apiResponse(res, { data: result });
+  } catch (err) {
+    return apiResponse(res, { error: err.message, status: 500 });
+  }
+};
+
+exports.getSavingCategories = async (req, res) => {
+  try {
+    const userFilter = getUserIdFilter(req);
+    const savings = await Saving.findAll({ where: userFilter, order: [['date', 'DESC']] });
+
+    const categories = {};
+    savings.forEach((s) => {
+      const cat = s.category || 'Lainnya';
+      if (!categories[cat]) categories[cat] = { total: 0, count: 0, items: [] };
+      categories[cat].total += Number(s.amount);
+      categories[cat].count += 1;
+      categories[cat].items.push({ id: s.id, amount: Number(s.amount), description: s.description, date: s.date });
+    });
+
+    const result = Object.entries(categories).map(([name, data]) => ({
+      name, total: data.total, count: data.count, items: data.items,
+    })).sort((a, b) => b.total - a.total);
+
+    return apiResponse(res, { data: result });
+  } catch (err) {
+    return apiResponse(res, { error: err.message, status: 500 });
+  }
+};
+
 exports.getSummary = async (req, res) => {
   try {
     const userFilter = getUserIdFilter(req);

@@ -65,9 +65,9 @@
 </div>
 <script>
 function E(id){return document.getElementById(id);}
-function switchTab(tab,btn){
+function switchTab(tab,E){
 document.querySelectorAll(".shape-tabs button").forEach(b=>b.classList.remove("active"));
-btn.classList.add("active");
+E.classList.add("active");
 E("tab2d").style.display=tab==="2d"?"":"none";
 E("tab3d").style.display=tab==="3d"?"":"none";
 }

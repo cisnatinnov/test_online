@@ -22,6 +22,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const patientHealthRoutes = require('./routes/patientHealthRoutes');
 const vitalSignsRoutes = require('./routes/vitalSignsRoutes');
+const estateRoutes = require('./routes/estateRoutes');
 
 const app = express();
 app.use(cors({
@@ -62,6 +63,7 @@ app.use('/api/admin', apiLimiter, adminRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/patient-health', patientHealthRoutes);
 app.use('/api/vital-signs', apiLimiter, vitalSignsRoutes);
+app.use('/api/estate', apiLimiter, estateRoutes);
 
 app.get('/api/dashboard/summary', authenticateToken, bmiController.getSummary);
 app.get('/api/history/:identityId/bmi', authenticateToken, bmiController.getHistoryBMI);
@@ -80,7 +82,7 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync({ force: false })
+sequelize.sync({ force: true })
   .then(async () => {
     console.log('Database synced successfully!');
 

@@ -46,7 +46,7 @@ document.getElementById("ccLives").textContent=3;
 document.getElementById("ccTime").textContent=30;
 document.getElementById("ccStartBtn").disabled=true;
 if(animId)cancelAnimationFrame(animId);
-spawnLoop();timeLoop();gameLoop();
+tick();spawnLoop();timeLoop();gameLoop();
 }
 function spawn(){
 const isBomb=Math.random()<0.25;

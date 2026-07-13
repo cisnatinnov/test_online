@@ -1,11 +1,11 @@
 # BMI App
 
-A health monitoring web application with BMI tracking, blood sugar monitoring, vital signs monitoring, patient health risk assessment, money management, interactive games, math tools, and text analysis. Built with Node.js, Express, Sequelize ORM, and PostgreSQL.
+A health monitoring web application with BMI tracking, blood sugar monitoring, vital signs monitoring, patient health risk assessment, money management, and palm oil estate management. Built with Node.js, Express, Sequelize ORM, PostgreSQL, and Vue 3.
 
 ## Features
 
 ### Health Monitoring
-- **BMI Calculator**: Calculate and track Body Mass Index with category classification
+- **BMI Calculator**: Calculate and track Body Mass Index with category classification (Sangat kurus / Kurus / Normal / Gemuk / Obesitas)
 - **Blood Sugar Monitor**: Track blood sugar levels with age-based threshold evaluation
 - **Vital Signs Monitor**: Blood pressure (systolic/diastolic), heart rate, body temperature, SpO2, respiratory rate with clinical evaluation
 - **Health Risk Assessment**: Composite risk scoring from BMI, blood sugar, vital signs, and age factors
@@ -16,7 +16,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 ### System & Auth
 - **Authentication**: Register, Login with 2FA (Email / WhatsApp)
 - **Email Validation**: Format validated on both backend and frontend (`user@domain.tld`), real-time on blur/input
-- **Password Validation**: Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 symbol — enforced on backend (register) and frontend (register + login) with real-time strength progress bar
+- **Password Validation**: Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 symbol -- enforced on backend (register) and frontend (register + login) with real-time strength progress bar
 - **System Health Monitoring**: Server uptime, DB connectivity, memory/CPU usage, readiness/liveness probes
 - **Rate Limiting**: Protection against API abuse
 - **Role-based Access**: Admin and user roles with data isolation
@@ -29,37 +29,32 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 
 ### Money Management
 - **Expense/Saving Tracking**: CRUD with category and description
+- **Category Breakdown**: Expense and saving totals grouped by category
 - **Chart Visualization**: Weekly, monthly, yearly expense vs saving charts
 - **Financial Summary**: Total expense, saving, and balance
 
-### Games (6 games)
-- **Hangman**: Guess the word letter by letter with tech-themed vocabulary
-- **Coin Catcher**: Catch falling coins, avoid bombs, 30s timer
-- **Roleplay Adventure**: Text-based dungeon RPG with combat, gold, and leveling
-- **Turtle Racing**: Bet coins on animated turtle races
-- **Aim Trainer**: Click shrinking targets, track accuracy and score
-- **Rock Paper Scissors**: Classic game vs computer with scoreboard
+### Palm Oil Estate Management (Sawit)
+- **Estate Management**: Create and manage palm oil estates (width x length grid)
+- **Tree Planting**: Plant trees at specific coordinates within estate bounds (height 1-30m)
+- **Estate Statistics**: Tree count, max/min/median height per estate
+- **Drone Planning**: Calculate optimal drone flyover path with Manhattan distance, forced landing calculation when battery limited
+- **Canvas Visualization**: Interactive canvas showing estate grid with tree positions
 
-### Math Tools (5 tools)
-- **Shapes Calculator**: 2D shapes (circle, rectangle, triangle, square, ellipse, trapezoid, parallelogram) and 3D shapes (cube, sphere, cylinder, cone, rectangular prism, pyramid, torus) with canvas visualization
-- **Equation Grapher**: Plot multiple functions (sin, cos, tan, asin, acos, atan, log, sqrt, x^n) with color legend
-- **Scientific Calculator**: Full calculator with trigonometric, logarithmic, and power functions
-- **Statistics Calculator**: Mean, median, mode, std dev, variance, quartiles, IQR, histogram
-- **Quadratic Function**: Graph and solve ax^2+bx+c with vertex, roots, and step-by-step solution
-
-### Text Analysis (NER)
-- **Text Summarizer**: Extractive summarization with adjustable ratio and sentence scoring
-- **Sentiment Analysis**: Lexicon-based sentiment detection with word-level coloring
+### Frontend (Vue 3 SPA)
+- **Health Monitor Page**: Record vitals (BP, HR, temp, SpO2, resp rate, weight, BMI), color-coded metric cards, history table
+- **Money Dashboard Page**: Expense/saving CRUD, category breakdowns, trend charts, financial summary
+- **Estate View Page**: Create estates, plant trees, view canvas visualization, stats, drone plans
+- **Dashboard Page**: Navigation hub to Health, Money, Estate, and other features
 
 ## Tech Stack
 
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **ORM**: Sequelize
-- **Database**: PostgreSQL
+- **Database**: PostgreSQL (tests use SQLite in-memory)
 - **Auth**: JWT with 2FA (Nodemailer / WhatsApp API)
-- **Frontend**: Vue 3 SPA with Vite
-- **Testing**: Jest + Supertest
+- **Frontend**: Vue 3 SPA with Vite, Pinia store, Vue Router
+- **Testing**: Jest + Supertest (backend), Vitest (frontend)
 
 ## Project Structure
 
@@ -69,24 +64,27 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   └── database.js              # Sequelize connection
 ├── models/
 │   ├── index.js                 # Associations & exports
-│   ├── User.js
-│   ├── TwoFactorCode.js
-│   ├── Identity.js
-│   ├── BMI.js
-│   ├── BloodSugar.js
-│   ├── VitalSigns.js            # BP, heart rate, temp, SpO2, respiratory rate
-│   ├── Expense.js
-│   └── Saving.js
+│   ├── User.js                  # User accounts (username, email, password, phone, role)
+│   ├── TwoFactorCode.js         # 2FA codes (code, expires_at, used, channel)
+│   ├── Identity.js              # Patient identity (nik, name, height, birthplace, birthdate, address)
+│   ├── BMI.js                   # BMI records (weight, age, result, status current/past)
+│   ├── BloodSugar.js            # Blood sugar records (age, result, conclusion, status)
+│   ├── VitalSigns.js            # Vital signs (BP, HR, temp, SpO2, resp rate, status)
+│   ├── Expense.js               # Expense records (amount, category, description, date)
+│   ├── Saving.js                # Saving records (amount, category, description, date)
+│   ├── Estate.js                # Palm oil estates (width, length)
+│   └── Tree.js                  # Trees in estates (x, y, height, estate_id)
 ├── controllers/
 │   ├── authController.js        # Register, Login, 2FA
 │   ├── bmiController.js         # BMI CRUD, list, summary, history
 │   ├── bloodSugarController.js  # Blood sugar CRUD, history
 │   ├── vitalSignsController.js  # Vital signs CRUD, history, list
 │   ├── identityController.js    # Identity CRUD
-│   ├── moneyController.js       # Expense/Saving CRUD, chart, summary
+│   ├── moneyController.js       # Expense/Saving CRUD, chart, summary, category breakdown
 │   ├── reportController.js      # PDF export
 │   ├── healthController.js      # System health checks (DB, memory, CPU, uptime)
-│   └── patientHealthController.js # Patient risk scoring, trends, alerts, population stats
+│   ├── patientHealthController.js # Patient risk scoring, trends, alerts, population stats
+│   └── estateController.js      # Estate CRUD, tree CRUD, stats, drone plan
 ├── middlewares/
 │   ├── authenticate.js          # JWT authentication
 │   ├── apiResponse.js           # Standardized API response + error handler
@@ -97,17 +95,19 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── authRoutes.js
 │   ├── bmiRoutes.js
 │   ├── bloodSugarRoutes.js
-│   ├── vitalSignsRoutes.js      # Vital signs CRUD + history
+│   ├── vitalSignsRoutes.js
 │   ├── identityRoutes.js
-│   ├── moneyRoutes.js
+│   ├── moneyRoutes.js           # Expense, Saving, Chart, Summary, Categories
 │   ├── reportRoutes.js
 │   ├── adminRoutes.js
-│   ├── healthRoutes.js          # /api/health, /ready, /live, /stats
-│   └── patientHealthRoutes.js   # /api/patient-health/risk, /trend, /alerts, /population
+│   ├── healthRoutes.js
+│   ├── patientHealthRoutes.js
+│   └── estateRoutes.js          # Estate & tree management
 ├── utils/
 │   ├── helpers.js               # BMI calc, blood sugar eval, vital sign eval, risk scoring, trend analysis
 │   └── history-utils.js         # Date formatting for history records
 ├── __tests__/
+│   ├── estate.test.js           # Estate API tests (SQLite in-memory)
 │   ├── helpers.test.js
 │   ├── historyUtils.test.js
 │   ├── apiResponse.test.js
@@ -117,27 +117,25 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── index.html
 │   ├── package.json
 │   ├── vite.config.js
-│   ├── src/                     # Vue source files
-│   ├── public/                  # Static assets copied to dist on build
-│   └── dist/                    # Built SPA served by Express
-│       ├── index.html           # SPA entry point
-│       ├── assets/              # Bundled JS/CSS
-│       ├── games/               # 6 interactive browser games
-│       │   ├── hangman.html
-│       │   ├── coin-catcher.html
-│       │   ├── roleplay-adventure.html
-│       │   ├── turtle-racing.html
-│       │   ├── aim-trainer.html
-│       │   └── rock-paper-scissors.html
-│       ├── math/                # 5 math tools
-│       │   ├── shapes.html      # 2D & 3D shape calculator
-│       │   ├── equation-grapher.html
-│       │   ├── scientific-calculator.html
-│       │   ├── statistics.html
-│       │   └── quadratic.html   # Quadratic function grapher & solver
-│       └── ner/                 # 2 text analysis tools
-│           ├── summary.html     # Text summarizer
-│           └── sentiment.html   # Sentiment analysis
+│   └── src/
+│       ├── api.js               # Axios instance with baseURL
+│       ├── App.vue
+│       ├── main.js
+│       ├── router/index.js      # Vue Router (login, register, dashboard, health, money, estate, etc.)
+│       ├── stores/auth.js       # Pinia auth store
+│       ├── utils/helpers.js     # Frontend helper functions
+│       └── views/
+│           ├── LoginView.vue
+│           ├── RegisterView.vue
+│           ├── Verify2FAView.vue
+│           ├── DashboardView.vue
+│           ├── HealthMonitorView.vue  # Health dashboard with BMI, vitals, history
+│           ├── MoneyDashboardView.vue # Money management with charts
+│           ├── EstateView.vue         # Estate management with canvas
+│           ├── ListView.vue
+│           ├── HistoryView.vue
+│           ├── SummaryView.vue
+│           └── ToolsView.vue
 ├── .env
 ├── server.js
 ├── README.md
@@ -166,7 +164,7 @@ npm install
 ```env
 DB_USER=postgres
 DB_HOST=localhost
-DB_NAME=bmi
+DB_NAME=bmi_app
 DB_PASS=your_password
 DB_PORT=5432
 
@@ -220,7 +218,7 @@ npm test
 | `npm run build:fe` | Build SPA to `client/dist/` |
 | `npm test` | Run backend unit tests |
 
-Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://localhost:5173`.
+Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://localhost:5173`. Vite proxies `/api` requests to `http://localhost:3000`.
 
 ## API Endpoints
 
@@ -228,9 +226,9 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/register` | Register new user | No |
+| POST | `/register` | Register new user (with optional patient identity) | No |
 | POST | `/login` | Login (returns temp 2FA token) | No |
-| POST | `/send-2fa` | Send 2FA code | No |
+| POST | `/send-2fa` | Send 2FA code (email or WhatsApp) | No |
 | POST | `/verify-2fa` | Verify 2FA code (returns JWT) | No |
 
 ### Identity (`/api/identities`)
@@ -238,14 +236,14 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/` | List user identities | Yes |
-| POST | `/` | Create identity | Yes |
+| POST | `/` | Create identity (admin only) | Yes (admin) |
 | PUT | `/:id` | Update identity | Yes |
 
 ### BMI (`/api/bmi`)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/` | Create BMI record | Yes |
+| POST | `/` | Create BMI record (identity_id + weight) | Yes |
 | PUT | `/:identityId` | Update BMI record | Yes |
 | GET | `/list` | List all patient data with current BMI & sugar | Yes |
 | GET | `/summary` | Dashboard summary statistics | Yes |
@@ -255,7 +253,7 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/` | Create blood sugar record | Yes |
+| POST | `/` | Create blood sugar record (identity_id + sugar) | Yes |
 | PUT | `/:identityId` | Update blood sugar record | Yes |
 | GET | `/history/:identityId` | Blood sugar history for an identity | Yes |
 
@@ -263,9 +261,9 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/` | Create vital signs record | Yes |
+| POST | `/` | Create vital signs record (BP, HR, temp, SpO2, resp rate) | Yes |
 | PUT | `/:identityId` | Update vital signs record | Yes |
-| GET | `/latest/:identityId` | Get latest vital signs with evaluation | Yes |
+| GET | `/latest/:identityId` | Get latest vital signs with clinical evaluation | Yes |
 | GET | `/list` | List all patients with latest vital signs | Yes |
 | GET | `/history/:identityId` | Vital signs history for an identity | Yes |
 
@@ -273,16 +271,30 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/expense` | Create expense | Yes |
+| POST | `/expense` | Create expense (amount, category, description, date) | Yes |
 | GET | `/expense` | List expenses | Yes |
 | PUT | `/expense/:id` | Update expense | Yes |
 | DELETE | `/expense/:id` | Delete expense | Yes |
-| POST | `/saving` | Create saving | Yes |
+| POST | `/saving` | Create saving (amount, category, description, date) | Yes |
 | GET | `/saving` | List savings | Yes |
 | PUT | `/saving/:id` | Update saving | Yes |
 | DELETE | `/saving/:id` | Delete saving | Yes |
 | GET | `/chart?period=monthly&year=2026` | Chart data (weekly/monthly/yearly) | Yes |
 | GET | `/summary` | Total expense, saving, balance | Yes |
+| GET | `/expense/categories` | Expense totals grouped by category | Yes |
+| GET | `/saving/categories` | Saving totals grouped by category | Yes |
+
+### Estate Management (`/api/estate`)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/` | List all estates | No |
+| POST | `/` | Create estate (width, length) | No |
+| GET | `/:id/trees` | List trees in an estate | No |
+| POST | `/:id/tree` | Plant tree (x, y, height) | No |
+| GET | `/:id/stats` | Estate stats (count, max, min, median height) | No |
+| GET | `/:id/drone-plan` | Drone path with Manhattan distance | No |
+| GET | `/:id/drone-plan?max_distance=N` | Drone path with forced landing point | No |
 
 ### Reports & Dashboard
 
@@ -312,15 +324,22 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | GET | `/alerts` | List all high-risk patients | Yes |
 | GET | `/population` | BMI, sugar, vital signs, and risk distribution stats | Yes |
 
+### Admin (`/api/admin`)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/users` | List all registered users | Yes (admin) |
+| GET | `/all-data` | List all patient data with BMI and blood sugar | Yes (admin) |
+
 ## BMI Categories
 
 | BMI Range | Category |
 |-----------|----------|
-| < 17 | Sangat kurus |
-| 17 - 18.5 | Kurus |
+| < 17 | Sangat kurus (Severely underweight) |
+| 17 - 18.5 | Kurus (Underweight) |
 | 18.5 - 25 | Normal |
-| 25 - 27 | Gemuk |
-| > 27 | Obesitas |
+| 25 - 27 | Gemuk (Overweight) |
+| > 27 | Obesitas (Obese) |
 
 ## Blood Sugar Thresholds
 
@@ -394,44 +413,34 @@ Risk score is calculated from combined BMI, blood sugar, vital signs, and age fa
 
 | Total Score | Risk Level |
 |-------------|------------|
-| 0 - 2 | rendah |
-| 3 - 4 | sedang |
-| 5+ | tinggi |
+| 0 - 2 | rendah (low) |
+| 3 - 4 | sedang (medium) |
+| 5+ | tinggi (high) |
 
-## System Health Check
+## Estate Management Rules
 
-`GET /api/health` returns:
+- Estate width and length must be positive integers (minimum 1)
+- Tree coordinates must be within estate bounds (0 <= x <= width, 0 <= y <= length)
+- Tree height must be between 1 and 30 meters
+- Drone path follows sorted tree order (by y then x), starting from (0,0)
+- Manhattan distance: |x1-x2| + |y1-y2|
+- When `max_distance` is provided, a forced landing point is calculated if battery runs out mid-segment
 
-```json
-{
-  "status": "healthy|degraded",
-  "timestamp": "2026-07-11T...",
-  "checks": {
-    "database": { "status": "up", "latencyMs": 5 },
-    "memory": { "rss": "45.20 MB", "heapUsed": "20.10 MB", "heapTotal": "35.00 MB", "external": "1.50 MB" },
-    "cpu": { "user": "120.50 ms", "system": "30.20 ms" },
-    "uptime": { "serverSeconds": 3600, "processSeconds": 3600 }
-  }
-}
-```
+## Frontend Pages (Vue SPA)
 
-Returns HTTP 200 when healthy, 503 when database is unreachable (degraded).
-
-## Frontend Pages
-
-| Page | Description |
-|------|-------------|
-| `login.html` | Login page with real-time email format validation (when input contains `@`) and password minimum length check |
-| `register.html` | Registration with patient data, real-time email validation, password strength progress bar with 5 rules and color coding |
-| `verify-2fa.html` | 2FA code verification |
-| `dashboard.html` | Main hub: BMI check, blood sugar check, vital signs check |
-| `list.html` | Patient data list with tabs (BMI, blood sugar) and search |
-| `history.html` | Patient BMI and blood sugar history |
-| `summary.html` | Dashboard statistics cards |
-| `tools.html` | Navigation hub for all games, math, and NER tools |
-| `games/*.html` | 6 interactive browser games |
-| `math/*.html` | 5 math calculation and graphing tools |
-| `ner/*.html` | 2 text analysis tools |
+| Route | Page | Description |
+|-------|------|-------------|
+| `/login` | LoginView | Login with username/email + password |
+| `/register` | RegisterView | Registration with patient identity |
+| `/verify-2fa` | Verify2FAView | 2FA verification (email or WhatsApp) |
+| `/` | DashboardView | Main hub: navigation to Health, Money, Estate |
+| `/health` | HealthMonitorView | Record vitals + weight, view BMI/metrics, history table |
+| `/money` | MoneyDashboardView | Expense/saving CRUD, category breakdowns, trend charts |
+| `/estate` | EstateView | Estate CRUD, tree planting, canvas visualization, drone plans |
+| `/list` | ListView | Patient data list with tabs |
+| `/history` | HistoryView | Patient BMI and blood sugar history |
+| `/summary` | SummaryView | Dashboard statistics cards |
+| `/tools` | ToolsView | Navigation hub for games, math, and NER tools |
 
 ## Testing
 
@@ -439,12 +448,19 @@ Returns HTTP 200 when healthy, 503 when database is unreachable (degraded).
 npm test
 ```
 
-Runs 38 unit tests covering:
+Runs 62 unit tests covering:
+- Estate API (24 tests) - estate CRUD, tree CRUD, stats, drone plan, max_distance (SQLite in-memory)
 - Helper functions (BMI calculation, blood sugar evaluation, age calculation, formatting)
 - History date formatting
 - API response middleware
 - JWT authentication middleware
 - Role-based authorization middleware
+
+```bash
+cd client && npx vitest run
+```
+
+Runs 6 frontend tests covering frontend helper functions.
 
 ## License
 

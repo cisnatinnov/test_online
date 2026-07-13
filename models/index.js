@@ -7,6 +7,8 @@ const BloodSugar = require('./BloodSugar');
 const VitalSigns = require('./VitalSigns');
 const Expense = require('./Expense');
 const Saving = require('./Saving');
+const Estate = require('./Estate');
+const Tree = require('./Tree');
 
 User.hasMany(TwoFactorCode, { foreignKey: 'user_id' });
 TwoFactorCode.belongsTo(User, { foreignKey: 'user_id' });
@@ -29,4 +31,7 @@ Expense.belongsTo(User, { foreignKey: 'user_id' });
 User.hasMany(Saving, { foreignKey: 'user_id' });
 Saving.belongsTo(User, { foreignKey: 'user_id' });
 
-module.exports = { sequelize, User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving };
+Estate.hasMany(Tree, { foreignKey: 'estate_id' });
+Tree.belongsTo(Estate, { foreignKey: 'estate_id' });
+
+module.exports = { sequelize, User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Estate, Tree };
