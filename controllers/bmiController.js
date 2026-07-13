@@ -26,7 +26,8 @@ exports.createBMI = async (req, res) => {
       id_identity: identity.id,
       weight: Number(weight),
       age,
-      result: kesimpulan.status,
+      result: Number(kesimpulan.bmi),
+      bmi_status: kesimpulan.status,
       status: 'current',
     });
 
@@ -66,7 +67,8 @@ exports.updateBMI = async (req, res) => {
       id_identity: identity.id,
       weight: Number(weight),
       age,
-      result: kesimpulan.status,
+      result: Number(kesimpulan.bmi),
+      bmi_status: kesimpulan.status,
       status: 'current',
     });
 
@@ -111,7 +113,7 @@ exports.getSummary = async (req, res) => {
 
     const bmiWhere = { status: 'current' };
     const bmiData = await BMI.findAll({
-      attributes: ['result'],
+      attributes: ['bmi_status'],
       include: [{ model: Identity, where: userFilter, attributes: [] }],
       where: bmiWhere,
     });
@@ -122,7 +124,7 @@ exports.getSummary = async (req, res) => {
       where: { status: 'current' },
     });
 
-    const bmiResults = bmiData.map((r) => r.result);
+    const bmiResults = bmiData.map((r) => r.bmi_status);
     const sugarResults = sugarData.map((r) => r.conclusion);
 
     return apiResponse(res, {
@@ -142,17 +144,11 @@ exports.getSummary = async (req, res) => {
 exports.getHistoryBMI = async (req, res) => {
   try {
     const { identityId } = req.params;
-    const identity = await Identity.findOne({ where: { id: identityId } });
     const results = await BMI.findAll({ where: { id_identity: identityId }, order: [['id', 'DESC']] });
-    const heightCm = identity ? Number(identity.height) : null;
     const enriched = results.map(r => {
       const plain = r.get({ plain: true });
-      if (heightCm && plain.weight) {
-        const heightM = heightCm / 100;
-        plain.bmi_value = Number((plain.weight / (heightM * heightM)).toFixed(2));
-      } else {
-        plain.bmi_value = null;
-      }
+      plain.bmi_value = plain.result != null ? Number(plain.result) : null;
+      plain.result = plain.bmi_status || null;
       return plain;
     });
     return apiResponse(res, { data: enriched });

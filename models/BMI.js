@@ -9,7 +9,10 @@ const BMI = sequelize.define('BMI', {
     type: DataTypes.INTEGER,
   },
   result: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.FLOAT,
+  },
+  bmi_status: {
+    type: DataTypes.TEXT,
   },
   status: {
     type: DataTypes.STRING(10),
