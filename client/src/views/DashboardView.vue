@@ -90,6 +90,7 @@ function flash(m, t) { msg.value = m; msgType.value = t; setTimeout(() => msg.va
         <button @click="nav('/summary')" style="margin-right:8px;padding:6px 12px;background:#9c27b0;color:#fff;border:none;border-radius:4px;cursor:pointer">Ringkasan</button>
         <button @click="nav('/tools')" style="margin-right:8px;padding:6px 12px;background:#00bcd4;color:#fff;border:none;border-radius:4px;cursor:pointer">Tools</button>
         <button @click="nav('/estate')" style="margin-right:8px;padding:6px 12px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer">Estate</button>
+        <button @click="nav('/chat')" style="margin-right:8px;padding:6px 12px;background:#00897b;color:#fff;border:none;border-radius:4px;cursor:pointer">Chat</button>
         <button @click="logout" style="padding:6px 12px;background:#f44336;color:#fff;border:none;border-radius:4px;cursor:pointer">Logout</button>
       </div>
     </div>

@@ -12,6 +12,7 @@ import ToolsView from '../views/ToolsView.vue'
 import EstateView from '../views/EstateView.vue'
 import HealthMonitorView from '../views/HealthMonitorView.vue'
 import MoneyDashboardView from '../views/MoneyDashboardView.vue'
+import ChatView from '../views/ChatView.vue'
 
 const routes = [
   { path: '/login', name: 'login', component: LoginView, meta: { guest: true } },
@@ -25,6 +26,7 @@ const routes = [
   { path: '/estate', name: 'estate', component: EstateView, meta: { auth: true } },
   { path: '/health', name: 'health', component: HealthMonitorView, meta: { auth: true } },
   { path: '/money', name: 'money', component: MoneyDashboardView, meta: { auth: true } },
+  { path: '/chat', name: 'chat', component: ChatView, meta: { auth: true } },
 
   { path: '/tools/hangman', name: 'tool-hangman', component: () => import('../views/tools/Hangman.vue'), meta: { auth: true } },
   { path: '/tools/coin-catcher', name: 'tool-coin-catcher', component: () => import('../views/tools/CoinCatcher.vue'), meta: { auth: true } },

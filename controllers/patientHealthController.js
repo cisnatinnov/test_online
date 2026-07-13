@@ -16,7 +16,7 @@ exports.getHealthRisk = async (req, res) => {
 
     const age = calculateAge(identity.birthdate) ?? bmiRow?.age ?? sugarRow?.age ?? null;
     const bmiResult = bmiRow ? hitungKesimpulan(Number(bmiRow.weight), Number(identity.height)) : null;
-    const sugarCriteria = sugarRow ? buildSugarCriteria(sugarRow.result, sugarRow.conclusion) : null;
+    const sugarCriteria = sugarRow ? buildSugarCriteria(sugarRow.conclusion, sugarRow.description) : null;
 
     const risk = hitungRisikoKesehatan(bmiResult, sugarCriteria, age);
 
@@ -70,7 +70,7 @@ exports.getAlerts = async (req, res) => {
 
       const age = calculateAge(identity.birthdate) ?? bmiRow?.age ?? sugarRow?.age ?? null;
       const bmiResult = bmiRow ? hitungKesimpulan(Number(bmiRow.weight), Number(identity.height)) : null;
-      const sugarCriteria = sugarRow ? buildSugarCriteria(sugarRow.result, sugarRow.conclusion) : null;
+      const sugarCriteria = sugarRow ? buildSugarCriteria(sugarRow.conclusion, sugarRow.description) : null;
       const risk = hitungRisikoKesehatan(bmiResult, sugarCriteria, age);
 
       if (risk.level === 'tinggi') {
@@ -107,13 +107,13 @@ exports.getPopulationStats = async (req, res) => {
         if (bmiDistribution[bmiResult.status] !== undefined) bmiDistribution[bmiResult.status]++;
       }
 
-      if (sugarRow && sugarDistribution[sugarRow.result] !== undefined) {
-        sugarDistribution[sugarRow.result]++;
+      if (sugarRow && sugarDistribution[sugarRow.conclusion] !== undefined) {
+        sugarDistribution[sugarRow.conclusion]++;
       }
 
       const age = calculateAge(identity.birthdate) ?? bmiRow?.age ?? sugarRow?.age ?? null;
       const bmiRes = bmiRow ? hitungKesimpulan(Number(bmiRow.weight), Number(identity.height)) : null;
-      const sugarCrit = sugarRow ? buildSugarCriteria(sugarRow.result, sugarRow.conclusion) : null;
+      const sugarCrit = sugarRow ? buildSugarCriteria(sugarRow.conclusion, sugarRow.description) : null;
       const risk = hitungRisikoKesehatan(bmiRes, sugarCrit, age);
       riskCounts[risk.level]++;
     }

@@ -9,6 +9,9 @@ const Expense = require('./Expense');
 const Saving = require('./Saving');
 const Estate = require('./Estate');
 const Tree = require('./Tree');
+const ChatRoom = require('./ChatRoom');
+const ChatMessage = require('./ChatMessage');
+const ChatParticipant = require('./ChatParticipant');
 
 User.hasMany(TwoFactorCode, { foreignKey: 'user_id' });
 TwoFactorCode.belongsTo(User, { foreignKey: 'user_id' });
@@ -34,4 +37,19 @@ Saving.belongsTo(User, { foreignKey: 'user_id' });
 Estate.hasMany(Tree, { foreignKey: 'estate_id' });
 Tree.belongsTo(Estate, { foreignKey: 'estate_id' });
 
-module.exports = { sequelize, User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Estate, Tree };
+User.hasMany(ChatRoom, { foreignKey: 'created_by' });
+ChatRoom.belongsTo(User, { foreignKey: 'created_by' });
+
+ChatRoom.hasMany(ChatMessage, { foreignKey: 'room_id' });
+ChatMessage.belongsTo(ChatRoom, { foreignKey: 'room_id' });
+
+ChatRoom.hasMany(ChatParticipant, { foreignKey: 'room_id' });
+ChatParticipant.belongsTo(ChatRoom, { foreignKey: 'room_id' });
+
+User.hasMany(ChatMessage, { foreignKey: 'user_id' });
+ChatMessage.belongsTo(User, { foreignKey: 'user_id' });
+
+User.hasMany(ChatParticipant, { foreignKey: 'user_id' });
+ChatParticipant.belongsTo(User, { foreignKey: 'user_id' });
+
+module.exports = { sequelize, User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Estate, Tree, ChatRoom, ChatMessage, ChatParticipant };

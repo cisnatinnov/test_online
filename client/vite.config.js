@@ -9,7 +9,11 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     proxy: {
-      '/api': apiTarget
+      '/api': apiTarget,
+      '/socket.io': {
+        target: apiTarget,
+        ws: true,
+      },
     }
   },
   build: {

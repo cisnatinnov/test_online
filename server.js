@@ -1,9 +1,11 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { Server } = require('socket.io');
 const { sequelize, User } = require('./models');
 const { errorHandler } = require('./middlewares/apiResponse');
 const { apiLimiter, authLimiter } = require('./middlewares/rateLimiter');
@@ -11,6 +13,7 @@ const authenticateToken = require('./middlewares/authenticate');
 const bmiController = require('./controllers/bmiController');
 const bloodSugarController = require('./controllers/bloodSugarController');
 const vitalSignsController = require('./controllers/vitalSignsController');
+const chatController = require('./controllers/chatController');
 
 const authRoutes = require('./routes/authRoutes');
 const bmiRoutes = require('./routes/bmiRoutes');
@@ -23,6 +26,7 @@ const healthRoutes = require('./routes/healthRoutes');
 const patientHealthRoutes = require('./routes/patientHealthRoutes');
 const vitalSignsRoutes = require('./routes/vitalSignsRoutes');
 const estateRoutes = require('./routes/estateRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 app.use(cors({
@@ -64,6 +68,7 @@ app.use('/api/health', healthRoutes);
 app.use('/api/patient-health', patientHealthRoutes);
 app.use('/api/vital-signs', apiLimiter, vitalSignsRoutes);
 app.use('/api/estate', apiLimiter, estateRoutes);
+app.use('/api/chat', apiLimiter, chatRoutes);
 
 app.get('/api/dashboard/summary', authenticateToken, bmiController.getSummary);
 app.get('/api/history/:identityId/bmi', authenticateToken, bmiController.getHistoryBMI);
@@ -81,6 +86,17 @@ app.get('*', (req, res, next) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CORS_ORIGIN || '*',
+    credentials: true,
+  },
+  path: '/socket.io',
+});
+
+chatController.initSocket(io);
 
 sequelize.sync({ alter: false, force: false })
   .then(async () => {
@@ -102,10 +118,10 @@ sequelize.sync({ alter: false, force: false })
       console.log(`Admin account created: ${adminUsername}`);
     }
 
-    app.listen(PORT, () => console.log(`Server berjalan di http://localhost:${PORT}`));
+    server.listen(PORT, () => console.log(`Server berjalan di http://localhost:${PORT}`));
   })
   .catch((err) => {
     console.error('Error syncing database:', err);
   });
 
-module.exports = app;
+module.exports = { app, server, io };

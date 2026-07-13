@@ -17,7 +17,7 @@ exports.getAllUsers = async (req, res) => {
 exports.getAllData = async (req, res) => {
   try {
     const identities = await Identity.findAll({
-      include: [{ model: User, as: 'user', attributes: ['id', 'username', 'email', 'role'] }],
+      include: [{ model: User, as: 'User', attributes: ['id', 'username', 'email', 'role'] }],
       order: [['id', 'ASC']],
     });
 
@@ -28,7 +28,7 @@ exports.getAllData = async (req, res) => {
 
       const age = calculateAge(identity.birthdate) ?? bmiRow?.age ?? sugarRow?.age ?? null;
       const kes = hitungKesimpulan(Number(bmiRow?.weight), Number(identity.height));
-      const sugarCriteria = buildSugarCriteria(sugarRow?.result, sugarRow?.conclusion);
+      const sugarCriteria = buildSugarCriteria(sugarRow?.conclusion, sugarRow?.description);
       formattedData.push(formatPatientResponse(identity, bmiRow, sugarRow, kes, sugarCriteria));
     }
 

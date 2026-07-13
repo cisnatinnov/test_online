@@ -224,6 +224,7 @@ function evalRespLabel(r) {
       <div class="nav-links">
         <button @click="router.push('/')" class="nav-btn">Dashboard</button>
         <button @click="router.push('/money')" class="nav-btn">Money</button>
+        <button @click="router.push('/chat')" class="nav-btn">Chat</button>
         <span class="user-badge">{{ auth.user?.username }}</span>
       </div>
     </nav>

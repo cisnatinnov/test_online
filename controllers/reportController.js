@@ -17,7 +17,7 @@ exports.exportPDF = async (req, res) => {
 
     const age = calculateAge(identity.birthdate) ?? bmiRow?.age ?? sugarRow?.age ?? null;
     const kes = hitungKesimpulan(Number(bmiRow?.weight), Number(identity.height));
-    const sugarCriteria = buildSugarCriteria(sugarRow?.result, sugarRow?.conclusion) || null;
+    const sugarCriteria = buildSugarCriteria(sugarRow?.conclusion, sugarRow?.description) || null;
 
     const doc = new PDFDocument({ margin: 50 });
     res.setHeader('Content-Type', 'application/pdf');
