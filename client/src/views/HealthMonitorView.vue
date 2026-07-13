@@ -16,9 +16,12 @@ const msgType = ref('')
 const latestVitals = ref(null)
 const latestBmi = ref(null)
 const bmiHistory = ref([])
+const latestBloodSugar = ref(null)
+const bloodSugarHistory = ref([])
 const vitalHistory = ref([])
 const systemHealth = ref(null)
 const loading = ref(false)
+const lastSaved = ref(null)
 
 const metrics = computed(() => {
   if (!latestVitals.value) return []
@@ -42,11 +45,13 @@ const metrics = computed(() => {
   if (ev.respiratoryRate) {
     items.push({ label: 'Respiratory Rate', value: v.respiratory_rate, unit: '/min', ...mapStatus(ev.respiratoryRate.label) })
   }
-  if (v.blood_sugar != null) {
-    items.push({ label: 'Blood Sugar', value: v.blood_sugar, unit: 'mg/dL', ...mapStatus(v.blood_sugar_label || 'Normal') })
-  }
   if (latestBmi.value) {
-    items.push({ label: 'BMI', value: latestBmi.value.bmi, unit: 'kg/m²', ...mapBMIStatus(latestBmi.value.status) })
+    items.push({ label: 'BMI', value: latestBmi.value.bmi_value ?? latestBmi.value.bmi, unit: 'kg/m²', ...mapBMIStatus(latestBmi.value.status) })
+  }
+  if (latestBloodSugar.value) {
+    const sugarVal = latestBloodSugar.value.result
+    const sugarUnit = sugarVal != null ? 'mg/dL' : ''
+    items.push({ label: 'Blood Sugar', value: sugarVal, unit: sugarUnit, ...mapSugarStatus(latestBloodSugar.value.conclusion) })
   }
   return items
 })
@@ -68,6 +73,13 @@ function mapBMIStatus(status) {
   if (s.includes('normal')) return { status: 'normal', color: '#4caf50', bg: 'rgba(76,175,80,0.12)', icon: 'Normal' }
   if (s.includes('kurus') || s.includes('sangat kurus')) return { status: 'low', color: '#ff9800', bg: 'rgba(255,152,0,0.12)', icon: 'Underweight' }
   return { status: 'high', color: '#f44336', bg: 'rgba(244,67,54,0.12)', icon: 'Overweight' }
+}
+
+function mapSugarStatus(result) {
+  const r = (result || '').toLowerCase()
+  if (r.includes('normal')) return { status: 'normal', color: '#4caf50', bg: 'rgba(76,175,80,0.12)', icon: 'Normal' }
+  if (r.includes('rendah')) return { status: 'low', color: '#ff9800', bg: 'rgba(255,152,0,0.12)', icon: 'Low' }
+  return { status: 'high', color: '#f44336', bg: 'rgba(244,67,54,0.12)', icon: 'High' }
 }
 
 function flash(m, t) { msg.value = m; msgType.value = t; setTimeout(() => msg.value = '', 4000) }
@@ -112,6 +124,7 @@ async function loadPatientHealth() {
       if (current) {
         latestBmi.value = {
           weight: current.weight,
+          bmi_value: current.bmi_value,
           bmi: current.result,
           status: current.result,
         }
@@ -120,6 +133,23 @@ async function loadPatientHealth() {
       }
       bmiHistory.value = bmiList.slice(0, 10)
     } catch { latestBmi.value = null; bmiHistory.value = [] }
+
+    try {
+      const { data: sugarRes } = await api.get(`/bloodsugar/history/${selectedIdentity.value}`)
+      const sugarList = sugarRes.data || []
+      const currentSugar = sugarList.find(b => b.status === 'current') || sugarList[0] || null
+      if (currentSugar) {
+        latestBloodSugar.value = {
+          result: currentSugar.result,
+          conclusion: currentSugar.conclusion || 'Normal',
+          description: currentSugar.description || '',
+          age: currentSugar.age,
+        }
+      } else {
+        latestBloodSugar.value = null
+      }
+      bloodSugarHistory.value = sugarList.slice(0, 10)
+    } catch { latestBloodSugar.value = null; bloodSugarHistory.value = [] }
   } catch (e) { console.error(e) }
 }
 
@@ -128,9 +158,15 @@ async function submitVitals() {
   loading.value = true
   try {
     await api.post('/vital-signs', { identity_id: selectedIdentity.value, ...vitals.value })
-    if (vitals.value.weight) {
-      await api.post('/bmi', { identity_id: selectedIdentity.value, weight: Number(vitals.value.weight) })
+    const savedWeight = vitals.value.weight ? Number(vitals.value.weight) : null
+    const savedSugar = vitals.value.blood_sugar ? Number(vitals.value.blood_sugar) : null
+    if (savedWeight) {
+      await api.post('/bmi', { identity_id: selectedIdentity.value, weight: savedWeight })
     }
+    if (savedSugar) {
+      await api.post('/bloodsugar', { identity_id: selectedIdentity.value, sugar: savedSugar })
+    }
+    lastSaved.value = { weight: savedWeight, sugar: savedSugar, time: new Date() }
     vitals.value = { systolic: '', diastolic: '', heart_rate: '', temperature: '', spo2: '', respiratory_rate: '', weight: '', blood_sugar: '' }
     flash('Vital signs saved successfully', 'success')
     await loadPatientHealth()
@@ -210,42 +246,51 @@ function evalRespLabel(r) {
             <div class="input-row">
               <div class="input-group">
                 <label>Systolic (mmHg)</label>
-                <input v-model="vitals.systolic" type="number" placeholder="120" />
+                <input v-model="vitals.systolic" type="number" placeholder="e.g. 120" />
               </div>
               <div class="input-group">
                 <label>Diastolic (mmHg)</label>
-                <input v-model="vitals.diastolic" type="number" placeholder="80" />
+                <input v-model="vitals.diastolic" type="number" placeholder="e.g. 80" />
               </div>
             </div>
             <div class="input-group">
               <label>Heart Rate (bpm)</label>
-              <input v-model="vitals.heart_rate" type="number" placeholder="72" />
+              <input v-model="vitals.heart_rate" type="number" placeholder="e.g. 72" />
             </div>
             <div class="input-group">
               <label>Temperature (C)</label>
-              <input v-model="vitals.temperature" type="number" step="0.1" placeholder="36.5" />
+              <input v-model="vitals.temperature" type="number" step="0.1" placeholder="e.g. 36.5" />
             </div>
             <div class="input-group">
               <label>SpO2 (%)</label>
-              <input v-model="vitals.spo2" type="number" placeholder="98" />
+              <input v-model="vitals.spo2" type="number" placeholder="e.g. 98" />
             </div>
             <div class="input-group">
               <label>Respiratory Rate (/min)</label>
-              <input v-model="vitals.respiratory_rate" type="number" placeholder="16" />
+              <input v-model="vitals.respiratory_rate" type="number" placeholder="e.g. 16" />
             </div>
             <div class="input-row">
               <div class="input-group">
                 <label>Weight (kg)</label>
-                <input v-model="vitals.weight" type="number" step="0.1" placeholder="65" />
+                <input v-model="vitals.weight" type="number" step="0.1" placeholder="e.g. 65" />
               </div>
               <div class="input-group">
                 <label>Height (cm)</label>
                 <input :value="selectedIdentityData?.height || '-'" type="text" disabled class="input-disabled" />
               </div>
             </div>
+            <div class="input-group">
+              <label>Blood Sugar (mg/dL)</label>
+              <input v-model="vitals.blood_sugar" type="number" placeholder="e.g. 85" />
+            </div>
             <button class="btn btn-primary" @click="submitVitals" :disabled="loading">
               {{ loading ? 'Saving...' : 'Save Vitals' }}
             </button>
+            <div v-if="lastSaved" style="margin-top:8px;padding:8px 12px;background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.3);border-radius:8px;font-size:0.78rem;color:#81c784">
+              <template v-if="lastSaved.weight">Weight saved: <strong>{{ lastSaved.weight }} kg</strong></template>
+              <template v-if="lastSaved.weight && lastSaved.sugar"> &middot; </template>
+              <template v-if="lastSaved.sugar">Sugar saved: <strong>{{ lastSaved.sugar }} mg/dL</strong></template>
+            </div>
           </div>
         </div>
       </aside>
@@ -297,6 +342,7 @@ function evalRespLabel(r) {
                     <th>SpO2</th>
                     <th>Resp</th>
                     <th>BMI</th>
+                    <th>Sugar</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -308,9 +354,23 @@ function evalRespLabel(r) {
                         <span class="history-val" :style="{ color: item.color }">{{ item.val }}</span>
                       </td>
                     </template>
-                    <td v-if="evalRow(vs).length < 5" v-for="n in (5 - evalRow(vs).length)" :key="'e'+n"></td>
+                    <template v-if="evalRow(vs).length < 5">
+                      <td v-for="n in (5 - evalRow(vs).length)" :key="'e'+n"></td>
+                    </template>
                     <td>
-                      <span v-if="bmiHistory[idx]" class="history-val" :style="{ color: mapBMIStatus(bmiHistory[idx].result).color }">{{ bmiHistory[idx].result }}</span>
+                      <span v-if="bmiHistory[idx]" class="history-val" :style="{ color: mapBMIStatus(bmiHistory[idx].result).color }">
+                        <template v-if="bmiHistory[idx].bmi_value != null">{{ bmiHistory[idx].bmi_value }}</template>
+                        <template v-else>-</template>
+                        <small style="font-weight:400;opacity:0.7"> ({{ bmiHistory[idx].result }})</small>
+                      </span>
+                      <span v-else>-</span>
+                    </td>
+                    <td>
+                      <span v-if="bloodSugarHistory[idx]" class="history-val" :style="{ color: mapSugarStatus(bloodSugarHistory[idx].conclusion).color }">
+                        <template v-if="bloodSugarHistory[idx].result != null">{{ bloodSugarHistory[idx].result }}</template>
+                        <template v-else>-</template>
+                        <small style="font-weight:400;opacity:0.7"> ({{ bloodSugarHistory[idx].conclusion }})</small>
+                      </span>
                       <span v-else>-</span>
                     </td>
                     <td>

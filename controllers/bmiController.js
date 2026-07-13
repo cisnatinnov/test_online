@@ -36,7 +36,7 @@ exports.createBMI = async (req, res) => {
     });
 
     return apiResponse(res, {
-      data: formatPatientResponse(identity, bmi, existingSugar, kesimpulan, existingSugar ? buildSugarCriteria(existingSugar.result, existingSugar.conclusion) : null),
+      data: formatPatientResponse(identity, bmi, existingSugar, kesimpulan, existingSugar ? buildSugarCriteria(existingSugar.conclusion, existingSugar.description) : null),
     });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
@@ -76,7 +76,7 @@ exports.updateBMI = async (req, res) => {
     });
 
     return apiResponse(res, {
-      data: formatPatientResponse(identity, bmi, existingSugar, kesimpulan, existingSugar ? buildSugarCriteria(existingSugar.result, existingSugar.conclusion) : null),
+      data: formatPatientResponse(identity, bmi, existingSugar, kesimpulan, existingSugar ? buildSugarCriteria(existingSugar.conclusion, existingSugar.description) : null),
     });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
@@ -94,7 +94,7 @@ exports.getBMIList = async (req, res) => {
 
       const age = calculateAge(identity.birthdate) ?? bmiRow?.age ?? sugarRow?.age ?? null;
       const kes = hitungKesimpulan(Number(bmiRow?.weight), Number(identity.height));
-      const sugarCriteria = buildSugarCriteria(sugarRow?.result, sugarRow?.conclusion);
+      const sugarCriteria = buildSugarCriteria(sugarRow?.conclusion, sugarRow?.description);
       formattedData.push(formatPatientResponse(identity, bmiRow, sugarRow, kes, sugarCriteria));
     }
 
@@ -117,13 +117,13 @@ exports.getSummary = async (req, res) => {
     });
 
     const sugarData = await BloodSugar.findAll({
-      attributes: ['result'],
+      attributes: ['conclusion'],
       include: [{ model: Identity, where: userFilter, attributes: [] }],
       where: { status: 'current' },
     });
 
     const bmiResults = bmiData.map((r) => r.result);
-    const sugarResults = sugarData.map((r) => r.result);
+    const sugarResults = sugarData.map((r) => r.conclusion);
 
     return apiResponse(res, {
       data: {
@@ -142,8 +142,20 @@ exports.getSummary = async (req, res) => {
 exports.getHistoryBMI = async (req, res) => {
   try {
     const { identityId } = req.params;
+    const identity = await Identity.findOne({ where: { id: identityId } });
     const results = await BMI.findAll({ where: { id_identity: identityId }, order: [['id', 'DESC']] });
-    return apiResponse(res, { data: results });
+    const heightCm = identity ? Number(identity.height) : null;
+    const enriched = results.map(r => {
+      const plain = r.get({ plain: true });
+      if (heightCm && plain.weight) {
+        const heightM = heightCm / 100;
+        plain.bmi_value = Number((plain.weight / (heightM * heightM)).toFixed(2));
+      } else {
+        plain.bmi_value = null;
+      }
+      return plain;
+    });
+    return apiResponse(res, { data: enriched });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

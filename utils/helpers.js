@@ -57,7 +57,7 @@ const formatPatientResponse = (identity, bmiRow, sugarRow, kesimpulan, sugarCrit
     bmi,
     result: status || null,
     bmi_status: safeBmi.status || null,
-    sugarCriteria: sugarCriteria || buildSugarCriteria(sugarRow?.result, sugarRow?.conclusion),
+    sugarCriteria: sugarCriteria || buildSugarCriteria(sugarRow?.conclusion, sugarRow?.description),
     sugar_status: sugarRow?.status || null,
   };
 };
@@ -116,7 +116,7 @@ const analisisTren = (bmiHistory, sugarHistory, heightCm) => {
 
   const sugarTrend = sugarHistory.map((row) => ({
     date: row.createdAt,
-    result: row.result,
+    conclusion: row.conclusion,
     age: row.age,
   }));
 
@@ -132,8 +132,8 @@ const analisisTren = (bmiHistory, sugarHistory, heightCm) => {
   let sugarDirection = 'stable';
   const sugarMap = { Rendah: -1, Normal: 0, Tinggi: 1 };
   if (sugarTrend.length >= 2) {
-    const firstVal = sugarMap[sugarTrend[0].result] ?? 0;
-    const lastVal = sugarMap[sugarTrend[sugarTrend.length - 1].result] ?? 0;
+    const firstVal = sugarMap[sugarTrend[0].conclusion] ?? 0;
+    const lastVal = sugarMap[sugarTrend[sugarTrend.length - 1].conclusion] ?? 0;
     if (lastVal > firstVal) sugarDirection = 'worsening';
     else if (lastVal < firstVal) sugarDirection = 'improving';
   }

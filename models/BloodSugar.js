@@ -6,9 +6,12 @@ const BloodSugar = sequelize.define('BloodSugar', {
     type: DataTypes.INTEGER,
   },
   result: {
-    type: DataTypes.STRING(50),
+    type: DataTypes.FLOAT,
   },
   conclusion: {
+    type: DataTypes.STRING(50),
+  },
+  description: {
     type: DataTypes.TEXT,
   },
   status: {

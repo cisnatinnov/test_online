@@ -25,8 +25,9 @@ exports.createBloodSugar = async (req, res) => {
     const bloodSugar = await BloodSugar.create({
       id_identity: identity.id,
       age,
-      result: sugarCriteria?.label || null,
-      conclusion: sugarCriteria?.description || null,
+      result: Number(sugar),
+      conclusion: sugarCriteria?.label || null,
+      description: sugarCriteria?.description || null,
       status: 'current',
     });
 
@@ -61,8 +62,9 @@ exports.updateBloodSugar = async (req, res) => {
     const bloodSugar = await BloodSugar.create({
       id_identity: identity.id,
       age,
-      result: sugarCriteria?.label || null,
-      conclusion: sugarCriteria?.description || null,
+      result: Number(sugar),
+      conclusion: sugarCriteria?.label || null,
+      description: sugarCriteria?.description || null,
       status: 'current',
     });
 

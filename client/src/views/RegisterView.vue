@@ -18,6 +18,17 @@ const fieldErrors = ref({ username: '', email: '', password: [] })
 const pwStrength = computed(() => passwordStrength(form.value.password))
 const pwProgress = computed(() => (pwStrength.value.score / 5) * 100)
 
+const pwRules = computed(() => {
+  const pw = form.value.password
+  return [
+    { label: 'Minimal 8 karakter', met: pw.length >= 8 },
+    { label: 'Minimal 1 huruf kapital', met: /[A-Z]/.test(pw) },
+    { label: 'Minimal 1 huruf kecil', met: /[a-z]/.test(pw) },
+    { label: 'Minimal 1 angka', met: /[0-9]/.test(pw) },
+    { label: 'Minimal 1 simbol', met: /[!@#$%^&*(),.?":{}|<>]/.test(pw) },
+  ]
+})
+
 function validateField(field) {
   touched.value[field] = true
   if (field === 'username') {
@@ -69,20 +80,25 @@ async function register() {
     <form @submit.prevent="register">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
         <div>
-          <input v-model="form.username" placeholder="Username *" required :style="inputStyle('username')" @blur="validateField('username')" @input="touched.username && validateField('username')" />
+          <input v-model="form.username" placeholder="Username *" required :style="inputStyle('username')" @focus="touched.username = true" @input="validateField('username')" @blur="validateField('username')" />
           <div v-if="touched.username && fieldErrors.username" style="color:#e74c3c;font-size:11px;margin-top:2px">{{ fieldErrors.username }}</div>
         </div>
         <div>
-          <input v-model="form.email" type="email" placeholder="Email *" required :style="inputStyle('email')" @blur="validateField('email')" @input="touched.email && validateField('email')" />
+          <input v-model="form.email" type="email" placeholder="Email *" required :style="inputStyle('email')" @focus="touched.email = true" @input="validateField('email')" @blur="validateField('email')" />
           <div v-if="touched.email && fieldErrors.email" style="color:#e74c3c;font-size:11px;margin-top:2px">{{ fieldErrors.email }}</div>
         </div>
         <div style="grid-column:span 2">
-          <input v-model="form.password" type="password" placeholder="Password *" required :style="inputStyle('password')" @blur="validateField('password')" @input="touched.password && validateField('password')" />
+          <input v-model="form.password" type="password" placeholder="Password *" required :style="inputStyle('password')" @focus="touched.password = true" @input="validateField('password')" @blur="validateField('password')" />
           <div v-if="form.password" style="margin-top:4px">
             <div style="height:6px;background:#eee;border-radius:3px;overflow:hidden">
               <div :style="{height:'100%',width:pwProgress+'%',background:pwStrength.color,borderRadius:'3px',transition:'width .3s,background .3s'}"></div>
             </div>
             <div :style="{fontSize:'11px',color:pwStrength.color,marginTop:'2px'}">{{ pwStrength.label }}</div>
+          </div>
+          <div v-if="form.password" style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:2px">
+            <div v-for="rule in pwRules" :key="rule.label" :style="{fontSize:'11px',color:rule.met ? '#2ecc71' : '#999',display:'flex',alignItems:'center',gap:'4px'}">
+              <span>{{ rule.met ? '\u2713' : '\u25CB' }}</span> {{ rule.label }}
+            </div>
           </div>
           <div v-if="touched.password && fieldErrors.password.length" style="color:#e74c3c;font-size:11px;margin-top:2px">{{ fieldErrors.password.join('. ') }}</div>
         </div>
