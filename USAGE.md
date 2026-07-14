@@ -8,10 +8,11 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
 2. [Registration](#registration)
 3. [Login & 2FA](#login--2fa)
 4. [Dashboard](#dashboard)
-5. [Health Monitor](#health-monitor)
+5. [Health Monitor (Admin Only)](#health-monitor-admin-only)
    - [Recording Vitals & BMI](#recording-vitals--bmi)
    - [Viewing Health Metrics](#viewing-health-metrics)
    - [Health History](#health-history)
+   - [API Traffic Dashboard](#api-traffic-dashboard)
 6. [Blood Sugar Check](#blood-sugar-check)
 7. [Money Management](#money-management)
    - [Expenses & Savings](#expenses--savings)
@@ -22,14 +23,25 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
    - [Planting Trees](#planting-trees)
    - [Estate Statistics](#estate-statistics)
    - [Drone Planning](#drone-planning)
-9. [Health Risk Assessment](#health-risk-assessment)
-10. [Health Trends](#health-trends)
-11. [Health Alerts](#health-alerts)
-12. [Population Statistics](#population-statistics)
-13. [PDF Export](#pdf-export)
-14. [Admin Features](#admin-features)
-15. [System Health Monitoring](#system-health-monitoring)
-16. [Troubleshooting](#troubleshooting)
+9. [Real-time Chat](#real-time-chat)
+   - [Chat Rooms](#chat-rooms)
+   - [Messaging](#messaging)
+   - [Online Users](#online-users)
+10. [Library Management](#library-management)
+    - [Book Catalog](#book-catalog)
+    - [Adding & Editing Books](#adding--editing-books)
+    - [Borrowing Books](#borrowing-books)
+    - [Returning Books & Fine](#returning-books--fine)
+    - [Library Statistics](#library-statistics)
+    - [Fine & Duration Settings (Admin)](#fine--duration-settings-admin)
+11. [Health Risk Assessment](#health-risk-assessment)
+12. [Health Trends](#health-trends)
+13. [Health Alerts](#health-alerts)
+14. [Population Statistics](#population-statistics)
+15. [PDF Export](#pdf-export)
+16. [Admin Features](#admin-features)
+17. [System Health Monitoring](#system-health-monitoring)
+18. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -126,19 +138,23 @@ The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you typ
 The dashboard is the main screen after login. It shows:
 
 - **Navigation buttons** for quick access:
-  - **Health** - go to the Health Monitor page
+  - **Health** - go to the Health Monitor page (admin only)
   - **Money** - go to the Money Management page
   - **Estate** - go to the Estate Management page
+  - **Chat** - go to the Real-time Chat page
+  - **Perpustakaan** - go to the Library Management page
 - **Welcome message** with your username
 - Links to other features (Patient List, Summary, Tools, etc.)
 
+> **Note:** The Health button is only visible to admin users. Non-admin users cannot access the Health Monitor page.
+
 ---
 
-## Health Monitor
+## Health Monitor (Admin Only)
 
-**Page:** `/health`
+**Page:** `/health` (admin only - non-admin users are redirected to dashboard)
 
-The Health Monitor is the primary health recording interface. It combines vital signs recording with BMI tracking in a single view.
+The Health Monitor is the primary health recording interface. It combines vital signs recording with BMI tracking in a single view, plus system health checks and API traffic monitoring.
 
 ### Recording Vitals & BMI
 
@@ -189,6 +205,16 @@ Below the metric cards, a **history table** shows the last 10 vital sign reading
 | Resp | Respiratory rate |
 | BMI | BMI category result |
 | Status | Green dot (all normal) or Red dot (abnormal) |
+
+### API Traffic Dashboard
+
+Admin users can view API traffic statistics for the health monitoring system:
+
+- **Period Selector**: Filter by 1h, 24h, 7d, or 30d
+- **KPI Cards**: Total requests, average response time, 200 OK count, error count
+- **Method Breakdown**: Number of GET, POST, PUT, DELETE requests
+- **Hourly Traffic Chart**: Bar chart showing request volume per hour
+- **Recent Requests Table**: Last 50 requests with method, path, status, response time, user, and timestamp
 
 ---
 
@@ -311,6 +337,143 @@ The drone plan calculates an optimal flyover path through all trees:
 
 ---
 
+## Real-time Chat
+
+**Page:** `/chat`
+
+Communicate with other users in real-time through chat rooms.
+
+### Chat Rooms
+
+- **Direct Chat**: 1:1 conversation with another user
+- **Group Chat**: Multi-user conversation with a custom name
+- To create a new room, click the **"+ New Room"** button and select participants
+
+### Messaging
+
+- Messages appear instantly via Socket.IO
+- **Typing indicators** show when other users are composing a message
+- Messages include the sender's username and timestamp
+
+### Online Users
+
+- The sidebar shows a list of currently online users
+- Online status updates in real-time as users connect/disconnect
+
+---
+
+## Library Management
+
+**Page:** `/library`
+
+Manage a book catalog with borrowing, returns, and overdue fine tracking. Admin can configure borrow duration, fine rate, and tolerance days.
+
+### Book Catalog
+
+The **Buku** tab shows all books in a card grid layout with:
+
+- **Title** and **author** prominently displayed
+- **Category** badge (e.g., Fiksi, Sains, Teknologi)
+- **ISBN**, **publisher**, and **year** metadata
+- **Shelf** location
+- **Availability** badge: green (available) or red (all copies borrowed)
+- **Action buttons**: Pinjam (Borrow), Edit, Hapus (Delete, admin only)
+
+**Search & Filter:**
+1. Type in the **search bar** to search by title, author, or ISBN
+2. Select a **category** from the dropdown filter
+3. Click **"Cari"** or press Enter to search
+4. Results are paginated (20 per page)
+
+### Adding & Editing Books
+
+1. Click **"+ Tambah Buku"** to add a new book
+2. Fill in the **required fields**:
+   - **Judul** (Title) - book title
+   - **Penulis** (Author) - author name
+3. Fill in **optional fields**:
+   - **ISBN** - unique identifier (e.g., 978-602-xxx-xxx)
+   - **Penerbit** (Publisher) - publisher name
+   - **Tahun** (Year) - publication year
+   - **Kategori** (Category) - e.g., Fiksi, Sains, Teknologi
+   - **Jumlah** (Quantity) - number of copies
+   - **Rak** (Shelf) - shelf location (e.g., A1, B2)
+   - **Deskripsi** (Description) - book description
+4. Click **"Tambah"** to save
+
+To **edit**, click the **"Edit"** button on any book card and modify the fields.
+
+### Borrowing Books
+
+1. Click **"Pinjam"** on a book card (only available if copies are available)
+2. A modal appears showing the book title and author
+3. **Set the due date** (default: borrow_duration_days from settings, typically 7 days)
+4. Optionally add **notes**
+5. Click **"Pinjam"** to confirm
+
+The book's available count decreases by 1.
+
+### Returning Books & Fine
+
+1. Go to the **Peminjaman** (Borrowings) tab
+2. Find the borrowing record and click **"Kembalikan"** (Return)
+3. Confirm the return
+
+**Overdue Fine Calculation:**
+- **Borrow Duration**: configurable by admin (default: 7 days)
+- **Fine Per Day**: configurable by admin (default: Rp 500/day)
+- **Overdue Tolerance**: configurable by admin (default: 1 day) - first N overdue days are free
+- Fine formula: `fine = max(0, overdue_days - tolerance_days) * fine_per_day`
+
+**Fine examples** (default settings: 1 day tolerance, Rp 500/day):
+
+| Due Date | Return Date | Overdue Days | Tolerance | Billable Days | Fine |
+|----------|-------------|-------------|-----------|--------------|------|
+| Jul 15 | Jul 15 | 0 | 1 | 0 | Rp 0 |
+| Jul 15 | Jul 16 | 1 | 1 | 0 | Rp 0 (within tolerance) |
+| Jul 15 | Jul 17 | 2 | 1 | 1 | Rp 500 |
+| Jul 15 | Jul 25 | 10 | 1 | 9 | Rp 4.500 |
+
+For borrowings that are still overdue (not yet returned), a **live fine** is calculated and displayed in real-time.
+
+### Library Statistics
+
+The **Statistik** tab shows:
+
+| Stat | Description |
+|------|-------------|
+| Judul Buku | Total number of unique book titles |
+| Total Eksemplar | Total copies across all books |
+| Tersedia | Copies currently available |
+| Dipinjam | Copies currently borrowed |
+| Peminjaman Aktif | Active borrowing records |
+| Terlambat | Overdue borrowing records |
+| Total Denda | Total fines collected (Rp) |
+| Denda/Hari | Fine rate per day (Rp, configurable) |
+| Durasi Pinjam | Borrow duration in days (configurable) |
+| Toleransi | Overdue tolerance in days (configurable) |
+
+Below the stats, a **category breakdown** chart shows the number of books per category as horizontal bars.
+
+### Fine & Duration Settings (Admin)
+
+The **Pengaturan** tab (visible to admin only) allows configuring library rules:
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Durasi Peminjaman (hari) | How many days a book can be borrowed | 7 days |
+| Denda Per Hari (Rp) | Fine amount per overdue day after tolerance | Rp 500 |
+| Hari Toleransi | Number of overdue days with no fine | 1 day |
+
+A **preview table** shows example fine calculations based on the current settings.
+
+**Rules:**
+- Only admin can access and modify these settings
+- Changes take effect immediately for new borrowings and live fine calculations
+- Settings are stored in the `library_settings` database table
+
+---
+
 ## Health Risk Assessment
 
 Assess a patient's combined health risk from BMI, blood sugar, vital signs, and age.
@@ -410,11 +573,25 @@ ADMIN_PASSWORD=Admin@123
 
 > Change these credentials before deploying to production.
 
+### Admin Library Features
+
+- Admin can **delete books** from the library
+- Admin can **borrow books on behalf of other users** (specify user_id)
+- Admin can **view all borrowings** across all users
+- Admin can **mark overdue borrowings** and trigger fine calculation
+- Admin can **configure library settings**: borrow duration, fine per day, overdue tolerance days
+
+### Admin Health Monitor Features
+
+- Admin can **access the Health Monitor page** (`/health`) - hidden from non-admin dashboard
+- Admin can **view API traffic dashboard** with request logs, hourly charts, and status breakdowns
+- Admin can **filter traffic by period** (1h, 24h, 7d, 30d)
+
 ---
 
 ## System Health Monitoring
 
-These endpoints require no authentication and are useful for monitoring tools, load balancers, and DevOps.
+These endpoints are used by the Health Monitor page (admin only) and are useful for monitoring tools, load balancers, and DevOps.
 
 ### Full Health Check
 
@@ -447,6 +624,20 @@ Always returns `{ status: "alive" }` with HTTP 200.
 
 Returns aggregate counts: total users, patients, BMI records, blood sugar records, uptime, Node version, platform.
 
+### API Traffic Stats (Admin Only)
+
+**Endpoint:** `GET /api/health-traffic/stats?period=24h`
+
+Returns:
+- **totalRequests**: total number of logged requests in the period
+- **avgResponseTime**: average response time in milliseconds
+- **statusBreakdown**: count of requests per HTTP status code
+- **methodBreakdown**: count of requests per HTTP method
+- **hourlyTraffic**: request count and average response time per hour
+- **recentRequests**: last 50 requests with method, path, status, response time, user, IP, and timestamp
+
+**Period options:** `1h`, `24h` (default), `7d`, `30d`
+
 ---
 
 ## Troubleshooting
@@ -463,3 +654,8 @@ Returns aggregate counts: total users, patients, BMI records, blood sugar record
 | Rate limit exceeded (429) | Wait 15 minutes before trying again; auth limit is 20 requests per 15 min, API limit is 100 |
 | Canvas not showing trees | Ensure you've selected an estate and planted at least one tree |
 | Drone plan returns sum_distance 0 | The estate has no trees planted yet |
+| Chat messages not appearing | Ensure Socket.IO connection is established; check that you've joined a room |
+| Library book shows 0 available | All copies are currently borrowed; wait for returns or add more copies |
+| Fine seems incorrect | Check the tolerance days setting (default: 1 day); first overdue day is free; fine starts from day 2 |
+| Cannot access Health page | Only admin users can access the Health Monitor; check your account role |
+| Settings tab not visible | Only admin users see the Pengaturan tab in Library Management |

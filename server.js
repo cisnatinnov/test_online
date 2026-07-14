@@ -27,6 +27,9 @@ const patientHealthRoutes = require('./routes/patientHealthRoutes');
 const vitalSignsRoutes = require('./routes/vitalSignsRoutes');
 const estateRoutes = require('./routes/estateRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const libraryRoutes = require('./routes/libraryRoutes');
+const healthTrafficRoutes = require('./routes/healthTrafficRoutes');
+const healthTrafficMiddleware = require('./middlewares/healthTraffic');
 
 const app = express();
 app.use(cors({
@@ -64,11 +67,13 @@ app.use('/api/identities', apiLimiter, identityRoutes);
 app.use('/api/export', apiLimiter, reportRoutes);
 app.use('/api/money', apiLimiter, moneyRoutes);
 app.use('/api/admin', apiLimiter, adminRoutes);
-app.use('/api/health', healthRoutes);
+app.use('/api/health', healthTrafficMiddleware, healthRoutes);
 app.use('/api/patient-health', patientHealthRoutes);
+app.use('/api/health-traffic', healthTrafficRoutes);
 app.use('/api/vital-signs', apiLimiter, vitalSignsRoutes);
 app.use('/api/estate', apiLimiter, estateRoutes);
 app.use('/api/chat', apiLimiter, chatRoutes);
+app.use('/api/library', apiLimiter, libraryRoutes);
 
 app.get('/api/dashboard/summary', authenticateToken, bmiController.getSummary);
 app.get('/api/history/:identityId/bmi', authenticateToken, bmiController.getHistoryBMI);
@@ -98,7 +103,7 @@ const io = new Server(server, {
 
 chatController.initSocket(io);
 
-sequelize.sync({ alter: false, force: false })
+sequelize.sync({ alter: true, force: true }) // force: true and alter: true in development only, remove in production
   .then(async () => {
     console.log('Database synced successfully!');
 

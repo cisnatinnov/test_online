@@ -1,10 +1,10 @@
 # BMI App
 
-A health monitoring web application with BMI tracking, blood sugar monitoring, vital signs monitoring, patient health risk assessment, money management, and palm oil estate management. Built with Node.js, Express, Sequelize ORM, PostgreSQL, and Vue 3.
+A health monitoring web application with BMI tracking, blood sugar monitoring, vital signs monitoring, patient health risk assessment, money management, palm oil estate management, real-time chat, and library management. Built with Node.js, Express, Sequelize ORM, PostgreSQL, and Vue 3.
 
 ## Features
 
-### Health Monitoring
+### Health Monitoring (Admin Only)
 - **BMI Calculator**: Calculate and track Body Mass Index with category classification (Sangat kurus / Kurus / Normal / Gemuk / Obesitas)
 - **Blood Sugar Monitor**: Track blood sugar levels with age-based threshold evaluation
 - **Vital Signs Monitor**: Blood pressure (systolic/diastolic), heart rate, body temperature, SpO2, respiratory rate with clinical evaluation
@@ -12,6 +12,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **Health Trend Analysis**: Track BMI, blood sugar, and vital signs trends over time per patient
 - **Health Alerts**: Flag patients with high-risk health status
 - **Population Statistics**: BMI, blood sugar, vital signs, and risk distribution across all patients
+- **API Traffic Tracking**: Monitor API request logs with method, path, status, response time, and user info
+- **Admin-only Access**: The Health Monitor page (`/health`) and API traffic dashboard are restricted to admin users only
 
 ### System & Auth
 - **Authentication**: Register, Login with 2FA (Email / WhatsApp)
@@ -40,11 +42,32 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **Drone Planning**: Calculate optimal drone flyover path with Manhattan distance, forced landing calculation when battery limited
 - **Canvas Visualization**: Interactive canvas showing estate grid with tree positions
 
+### Real-time Chat
+- **Chat Rooms**: Create direct (1:1) or group chat rooms
+- **Real-time Messaging**: Socket.IO-based instant message delivery
+- **Online Users**: Track which users are currently online
+- **Typing Indicators**: See when other users are typing
+- **Participant Management**: Add/remove users from group chats
+
+### Library Management
+- **Book Management**: CRUD for books with title, author, ISBN, publisher, year, category, description, quantity, and shelf location
+- **Search & Filter**: Search by title, author, ISBN; filter by category with pagination
+- **Borrowing System**: Borrow and return books with due dates and notes
+- **Overdue Tracking**: Automatic detection of overdue borrowings with status marking
+- **Configurable Fine & Duration**: Admin can manage borrow duration (days), fine per day (Rp), and overdue tolerance days
+- **Overdue Tolerance**: First N days of overdue are free (default: 1 day), fine only applies after tolerance period
+- **Overdue Fine**: Configurable fine per day (default: Rp 500) for overdue borrowings beyond tolerance, calculated automatically on return
+- **Fine Statistics**: Total fines collected and unpaid fines tracking
+- **Library Statistics**: Total books, available, borrowed, overdue counts, category breakdown, fine/duration settings
+- **Role-based Access**: Admin can manage all books, view all borrowings, and configure library settings; users manage their own borrowings
+
 ### Frontend (Vue 3 SPA)
-- **Health Monitor Page**: Record vitals (BP, HR, temp, SpO2, resp rate, weight, BMI), color-coded metric cards, history table
+- **Health Monitor Page** (Admin Only): Record vitals (BP, HR, temp, SpO2, resp rate, weight, BMI), color-coded metric cards, history table, API traffic dashboard with request logs, hourly charts, and status breakdowns
 - **Money Dashboard Page**: Expense/saving CRUD, category breakdowns, trend charts, financial summary
 - **Estate View Page**: Create estates, plant trees, view canvas visualization, stats, drone plans
-- **Dashboard Page**: Navigation hub to Health, Money, Estate, and other features
+- **Chat Page**: Real-time messaging with chat rooms, online users, typing indicators
+- **Library Page**: Book catalog with search/filter, borrowing management, fine display, library statistics with category breakdown, admin-only fine/duration settings panel
+- **Dashboard Page**: Navigation hub to Health (admin only), Money, Estate, Chat, Library, and other features
 
 ## Tech Stack
 
@@ -53,6 +76,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **ORM**: Sequelize
 - **Database**: PostgreSQL (tests use SQLite in-memory)
 - **Auth**: JWT with 2FA (Nodemailer / WhatsApp API)
+- **Real-time**: Socket.IO (chat feature)
+- **PDF Generation**: PDFKit
 - **Frontend**: Vue 3 SPA with Vite, Pinia store, Vue Router
 - **Testing**: Jest + Supertest (backend), Vitest (frontend)
 
@@ -73,7 +98,14 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── Expense.js               # Expense records (amount, category, description, date)
 │   ├── Saving.js                # Saving records (amount, category, description, date)
 │   ├── Estate.js                # Palm oil estates (width, length)
-│   └── Tree.js                  # Trees in estates (x, y, height, estate_id)
+│   ├── Tree.js                  # Trees in estates (x, y, height, estate_id)
+│   ├── ChatRoom.js              # Chat rooms (name, type direct/group)
+│   ├── ChatMessage.js           # Chat messages (room_id, user_id, content)
+│   ├── ChatParticipant.js       # Room participants (room_id, user_id, role)
+│   ├── Book.js                  # Library books (title, author, isbn, publisher, year, category, quantity, available, shelf)
+│   ├── Borrowing.js             # Book borrowings (user_id, book_id, borrow_date, due_date, return_date, status, fine, notes)
+│   ├── LibrarySetting.js        # Library config (borrow_duration_days, fine_per_day, overdue_tolerance_days)
+│   └── HealthTraffic.js         # API traffic logs (method, path, status_code, response_time_ms, user_id, ip, user_agent)
 ├── controllers/
 │   ├── authController.js        # Register, Login, 2FA
 │   ├── bmiController.js         # BMI CRUD, list, summary, history
@@ -83,26 +115,34 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── moneyController.js       # Expense/Saving CRUD, chart, summary, category breakdown
 │   ├── reportController.js      # PDF export
 │   ├── healthController.js      # System health checks (DB, memory, CPU, uptime)
+│   ├── healthTrafficController.js # API traffic stats (total requests, avg response, status/method breakdown, hourly, recent)
 │   ├── patientHealthController.js # Patient risk scoring, trends, alerts, population stats
-│   └── estateController.js      # Estate CRUD, tree CRUD, stats, drone plan
+│   ├── estateController.js      # Estate CRUD, tree CRUD, stats, drone plan
+│   ├── chatController.js        # Real-time chat (Socket.IO + REST)
+│   ├── libraryController.js     # Book CRUD, borrow/return, overdue fine, stats, library settings
+│   └── adminController.js       # Admin user/data listing
 ├── middlewares/
 │   ├── authenticate.js          # JWT authentication
 │   ├── apiResponse.js           # Standardized API response + error handler
 │   ├── mailTransporter.js       # Nodemailer transport
 │   ├── rateLimiter.js           # Rate limiting (API & Auth)
-│   └── authorize.js             # Role-based access control
+│   ├── authorize.js             # Role-based access control
+│   └── healthTraffic.js         # Logs health API requests to health_traffic table
 ├── routes/
 │   ├── authRoutes.js
 │   ├── bmiRoutes.js
 │   ├── bloodSugarRoutes.js
 │   ├── vitalSignsRoutes.js
 │   ├── identityRoutes.js
-│   ├── moneyRoutes.js           # Expense, Saving, Chart, Summary, Categories
+│   ├── moneyRoutes.js
 │   ├── reportRoutes.js
 │   ├── adminRoutes.js
 │   ├── healthRoutes.js
+│   ├── healthTrafficRoutes.js
 │   ├── patientHealthRoutes.js
-│   └── estateRoutes.js          # Estate & tree management
+│   ├── estateRoutes.js
+│   ├── chatRoutes.js
+│   └── libraryRoutes.js
 ├── utils/
 │   ├── helpers.js               # BMI calc, blood sugar eval, vital sign eval, risk scoring, trend analysis
 │   └── history-utils.js         # Date formatting for history records
@@ -121,7 +161,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │       ├── api.js               # Axios instance with baseURL
 │       ├── App.vue
 │       ├── main.js
-│       ├── router/index.js      # Vue Router (login, register, dashboard, health, money, estate, etc.)
+│       ├── router/index.js      # Vue Router (all routes)
 │       ├── stores/auth.js       # Pinia auth store
 │       ├── utils/helpers.js     # Frontend helper functions
 │       └── views/
@@ -129,13 +169,16 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │           ├── RegisterView.vue
 │           ├── Verify2FAView.vue
 │           ├── DashboardView.vue
-│           ├── HealthMonitorView.vue  # Health dashboard with BMI, vitals, history
-│           ├── MoneyDashboardView.vue # Money management with charts
-│           ├── EstateView.vue         # Estate management with canvas
+│           ├── HealthMonitorView.vue
+│           ├── MoneyDashboardView.vue
+│           ├── EstateView.vue
+│           ├── ChatView.vue
+│           ├── LibraryView.vue
 │           ├── ListView.vue
 │           ├── HistoryView.vue
 │           ├── SummaryView.vue
-│           └── ToolsView.vue
+│           ├── ToolsView.vue
+│           └── tools/           # 13 tool Vue components
 ├── .env
 ├── server.js
 ├── README.md
@@ -296,6 +339,48 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | GET | `/:id/drone-plan` | Drone path with Manhattan distance | No |
 | GET | `/:id/drone-plan?max_distance=N` | Drone path with forced landing point | No |
 
+### Chat (`/api/chat`)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/rooms` | List chat rooms for current user | Yes |
+| POST | `/rooms` | Create chat room (name, type, participants) | Yes |
+| POST | `/rooms/:id/participants` | Add participant to room | Yes |
+| DELETE | `/rooms/:id/participants/:userId` | Remove participant from room | Yes |
+| GET | `/rooms/:id/messages` | List messages in a room (paginated) | Yes |
+| GET | `/online` | List currently online users | Yes |
+
+**Socket.IO Events** (path: `/socket.io`):
+
+| Event | Direction | Description |
+|-------|-----------|-------------|
+| `join-room` | Client -> Server | Join a chat room |
+| `leave-room` | Client -> Server | Leave a chat room |
+| `send-message` | Client -> Server | Send a message to a room |
+| `new-message` | Server -> Client | Receive a new message |
+| `typing` | Client -> Server | User is typing indicator |
+| `user-typing` | Server -> Client | Broadcast typing status |
+| `user-online` | Server -> Client | User came online |
+| `user-offline` | Server -> Client | User went offline |
+
+### Library Management (`/api/library`)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/settings` | Get library settings (borrow duration, fine, tolerance) | Yes |
+| PUT | `/settings` | Update library settings | Yes (admin) |
+| GET | `/` | List books (search, category, page, limit) | Yes |
+| POST | `/` | Create book (title, author, isbn, publisher, year, category, description, quantity, shelf) | Yes |
+| GET | `/:id` | Get book detail | Yes |
+| PUT | `/:id` | Update book | Yes |
+| DELETE | `/:id` | Delete book (admin only) | Yes |
+| POST | `/:id/borrow` | Borrow book (due_date, notes, user_id for admin) | Yes |
+| POST | `/:id/return/:borrowId` | Return borrowed book (calculates overdue fine) | Yes |
+| GET | `/borrowings` | List borrowings (status, user_id, page, limit) with fine info | Yes |
+| GET | `/categories` | List all book categories | Yes |
+| GET | `/stats` | Library statistics (totals, overdue, fines, settings, category breakdown) | Yes |
+| POST | `/overdue/update` | Mark overdue borrowings and calculate fines | Yes |
+
 ### Reports & Dashboard
 
 | Method | Endpoint | Description | Auth |
@@ -306,7 +391,7 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | GET | `/api/history/:identityId/bloodsugar` | Blood sugar history | Yes |
 | GET | `/api/history/:identityId/vitalsigns` | Vital signs history | Yes |
 
-### System Health (`/api/health`)
+### System Health (`/api/health`) - Traffic logged
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -314,6 +399,12 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | GET | `/ready` | Readiness probe (DB connectivity) | No |
 | GET | `/live` | Liveness probe | No |
 | GET | `/stats` | Aggregate system and data statistics | No |
+
+### Health Traffic (`/api/health-traffic`)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/stats?period=24h` | API traffic stats (1h, 24h, 7d, 30d) | Yes (admin) |
 
 ### Patient Health (`/api/patient-health`)
 
@@ -426,21 +517,34 @@ Risk score is calculated from combined BMI, blood sugar, vital signs, and age fa
 - Manhattan distance: |x1-x2| + |y1-y2|
 - When `max_distance` is provided, a forced landing point is calculated if battery runs out mid-segment
 
+## Library Fine & Duration Rules
+
+- **Borrow Duration**: Configurable (default: 7 days) -- how long a book can be borrowed
+- **Fine Per Day**: Configurable (default: Rp 500/day) -- fine amount per day of overdue
+- **Overdue Tolerance**: Configurable (default: 1 day) -- the first N overdue days are free
+- Fine calculation: `fine = max(0, overdue_days - tolerance_days) * fine_per_day`
+- Fine is calculated automatically when a book is returned late
+- Fine is also calculated for books still overdue (live fine) in the borrowing list
+- Fines are tracked in the library statistics (total fines, unpaid fines)
+- Only admin can update library settings via `PUT /api/library/settings`
+
 ## Frontend Pages (Vue SPA)
 
-| Route | Page | Description |
-|-------|------|-------------|
-| `/login` | LoginView | Login with username/email + password |
-| `/register` | RegisterView | Registration with patient identity |
-| `/verify-2fa` | Verify2FAView | 2FA verification (email or WhatsApp) |
-| `/` | DashboardView | Main hub: navigation to Health, Money, Estate |
-| `/health` | HealthMonitorView | Record vitals + weight, view BMI/metrics, history table |
-| `/money` | MoneyDashboardView | Expense/saving CRUD, category breakdowns, trend charts |
-| `/estate` | EstateView | Estate CRUD, tree planting, canvas visualization, drone plans |
-| `/list` | ListView | Patient data list with tabs |
-| `/history` | HistoryView | Patient BMI and blood sugar history |
-| `/summary` | SummaryView | Dashboard statistics cards |
-| `/tools` | ToolsView | Navigation hub for games, math, and NER tools |
+| Route | Page | Access | Description |
+|-------|------|--------|-------------|
+| `/login` | LoginView | Public | Login with username/email + password |
+| `/register` | RegisterView | Public | Registration with patient identity |
+| `/verify-2fa` | Verify2FAView | Public | 2FA verification (email or WhatsApp) |
+| `/` | DashboardView | Auth | Main hub: navigation to Health, Money, Estate, Chat, Library |
+| `/health` | HealthMonitorView | Admin Only | Record vitals + weight, view BMI/metrics, history table, API traffic dashboard |
+| `/money` | MoneyDashboardView | Auth | Expense/saving CRUD, category breakdowns, trend charts |
+| `/estate` | EstateView | Auth | Estate CRUD, tree planting, canvas visualization, drone plans |
+| `/chat` | ChatView | Auth | Real-time chat rooms, messaging, online users |
+| `/library` | LibraryView | Auth | Book catalog, search/filter, borrowing, return, fine, statistics, admin settings |
+| `/list` | ListView | Auth | Patient data list with tabs |
+| `/history` | HistoryView | Auth | Patient BMI and blood sugar history |
+| `/summary` | SummaryView | Auth | Dashboard statistics cards |
+| `/tools` | ToolsView | Auth | Navigation hub for games, math, and NER tools |
 
 ## Testing
 

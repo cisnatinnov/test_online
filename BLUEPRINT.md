@@ -10,18 +10,27 @@
 8. **savings** (id, user_id, amount, category, description, date, createdAt, updatedAt)
 9. **estates** (id, width, length, createdAt, updatedAt)
 10. **trees** (id, estate_id, x, y, height, createdAt, updatedAt)
+11. **chat_rooms** (id, name, type [direct/group], created_by, createdAt, updatedAt)
+12. **chat_messages** (id, room_id, user_id, content, createdAt, updatedAt)
+13. **chat_participants** (id, room_id, user_id, role [admin/member], createdAt, updatedAt)
+14. **books** (id, title, author, isbn, publisher, year, category, description, quantity, available, shelf, createdAt, updatedAt)
+15. **borrowings** (id, user_id, book_id, borrow_date, due_date, return_date, status [borrowed/returned/overdue], notes, fine, createdAt, updatedAt)
+16. **library_settings** (id, borrow_duration_days, fine_per_day, overdue_tolerance_days, createdAt, updatedAt)
+17. **health_traffic** (id, method, path, status_code, response_time_ms, user_id, ip, user_agent, createdAt, updatedAt)
 
 ## Flow
 
 1. **Register** (username, email, password + optional identity data)
 2. **Login** (username/email + password)
 3. **2FA Verification** (email or WhatsApp channel)
-4. **Dashboard** with navigation to Health, Money, Estate features
-5. **Health Features** (via `/health` HealthMonitorView):
+4. **Dashboard** with navigation to Health (admin only), Money, Estate, Chat, Library features
+5. **Health Features** (admin-only, via `/health` HealthMonitorView):
    - a. Record vitals (BP, heart rate, temperature, SpO2, respiratory rate) + weight for BMI
    - b. BMI calculated automatically using weight (kg) + identity height (cm)
    - c. Color-coded metric cards: green (normal), orange (low/underweight), red (high/overweight)
    - d. History table showing last 10 readings with all vitals + BMI
+   - e. System health checks (DB, memory, CPU, uptime)
+   - f. API traffic dashboard with request logs, hourly charts, status/method breakdowns
 6. **Blood Sugar** - track with age-based thresholds (Rendah/Normal/Tinggi)
 7. **Money Management** (via `/money` MoneyDashboardView):
    - a. Expense CRUD with amount, category, description, date
@@ -35,19 +44,35 @@
    - c. Canvas visualization showing estate grid with tree positions
    - d. Estate statistics: tree count, max/min/median height
    - e. Drone planning: Manhattan distance path with forced landing on battery limit
-9. **Patient Health Analytics**:
-   - a. Health Risk Assessment (composite score from BMI + sugar + vitals + age)
-   - b. Health Trend Analysis (BMI and blood sugar direction tracking over time)
-   - c. Health Alerts (flag high-risk patients for immediate attention)
-   - d. Population Statistics (BMI, sugar, vital signs, risk distribution across all patients)
-10. **Patient Data List** (all identities with current BMI, blood sugar, and vital signs status, PDF export)
-11. **History** (full BMI, blood sugar, and vital signs records per identity)
-12. **PDF Export** (download patient examination reports)
-13. **Tools & Games** (accessible from dashboard navigation):
+9. **Real-time Chat** (via `/chat` ChatView):
+   - a. Create direct (1:1) or group chat rooms
+   - b. Real-time messaging via Socket.IO
+   - c. Online user tracking and typing indicators
+   - d. Participant management (add/remove from group chats)
+10. **Library Management** (via `/library` LibraryView):
+    - a. Book catalog with CRUD (title, author, ISBN, publisher, year, category, description, quantity, shelf)
+    - b. Search by title, author, ISBN; filter by category with pagination
+    - c. Borrowing system with due dates and notes (default due = borrow_duration_days)
+    - d. Return books and track borrowing status (borrowed/returned/overdue)
+    - e. Configurable fine & duration: admin sets borrow_duration_days, fine_per_day, overdue_tolerance_days
+    - f. Overdue tolerance: first N overdue days free (default 1), fine starts after tolerance
+    - g. Fine calculation: fine = max(0, overdue_days - tolerance_days) * fine_per_day
+    - h. Fine tracking: total fines and unpaid fines in statistics
+    - i. Library statistics: total books, available, borrowed, overdue, fines, settings, category breakdown
+11. **Patient Health Analytics** (accessible by all authenticated users):
+    - a. Health Risk Assessment (composite score from BMI + sugar + vitals + age)
+    - b. Health Trend Analysis (BMI and blood sugar direction tracking over time)
+    - c. Health Alerts (flag high-risk patients for immediate attention)
+    - d. Population Statistics (BMI, sugar, vital signs, risk distribution across all patients)
+12. **Patient Data List** (all identities with current BMI, blood sugar, and vital signs status, PDF export)
+13. **History** (full BMI, blood sugar, and vital signs records per identity)
+14. **PDF Export** (download patient examination reports)
+15. **Tools & Games** (accessible from dashboard navigation):
     - a. Games: Hangman, Coin Catcher, Roleplay Adventure, Turtle Racing, Aim Trainer, Rock Paper Scissors
     - b. Math: Shapes Calculator (2D/3D), Equation Grapher, Scientific Calculator, Statistics, Quadratic Function
     - c. NER: Text Summarizer, Sentiment Analysis
-14. **System Health Monitoring** (DB connectivity, memory usage, CPU usage, uptime, readiness/liveness probes)
+16. **System Health Monitoring** (admin-only via FE, DB connectivity, memory usage, CPU usage, uptime, readiness/liveness probes)
+17. **API Traffic Tracking** (admin-only, logs all health API requests with method, path, status, response time, user)
 
 ## Password Rules
 
@@ -70,15 +95,18 @@
 ## Architecture
 
 - **ORM**: Sequelize (no raw queries)
-- **Controllers**: Separate controller per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, report, health, patientHealth, estate)
-- **Middlewares**: authenticate (JWT), authorize (role-based), apiResponse (standardized response), mailTransporter (nodemailer), rateLimiter (express-rate-limit)
-- **Models**: User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Estate, Tree
-- **Routes**: Separate route file per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, report, admin, health, patientHealth, estate)
+- **Controllers**: Separate controller per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, report, health, healthTraffic, patientHealth, estate, chat, library, admin)
+- **Middlewares**: authenticate (JWT), authorize (role-based), apiResponse (standardized response), mailTransporter (nodemailer), rateLimiter (express-rate-limit), healthTraffic (request logging)
+- **Models**: User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Estate, Tree, ChatRoom, ChatMessage, ChatParticipant, Book, Borrowing, LibrarySetting, HealthTraffic
+- **Routes**: Separate route file per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, report, admin, health, healthTraffic, patientHealth, estate, chat, library)
 - **Frontend**: Vue 3 SPA with Vite, Pinia store (auth), Vue Router, Axios API client
   - Runs on `:5173` during development (Vite dev server)
   - Vite proxies `/api` requests to `:3000` backend
   - Built output at `client/dist/` served by Express in production
+  - Health Monitor page (`/health`) restricted to admin role only via route guard
 - **Backend**: Express API server on `:3000`, serves built SPA from `client/dist` when available
+- **Real-time**: Socket.IO server for chat feature (path: `/socket.io`)
+- **Traffic Logging**: Health API requests (`/api/health/*`) are logged to `health_traffic` table via middleware
 - **Separation**: FE and BE can run independently via `npm run dev` (BE) and `npm run dev:fe` (FE), or together via `npm run dev:all`
 - **Tests**: Jest + Supertest (62 backend tests), Vitest (6 frontend tests)
   - Estate tests use SQLite in-memory (no PostgreSQL dependency)
@@ -88,19 +116,21 @@
 
 ### Vue Router Pages (SPA - `client/src/views/`)
 
-| Route | View | Description |
-|-------|------|-------------|
-| `/login` | LoginView | Login with username/email + password, real-time email format validation |
-| `/register` | RegisterView | Registration with patient identity, real-time email & password validation with strength progress bar |
-| `/verify-2fa` | Verify2FAView | 2FA verification (email or WhatsApp) |
-| `/` | DashboardView | Main hub with navigation to Health, Money, Estate, and other features |
-| `/health` | HealthMonitorView | Health monitoring: record vitals + weight, BMI display, color-coded metrics, history table |
-| `/money` | MoneyDashboardView | Money management: expense/saving CRUD, category breakdowns, trend charts |
-| `/estate` | EstateView | Estate management: create estates, plant trees, canvas visualization, stats, drone plans |
-| `/list` | ListView | Patient data list with tabbed BMI/blood sugar view and search |
-| `/history` | HistoryView | Patient BMI and blood sugar history tables |
-| `/summary` | SummaryView | Dashboard statistics cards (total patients, BMI, sugar) |
-| `/tools` | ToolsView | Navigation hub for games, math tools, and NER tools |
+| Route | Access | View | Description |
+|-------|--------|------|-------------|
+| `/login` | Public | LoginView | Login with username/email + password, real-time email format validation |
+| `/register` | Public | RegisterView | Registration with patient identity, real-time email & password validation with strength progress bar |
+| `/verify-2fa` | Public | Verify2FAView | 2FA verification (email or WhatsApp) |
+| `/` | Auth | DashboardView | Main hub with navigation to Health (admin only), Money, Estate, Chat, Library, and other features |
+| `/health` | Admin Only | HealthMonitorView | Health monitoring: record vitals + weight, BMI display, color-coded metrics, history table, API traffic dashboard |
+| `/money` | Auth | MoneyDashboardView | Money management: expense/saving CRUD, category breakdowns, trend charts |
+| `/estate` | Auth | EstateView | Estate management: create estates, plant trees, canvas visualization, stats, drone plans |
+| `/chat` | Auth | ChatView | Real-time chat: rooms, messaging, online users, typing indicators |
+| `/library` | Auth | LibraryView | Library management: book catalog, search/filter, borrowing, return, fine display, statistics, admin settings panel |
+| `/list` | Auth | ListView | Patient data list with tabbed BMI/blood sugar view and search |
+| `/history` | Auth | HistoryView | Patient BMI and blood sugar history tables |
+| `/summary` | Auth | SummaryView | Dashboard statistics cards (total patients, BMI, sugar) |
+| `/tools` | Auth | ToolsView | Navigation hub for games, math tools, and NER tools |
 
 ### Static Pages (`client/public/` or `client/dist/`)
 
@@ -125,11 +155,14 @@
 
 ## Health Monitoring Endpoints
 
-### System Health (`/api/health` - no auth required)
+### System Health (`/api/health` - no auth required, traffic logged)
 - `GET /` - Full health check: DB connectivity + latency, memory (RSS, heap), CPU usage, server/process uptime
 - `GET /ready` - Readiness probe: verifies database is reachable
 - `GET /live` - Liveness probe: confirms process is alive
 - `GET /stats` - Aggregate stats: total users, patients, BMI records, blood sugar records, uptime, Node version, platform
+
+### Health Traffic (`/api/health-traffic` - admin only)
+- `GET /stats?period=24h` - API traffic stats with period filtering (1h, 24h, 7d, 30d): total requests, avg response time, status breakdown, method breakdown, hourly traffic, 50 most recent requests with user info
 
 ### Vital Signs (`/api/vital-signs` - auth required)
 - `POST /` - Create vital signs record (BP, heart rate, temp, SpO2, respiratory rate), marks previous as past
@@ -161,6 +194,65 @@
 - `y`: non-negative integer, must be <= estate length
 - `height`: integer between 1 and 30
 - `max_distance`: positive integer (validated before tree count check)
+
+## Chat Endpoints
+
+### Chat (`/api/chat` - auth required)
+- `GET /rooms` - List chat rooms for current user
+- `POST /rooms` - Create chat room (name, type: direct/group, participants array)
+- `POST /rooms/:id/participants` - Add participant to room
+- `DELETE /rooms/:id/participants/:userId` - Remove participant from room
+- `GET /rooms/:id/messages` - List messages in a room (paginated: page, limit)
+- `GET /online` - List currently online users
+
+### Socket.IO Events (path: `/socket.io`)
+- `join-room` (client -> server) - Join a chat room
+- `leave-room` (client -> server) - Leave a chat room
+- `send-message` (client -> server) - Send message to room (content)
+- `new-message` (server -> client) - Receive new message
+- `typing` (client -> server) - User is typing
+- `user-typing` (server -> client) - Broadcast typing status
+- `user-online` (server -> client) - User came online
+- `user-offline` (server -> client) - User went offline
+
+## Library Endpoints
+
+### Library (`/api/library` - auth required)
+- `GET /settings` - Get library settings (borrow_duration_days, fine_per_day, overdue_tolerance_days)
+- `PUT /settings` - Update library settings (admin only)
+- `GET /` - List books (query: search, category, page, limit)
+- `POST /` - Create book (title, author required; isbn, publisher, year, category, description, quantity, shelf optional)
+- `GET /:id` - Get book detail
+- `PUT /:id` - Update book fields
+- `DELETE /:id` - Delete book (admin only; fails if book has active borrowings)
+- `POST /:id/borrow` - Borrow book (due_date required; user_id for admin; auto-decrements available count)
+- `POST /:id/return/:borrowId` - Return borrowed book (auto-increments available count; calculates overdue fine with tolerance)
+- `GET /borrowings` - List borrowings (query: status, user_id for admin, page, limit); includes live fine for active overdue
+- `GET /categories` - List all distinct book categories
+- `GET /stats` - Library statistics (totalBooks, totalAvailable, totalBorrowed, totalTitles, activeBorrowings, overdueBorrowings, totalFines, unpaidFines, finePerDay, borrowDurationDays, overdueToleranceDays, categoryStats)
+- `POST /overdue/update` - Mark overdue borrowings and calculate fines
+
+### Library Settings (single-row config table)
+- `borrow_duration_days`: INTEGER (default 7) - days a book can be borrowed
+- `fine_per_day`: INTEGER (default 500) - fine per overdue day in Rupiah
+- `overdue_tolerance_days`: INTEGER (default 1) - days tolerated before fine applies
+
+### Library Validation Rules
+- `title` and `author`: required, non-empty strings
+- `quantity`: non-negative integer
+- `isbn`: unique if provided
+- `due_date`: required, must be after today
+- `status`: one of borrowed, returned, overdue
+
+### Library Fine Rules
+- **Borrow Duration**: configurable (default: 7 days)
+- **Fine Per Day**: configurable (default: Rp 500/day)
+- **Overdue Tolerance**: configurable (default: 1 day) - first N overdue days are free
+- Fine = `max(0, overdue_days - tolerance_days) * fine_per_day`
+- Fine is calculated when a book is returned
+- Overdue days = `ceil((return_date - due_date) / 86400000)` in milliseconds
+- Live fine is calculated for borrowings still overdue (not yet returned)
+- Fines are included in borrowing list response and library statistics
 
 ### Drone Path Algorithm
 1. Sort trees by Y coordinate, then X coordinate

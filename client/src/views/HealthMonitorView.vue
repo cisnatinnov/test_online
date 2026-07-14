@@ -22,6 +22,9 @@ const vitalHistory = ref([])
 const systemHealth = ref(null)
 const loading = ref(false)
 const lastSaved = ref(null)
+const trafficStats = ref(null)
+const trafficPeriod = ref('24h')
+const trafficLoading = ref(false)
 
 const metrics = computed(() => {
   if (!latestVitals.value) return []
@@ -84,9 +87,19 @@ function mapSugarStatus(result) {
 
 function flash(m, t) { msg.value = m; msgType.value = t; setTimeout(() => msg.value = '', 4000) }
 
+async function loadTrafficStats() {
+  trafficLoading.value = true
+  try {
+    const { data: res } = await api.get(`/health-traffic/stats?period=${trafficPeriod.value}`)
+    trafficStats.value = res.data
+  } catch (e) { console.error(e) }
+  trafficLoading.value = false
+}
+
 onMounted(async () => {
   await loadIdentities()
   await loadSystemHealth()
+  if (auth.user?.role === 'admin') await loadTrafficStats()
 })
 
 async function loadIdentities() {
@@ -404,6 +417,76 @@ function evalRespLabel(r) {
               </div>
             </div>
           </div>
+
+          <div class="card" v-if="auth.user?.role === 'admin'">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <h3 class="card-title" style="margin-bottom:0">API Traffic</h3>
+              <div style="display:flex;gap:6px">
+                <button v-for="p in ['1h','24h','7d','30d']" :key="p" @click="trafficPeriod = p; loadTrafficStats()" :style="{ padding:'4px 10px', borderRadius:'6px', border:'none', cursor:'pointer', fontSize:'0.72rem', fontWeight:700, background: trafficPeriod === p ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.08)', color: trafficPeriod === p ? '#81c784' : '#999' }">{{ p }}</button>
+              </div>
+            </div>
+            <div v-if="trafficLoading" style="text-align:center;padding:20px;color:#666">Loading...</div>
+            <div v-else-if="trafficStats">
+              <div class="traffic-kpi-grid">
+                <div class="traffic-kpi">
+                  <span class="traffic-kpi-val">{{ trafficStats.totalRequests }}</span>
+                  <span class="traffic-kpi-label">Total Requests</span>
+                </div>
+                <div class="traffic-kpi">
+                  <span class="traffic-kpi-val">{{ trafficStats.avgResponseTime }}ms</span>
+                  <span class="traffic-kpi-label">Avg Response</span>
+                </div>
+                <div class="traffic-kpi">
+                  <span class="traffic-kpi-val" style="color:#66bb6a">{{ trafficStats.statusBreakdown?.[200] || 0 }}</span>
+                  <span class="traffic-kpi-label">200 OK</span>
+                </div>
+                <div class="traffic-kpi">
+                  <span class="traffic-kpi-val" style="color:#ef5350">{{ (trafficStats.statusBreakdown?.[400] || 0) + (trafficStats.statusBreakdown?.[401] || 0) + (trafficStats.statusBreakdown?.[403] || 0) + (trafficStats.statusBreakdown?.[404] || 0) + (trafficStats.statusBreakdown?.[500] || 0) }}</span>
+                  <span class="traffic-kpi-label">Errors</span>
+                </div>
+              </div>
+
+              <div style="margin-top:14px">
+                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Requests by Method</h4>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <span v-for="(count, method) in trafficStats.methodBreakdown" :key="method" style="padding:4px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;background:rgba(255,255,255,0.06);color:#bbb">{{ method }}: {{ count }}</span>
+                </div>
+              </div>
+
+              <div style="margin-top:14px">
+                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Hourly Traffic</h4>
+                <div class="traffic-chart">
+                  <div v-for="(h, idx) in trafficStats.hourlyTraffic" :key="idx" class="traffic-bar-wrap">
+                    <div class="traffic-bar" :style="{ height: Math.max(4, (h.count / Math.max(...trafficStats.hourlyTraffic.map(x => x.count), 1)) * 80) + 'px' }">
+                      <span class="traffic-bar-tip">{{ h.count }}</span>
+                    </div>
+                    <span class="traffic-bar-label">{{ new Date(h.hour).getHours() }}h</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:14px">
+                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Recent Requests</h4>
+                <div class="traffic-table-wrap">
+                  <table class="traffic-table">
+                    <thead>
+                      <tr><th>Method</th><th>Path</th><th>Status</th><th>Time</th><th>User</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="r in trafficStats.recentRequests" :key="r.id">
+                        <td><span :class="['method-badge', r.method.toLowerCase()]">{{ r.method }}</span></td>
+                        <td style="font-family:monospace;font-size:0.75rem">{{ r.path }}</td>
+                        <td><span :class="['status-badge', r.statusCode < 400 ? 'ok' : 'err']">{{ r.statusCode }}</span></td>
+                        <td>{{ r.responseTimeMs }}ms</td>
+                        <td>{{ r.user }}</td>
+                        <td>{{ formatDate(r.createdAt) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         </template>
       </main>
     </div>
@@ -675,9 +758,103 @@ function evalRespLabel(r) {
 .sys-val.ok { color: #66bb6a; }
 .sys-val.bad { color: #ef5350; }
 
+.traffic-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.traffic-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+}
+.traffic-kpi-val { font-size: 1.4rem; font-weight: 800; color: #e0e0e0; }
+.traffic-kpi-label { font-size: 0.68rem; color: #888; text-transform: uppercase; font-weight: 600; }
+
+.traffic-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 100px;
+  padding: 8px 0;
+}
+.traffic-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.traffic-bar {
+  width: 100%;
+  max-width: 24px;
+  background: linear-gradient(180deg, #66bb6a, #2e7d32);
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: height 0.3s;
+}
+.traffic-bar-tip {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  color: #999;
+  white-space: nowrap;
+}
+.traffic-bar-label { font-size: 0.58rem; color: #666; }
+
+.traffic-table-wrap { overflow-x: auto; }
+.traffic-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+.traffic-table th {
+  padding: 8px 10px;
+  text-align: left;
+  color: #888;
+  font-weight: 600;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.traffic-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: #bbb;
+}
+
+.method-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.method-badge.get { background: rgba(33,150,243,0.2); color: #64b5f6; }
+.method-badge.post { background: rgba(76,175,80,0.2); color: #81c784; }
+.method-badge.put { background: rgba(255,193,7,0.2); color: #ffd54f; }
+.method-badge.delete { background: rgba(244,67,54,0.2); color: #ef5350; }
+
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.status-badge.ok { background: rgba(76,175,80,0.2); color: #66bb6a; }
+.status-badge.err { background: rgba(244,67,54,0.2); color: #ef5350; }
+
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
   .metrics-grid { grid-template-columns: repeat(2, 1fr); }
   .sys-grid { grid-template-columns: repeat(2, 1fr); }
+  .traffic-kpi-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>

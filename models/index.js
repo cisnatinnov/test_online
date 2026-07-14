@@ -12,6 +12,10 @@ const Tree = require('./Tree');
 const ChatRoom = require('./ChatRoom');
 const ChatMessage = require('./ChatMessage');
 const ChatParticipant = require('./ChatParticipant');
+const Book = require('./Book');
+const Borrowing = require('./Borrowing');
+const HealthTraffic = require('./HealthTraffic');
+const LibrarySetting = require('./LibrarySetting');
 
 User.hasMany(TwoFactorCode, { foreignKey: 'user_id' });
 TwoFactorCode.belongsTo(User, { foreignKey: 'user_id' });
@@ -52,4 +56,10 @@ ChatMessage.belongsTo(User, { foreignKey: 'user_id' });
 User.hasMany(ChatParticipant, { foreignKey: 'user_id' });
 ChatParticipant.belongsTo(User, { foreignKey: 'user_id' });
 
-module.exports = { sequelize, User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Estate, Tree, ChatRoom, ChatMessage, ChatParticipant };
+Book.hasMany(Borrowing, { foreignKey: 'book_id' });
+Borrowing.belongsTo(Book, { foreignKey: 'book_id' });
+
+User.hasMany(Borrowing, { foreignKey: 'user_id' });
+Borrowing.belongsTo(User, { foreignKey: 'user_id' });
+
+module.exports = { sequelize, User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Estate, Tree, ChatRoom, ChatMessage, ChatParticipant, Book, Borrowing, HealthTraffic, LibrarySetting };

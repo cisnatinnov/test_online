@@ -84,13 +84,14 @@ function flash(m, t) { msg.value = m; msgType.value = t; setTimeout(() => msg.va
       <h2>Dashboard</h2>
       <div>
         <span style="margin-right:12px">Halo, {{ auth.user?.username }}</span>
-        <button @click="nav('/health')" style="margin-right:8px;padding:6px 12px;background:#2196f3;color:#fff;border:none;border-radius:4px;cursor:pointer">Health</button>
+        <button v-if="auth.user?.role==='admin'" @click="nav('/health')" style="margin-right:8px;padding:6px 12px;background:#2196f3;color:#fff;border:none;border-radius:4px;cursor:pointer">Health</button>
         <button @click="nav('/money')" style="margin-right:8px;padding:6px 12px;background:#ffc107;color:#1a1a2e;border:none;border-radius:4px;cursor:pointer;font-weight:700">Money</button>
         <button @click="nav('/list')" style="margin-right:8px;padding:6px 12px;background:#ff9800;color:#fff;border:none;border-radius:4px;cursor:pointer">List</button>
         <button @click="nav('/summary')" style="margin-right:8px;padding:6px 12px;background:#9c27b0;color:#fff;border:none;border-radius:4px;cursor:pointer">Ringkasan</button>
         <button @click="nav('/tools')" style="margin-right:8px;padding:6px 12px;background:#00bcd4;color:#fff;border:none;border-radius:4px;cursor:pointer">Tools</button>
         <button @click="nav('/estate')" style="margin-right:8px;padding:6px 12px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer">Estate</button>
         <button @click="nav('/chat')" style="margin-right:8px;padding:6px 12px;background:#00897b;color:#fff;border:none;border-radius:4px;cursor:pointer">Chat</button>
+        <button @click="nav('/library')" style="margin-right:8px;padding:6px 12px;background:#795548;color:#fff;border:none;border-radius:4px;cursor:pointer">Perpustakaan</button>
         <button @click="logout" style="padding:6px 12px;background:#f44336;color:#fff;border:none;border-radius:4px;cursor:pointer">Logout</button>
       </div>
     </div>
