@@ -18,6 +18,10 @@
 16. **library_settings** (id, borrow_duration_days, fine_per_day, overdue_tolerance_days, createdAt, updatedAt)
 17. **health_traffic** (id, method, path, status_code, response_time_ms, user_id, ip, user_agent, createdAt, updatedAt)
 
+### Transaction Notes
+- **BMI, BloodSugar, VitalSigns**: Status updates use transactions (update past + create current in a single transaction)
+- **Library borrow/return**: Operations use transactions (update borrowing + book available count in a single transaction)
+
 ## Flow
 
 1. **Register** (username, email, password + optional identity data)
@@ -107,7 +111,10 @@
 - **Backend**: Express API server on `:3000`, serves built SPA from `client/dist` when available
 - **Real-time**: Socket.IO server for chat feature (path: `/socket.io`)
 - **Traffic Logging**: All API requests (`/api/*`) are logged to `health_traffic` table via global middleware
-- **Database Sync**: Sequelize syncs with `force: true` (resets tables on server restart)
+- **Database Sync**: Sequelize syncs with `force: false` (safe for production)
+- **Security**: Helmet.js for HTTP headers, rate limiting, no hardcoded credential fallbacks, startup env validation
+- **i18n**: vue-i18n with 5 locales (en-GB, en-US, id, es, pt), language persisted in localStorage
+- **PWA**: vite-plugin-pwa with Workbox, auto-update service worker, offline caching for static assets
 - **Separation**: FE and BE can run independently via `npm run dev` (BE) and `npm run dev:fe` (FE), or together via `npm run dev:all`
 - **Tests**: Jest + Supertest (62 backend tests), Vitest (6 frontend tests)
   - Estate tests use SQLite in-memory (no PostgreSQL dependency)
@@ -207,14 +214,14 @@
 - `GET /online` - List currently online users
 
 ### Socket.IO Events (path: `/socket.io`)
-- `join-room` (client -> server) - Join a chat room
-- `leave-room` (client -> server) - Leave a chat room
-- `send-message` (client -> server) - Send message to room (content)
-- `new-message` (server -> client) - Receive new message
-- `typing` (client -> server) - User is typing
-- `user-typing` (server -> client) - Broadcast typing status
-- `user-online` (server -> client) - User came online
-- `user-offline` (server -> client) - User went offline
+- `chat:join` (client -> server) - Join a chat room
+- `chat:leave` (client -> server) - Leave a chat room
+- `chat:send` (client -> server) - Send message to room (content)
+- `chat:typing` (client -> server) - User is typing
+- `chat:message` (server -> client) - Receive new message
+- `chat:users` (server -> client) - Broadcast typing status
+- `user:online` (server -> client) - User came online
+- `user:offline` (server -> client) - User went offline
 
 ## Library Endpoints
 

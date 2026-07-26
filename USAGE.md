@@ -42,7 +42,9 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
 16. [History & Summary](#history--summary)
 17. [Admin Features](#admin-features)
 18. [System Health Monitoring](#system-health-monitoring)
-19. [Troubleshooting](#troubleshooting)
+19. [Progressive Web App (PWA)](#progressive-web-app-pwa)
+20. [Internationalization](#internationalization)
+21. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -69,6 +71,7 @@ npm run dev:all
 ```
 
 4. Open `http://localhost:5173` in your browser. You will be redirected to the login page.
+5. **Install App** - The app can be installed on Android/iOS as a Progressive Web App (PWA). Look for the "Install App" prompt in your browser.
 
 ---
 
@@ -144,6 +147,7 @@ The dashboard is the main screen after login. It shows:
   - **Estate** - go to the Estate Management page
   - **Chat** - go to the Real-time Chat page
   - **Perpustakaan** - go to the Library Management page
+- **Language switcher** in the navbar - switch between 5 languages: English (UK), English (US), Bahasa Indonesia, Espanol, Portugues. Your language preference is saved in localStorage.
 - **Welcome message** with your username
 - Links to other features (Patient List, Summary, Tools, etc.)
 
@@ -660,6 +664,47 @@ Returns:
 
 ---
 
+## Progressive Web App (PWA)
+
+The application is a Progressive Web App and can be installed on mobile and desktop devices.
+
+### Installing on Android
+1. Open the app in Chrome
+2. Tap the "Add to Home Screen" banner or go to menu > "Install app"
+3. The app will be installed on your device
+
+### Installing on iOS (iPhone/iPad)
+1. Open the app in Safari
+2. Tap the Share button
+3. Scroll down and tap "Add to Home Screen"
+4. Tap "Add" to confirm
+
+### Offline Support
+- The app caches static assets for offline use
+- API requests require an internet connection
+- The service worker runs in the background to cache resources
+
+---
+
+## Internationalization
+
+The app supports 5 languages:
+
+| Code | Language |
+|------|----------|
+| en-GB | English (UK) |
+| en-US | English (US) |
+| id | Bahasa Indonesia |
+| es | Espanol |
+| pt | Portugues |
+
+### Changing Language
+1. Click a language code button in the dashboard navbar
+2. The language changes immediately
+3. Your preference is saved in localStorage and persists across sessions
+
+---
+
 ## Session Management
 
 - **Token Expiry**: Access tokens expire after **24 hours**. When expired, you will be automatically redirected to the login page
@@ -689,3 +734,5 @@ Returns:
 | Fine seems incorrect | Check the tolerance days setting (default: 1 day); first overdue day is free; fine starts from day 2 |
 | Cannot access Health page | Only admin users can access the Health Monitor; check your account role |
 | Settings tab not visible | Only admin users see the Pengaturan tab in Library Management |
+| App not installing as PWA | Ensure you're using a supported browser (Chrome/Edge on Android, Safari on iOS). The app must be served over HTTPS in production. |
+| Language not changing | Clear localStorage and refresh the page. |

@@ -1,6 +1,7 @@
 const { Identity, BMI, BloodSugar } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { calculateAge, hitungKesimpulan, buildSugarCriteria, formatPatientResponse } = require('../utils/helpers');
+const sequelize = require('../config/database');
 
 const getUserIdFilter = (req) => req.user.role === 'admin' ? {} : { id_user: req.user.id };
 
@@ -20,15 +21,16 @@ exports.createBMI = async (req, res) => {
     const age = calculateAge(identity.birthdate);
     const kesimpulan = hitungKesimpulan(Number(weight), Number(identity.height));
 
-    await BMI.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' } });
-
-    const bmi = await BMI.create({
-      id_identity: identity.id,
-      weight: Number(weight),
-      age,
-      result: Number(kesimpulan.bmi),
-      bmi_status: kesimpulan.status,
-      status: 'current',
+    const bmi = await sequelize.transaction(async (t) => {
+      await BMI.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' }, transaction: t });
+      return BMI.create({
+        id_identity: identity.id,
+        weight: Number(weight),
+        age,
+        result: Number(kesimpulan.bmi),
+        bmi_status: kesimpulan.status,
+        status: 'current',
+      }, { transaction: t });
     });
 
     const existingSugar = await BloodSugar.findOne({
@@ -61,15 +63,16 @@ exports.updateBMI = async (req, res) => {
     const age = calculateAge(identity.birthdate);
     const kesimpulan = hitungKesimpulan(Number(weight), Number(identity.height));
 
-    await BMI.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' } });
-
-    const bmi = await BMI.create({
-      id_identity: identity.id,
-      weight: Number(weight),
-      age,
-      result: Number(kesimpulan.bmi),
-      bmi_status: kesimpulan.status,
-      status: 'current',
+    const bmi = await sequelize.transaction(async (t) => {
+      await BMI.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' }, transaction: t });
+      return BMI.create({
+        id_identity: identity.id,
+        weight: Number(weight),
+        age,
+        result: Number(kesimpulan.bmi),
+        bmi_status: kesimpulan.status,
+        status: 'current',
+      }, { transaction: t });
     });
 
     const existingSugar = await BloodSugar.findOne({

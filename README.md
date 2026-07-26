@@ -15,6 +15,34 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **API Traffic Tracking**: Monitor API request logs with method, path, status, response time, and user info
 - **Admin-only Access**: The Health Monitor page (`/health`) and API traffic dashboard are restricted to admin users only
 
+### Internationalization (i18n)
+- **5 Language Options**: English (UK), English (US), Bahasa Indonesia, Espanol, Portugues
+- **Language Preference**: Saved in localStorage and persists across sessions
+- **Language Switcher**: Available in the dashboard navbar for easy language switching
+
+### Progressive Web App (PWA)
+- **Installable**: Can be installed on Android and iOS devices
+- **Offline Support**: Service worker for offline caching of assets
+- **Home Screen Installation**: Web app manifest for adding to home screen
+- **Offline Mode**: Works offline for cached assets
+
+### Security Hardening
+- **HTTP Security Headers**: Helmet.js for setting secure HTTP headers
+- **Body Size Limit**: JSON body size limited to 1MB
+- **Startup Validation**: Required environment variables validated on startup
+- **No Hardcoded Fallbacks**: No default credential fallbacks -- all credentials must be provided
+- **Rate Limiting**: Rate limiting on health endpoints
+- **Error Handlers**: Global unhandled rejection and exception handlers
+
+### Transaction Safety
+- **Race Condition Prevention**: Database transactions for BMI, blood sugar, and vital signs status updates
+- **Library Operations**: Borrow/return operations wrapped in transactions for data integrity
+
+### Input Validation
+- **Field Length Limits**: Username (50), email (255), password (128) max length validation
+- **Chat Message Cap**: Chat messages limited to 5000 characters
+- **Room Membership Verification**: Verified before join/send operations
+
 ### System & Auth
 - **Authentication**: Register, Login with 2FA (Email / WhatsApp)
 - **JWT Token Expiry**: Access tokens expire after 24 hours; backend returns 401 (expired) vs 403 (invalid) to distinguish error types
@@ -81,6 +109,9 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **PDF Generation**: PDFKit
 - **Frontend**: Vue 3 SPA with Vite, Pinia store, Vue Router
 - **Testing**: Jest + Supertest (backend), Vitest (frontend)
+- **i18n**: vue-i18n v10
+- **PWA**: vite-plugin-pwa (Workbox)
+- **Security**: Helmet.js
 
 ## Project Structure
 
@@ -158,6 +189,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── index.html
 │   ├── package.json
 │   ├── vite.config.js
+│   ├── public/
+│   │   └── icons/               # PWA icons
 │   └── src/
 │       ├── api.js               # Axios instance with auth interceptors (auto-logout on 401/403)
 │       ├── App.vue
@@ -165,6 +198,15 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │       ├── router/index.js      # Vue Router (all routes, token expiry guard)
 │       ├── stores/auth.js       # Pinia auth store (JWT expiry check, storage sync)
 │       ├── utils/helpers.js     # Frontend helper functions
+│       ├── locales/              # i18n translation files
+│       │   ├── en-GB.json       # English (UK) translations
+│       │   ├── en-US.json       # English (US) translations
+│       │   ├── id.json          # Bahasa Indonesia translations
+│       │   ├── es.json          # Espanol translations
+│       │   ├── pt.json          # Portugues translations
+│       │   └── index.js         # i18n configuration and locale loading
+│       ├── components/
+│       │   └── LanguageSwitcher.vue  # Language selection component
 │       └── views/
 │           ├── LoginView.vue
 │           ├── RegisterView.vue
@@ -203,13 +245,13 @@ npm install
 
 ### Environment Variables (`.env`)
 
-**Backend:**
+**Backend:** (all variables are required at startup)
 
 ```env
-DB_USER=postgres
-DB_HOST=localhost
-DB_NAME=bmi_app
-DB_PASS=your_password
+DB_USER=your_db_user
+DB_HOST=your_db_host
+DB_NAME=your_db_name
+DB_PASS=your_db_password
 DB_PORT=5432
 
 EMAIL_HOST=smtp.gmail.com
@@ -221,9 +263,11 @@ EMAIL_FROM=your_email
 WHATSAPP_API_URL=
 WHATSAPP_API_KEY=
 
-ADMIN_USERNAME=admin
-ADMIN_EMAIL=admin@bmi-app.com
-ADMIN_PASSWORD=Admin@123
+ADMIN_USERNAME=your_admin_username
+ADMIN_EMAIL=your_admin_email
+ADMIN_PASSWORD=your_admin_password
+
+JWT_SECRET=your_jwt_secret
 
 CORS_ORIGIN=http://localhost:5173
 ```
@@ -261,8 +305,6 @@ npm test
 | `npm run dev:all` | Both concurrently |
 | `npm run build:fe` | Build SPA to `client/dist/` |
 | `npm test` | Run backend unit tests |
-
-- `force: true` is set in Sequelize sync (resets tables on server restart)
 
 Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://localhost:5173`. Vite proxies `/api` requests to `http://localhost:3000`.
 
@@ -349,7 +391,7 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | GET | `/rooms` | List chat rooms for current user | Yes |
 | POST | `/rooms` | Create chat room (name, type, participants) | Yes |
 | POST | `/rooms/:id/participants` | Add participant to room | Yes |
-| DELETE | `/rooms/:id/participants/:userId` | Remove participant from room | Yes |
+| DELETE | `/rooms/:id/participants/:userId` | Remove participant from room (admin only) | Yes |
 | GET | `/rooms/:id/messages` | List messages in a room (paginated) | Yes |
 | GET | `/online` | List currently online users | Yes |
 
@@ -357,14 +399,14 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 | Event | Direction | Description |
 |-------|-----------|-------------|
-| `join-room` | Client -> Server | Join a chat room |
-| `leave-room` | Client -> Server | Leave a chat room |
-| `send-message` | Client -> Server | Send a message to a room |
-| `new-message` | Server -> Client | Receive a new message |
-| `typing` | Client -> Server | User is typing indicator |
-| `user-typing` | Server -> Client | Broadcast typing status |
-| `user-online` | Server -> Client | User came online |
-| `user-offline` | Server -> Client | User went offline |
+| `chat:join` | Client -> Server | Join a chat room |
+| `chat:leave` | Client -> Server | Leave a chat room |
+| `chat:send` | Client -> Server | Send a message to a room |
+| `chat:message` | Server -> Client | Receive a new message |
+| `chat:typing` | Client -> Server | User is typing indicator |
+| `chat:users` | Server -> Client | Broadcast typing status |
+| `user:online` | Server -> Client | User came online |
+| `user:offline` | Server -> Client | User went offline |
 
 ### Library Management (`/api/library`)
 

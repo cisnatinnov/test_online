@@ -8,6 +8,9 @@ function apiResponse(res, { success, data = null, error = null, status = 200 }) 
 
 function errorHandler(err, req, res, next) {
   console.error('[Error]', err.message);
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
   return res.status(500).json({ success: false, error: err.message });
 }
 

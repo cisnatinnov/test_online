@@ -3,7 +3,9 @@ const { Op } = require('sequelize');
 const { User, ChatRoom, ChatMessage, ChatParticipant } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-bmi-app-2024';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+const MAX_MESSAGE_LENGTH = 5000;
 
 let io = null;
 const onlineUsers = new Map();
@@ -33,6 +35,8 @@ function initSocket(socketIo) {
 
     socket.on('chat:join', async (data) => {
       const { roomId } = data;
+      const participant = await ChatParticipant.findOne({ where: { room_id: roomId, user_id: userId } });
+      if (!participant) return;
       socket.join(`room:${roomId}`);
       const participants = await ChatParticipant.findAll({ where: { room_id: roomId } });
       const onlineInRoom = participants
@@ -49,6 +53,7 @@ function initSocket(socketIo) {
     socket.on('chat:send', async (data) => {
       const { roomId, content } = data;
       if (!content || !content.trim()) return;
+      const trimmedContent = content.trim().slice(0, MAX_MESSAGE_LENGTH);
 
       const participant = await ChatParticipant.findOne({ where: { room_id: roomId, user_id: userId } });
       if (!participant) return;
@@ -56,7 +61,7 @@ function initSocket(socketIo) {
       const message = await ChatMessage.create({
         room_id: roomId,
         user_id: userId,
-        content: content.trim(),
+        content: trimmedContent,
       });
 
       const fullMessage = {
@@ -64,7 +69,7 @@ function initSocket(socketIo) {
         roomId,
         userId,
         username: socket.user.username,
-        content: content.trim(),
+        content: trimmedContent,
         createdAt: message.createdAt,
       };
 
@@ -271,6 +276,36 @@ exports.addParticipants = async (req, res) => {
     }
 
     return apiResponse(res, { data: { added } });
+  } catch (err) {
+    return apiResponse(res, { error: err.message, status: 500 });
+  }
+};
+
+exports.removeParticipants = async (req, res) => {
+  try {
+    const { roomId, userId } = req.params;
+
+    const admin = await ChatParticipant.findOne({ where: { room_id: roomId, user_id: req.user.id, role: 'admin' } });
+    if (!admin) {
+      return apiResponse(res, { error: 'Only admins can remove participants', status: 403 });
+    }
+
+    if (String(userId) === String(req.user.id)) {
+      return apiResponse(res, { error: 'Cannot remove yourself', status: 400 });
+    }
+
+    const participant = await ChatParticipant.findOne({ where: { room_id: roomId, user_id: userId } });
+    if (!participant) {
+      return apiResponse(res, { error: 'Participant not found', status: 404 });
+    }
+
+    await participant.destroy();
+
+    if (io) {
+      io.to(`room:${roomId}`).emit('chat:room:updated', { roomId });
+    }
+
+    return apiResponse(res, { data: { removed: userId } });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

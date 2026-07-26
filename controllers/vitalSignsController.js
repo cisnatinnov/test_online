@@ -1,6 +1,7 @@
 const { Identity, VitalSigns } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { calculateAge, evalBloodPressure, evalHeartRate, evalTemperature, evalSpO2, evalRespiratoryRate } = require('../utils/helpers');
+const sequelize = require('../config/database');
 
 const getUserIdFilter = (req) => req.user.role === 'admin' ? {} : { id_user: req.user.id };
 
@@ -17,18 +18,19 @@ exports.createVitalSigns = async (req, res) => {
 
     const age = calculateAge(identity.birthdate);
 
-    await VitalSigns.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' } });
-
-    const vs = await VitalSigns.create({
-      id_identity: identity.id,
-      systolic: systolic != null ? Number(systolic) : null,
-      diastolic: diastolic != null ? Number(diastolic) : null,
-      heart_rate: heart_rate != null ? Number(heart_rate) : null,
-      temperature: temperature != null ? Number(temperature) : null,
-      spo2: spo2 != null ? Number(spo2) : null,
-      respiratory_rate: respiratory_rate != null ? Number(respiratory_rate) : null,
-      age,
-      status: 'current',
+    const vs = await sequelize.transaction(async (t) => {
+      await VitalSigns.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' }, transaction: t });
+      return VitalSigns.create({
+        id_identity: identity.id,
+        systolic: systolic != null ? Number(systolic) : null,
+        diastolic: diastolic != null ? Number(diastolic) : null,
+        heart_rate: heart_rate != null ? Number(heart_rate) : null,
+        temperature: temperature != null ? Number(temperature) : null,
+        spo2: spo2 != null ? Number(spo2) : null,
+        respiratory_rate: respiratory_rate != null ? Number(respiratory_rate) : null,
+        age,
+        status: 'current',
+      }, { transaction: t });
     });
 
     const evaluation = evaluateVitalSigns(vs, age);
@@ -57,18 +59,19 @@ exports.updateVitalSigns = async (req, res) => {
 
     const age = calculateAge(identity.birthdate);
 
-    await VitalSigns.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' } });
-
-    const vs = await VitalSigns.create({
-      id_identity: identity.id,
-      systolic: systolic != null ? Number(systolic) : null,
-      diastolic: diastolic != null ? Number(diastolic) : null,
-      heart_rate: heart_rate != null ? Number(heart_rate) : null,
-      temperature: temperature != null ? Number(temperature) : null,
-      spo2: spo2 != null ? Number(spo2) : null,
-      respiratory_rate: respiratory_rate != null ? Number(respiratory_rate) : null,
-      age,
-      status: 'current',
+    const vs = await sequelize.transaction(async (t) => {
+      await VitalSigns.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' }, transaction: t });
+      return VitalSigns.create({
+        id_identity: identity.id,
+        systolic: systolic != null ? Number(systolic) : null,
+        diastolic: diastolic != null ? Number(diastolic) : null,
+        heart_rate: heart_rate != null ? Number(heart_rate) : null,
+        temperature: temperature != null ? Number(temperature) : null,
+        spo2: spo2 != null ? Number(spo2) : null,
+        respiratory_rate: respiratory_rate != null ? Number(respiratory_rate) : null,
+        age,
+        status: 'current',
+      }, { transaction: t });
     });
 
     const evaluation = evaluateVitalSigns(vs, age);

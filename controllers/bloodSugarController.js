@@ -1,6 +1,7 @@
 const { Identity, BMI, BloodSugar } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { calculateAge, hitungKriteriaGula, hitungKesimpulan, formatPatientResponse } = require('../utils/helpers');
+const sequelize = require('../config/database');
 
 const getUserIdFilter = (req) => req.user.role === 'admin' ? {} : { id_user: req.user.id };
 
@@ -20,15 +21,16 @@ exports.createBloodSugar = async (req, res) => {
     const age = calculateAge(identity.birthdate);
     const sugarCriteria = hitungKriteriaGula(age, sugar);
 
-    await BloodSugar.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' } });
-
-    const bloodSugar = await BloodSugar.create({
-      id_identity: identity.id,
-      age,
-      result: Number(sugar),
-      conclusion: sugarCriteria?.label || null,
-      description: sugarCriteria?.description || null,
-      status: 'current',
+    const bloodSugar = await sequelize.transaction(async (t) => {
+      await BloodSugar.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' }, transaction: t });
+      return BloodSugar.create({
+        id_identity: identity.id,
+        age,
+        result: Number(sugar),
+        conclusion: sugarCriteria?.label || null,
+        description: sugarCriteria?.description || null,
+        status: 'current',
+      }, { transaction: t });
     });
 
     const existingBmi = await BMI.findOne({ where: { id_identity: identity.id, status: 'current' }, order: [['id', 'DESC']] });
@@ -57,15 +59,16 @@ exports.updateBloodSugar = async (req, res) => {
     const age = calculateAge(identity.birthdate);
     const sugarCriteria = hitungKriteriaGula(age, sugar);
 
-    await BloodSugar.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' } });
-
-    const bloodSugar = await BloodSugar.create({
-      id_identity: identity.id,
-      age,
-      result: Number(sugar),
-      conclusion: sugarCriteria?.label || null,
-      description: sugarCriteria?.description || null,
-      status: 'current',
+    const bloodSugar = await sequelize.transaction(async (t) => {
+      await BloodSugar.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' }, transaction: t });
+      return BloodSugar.create({
+        id_identity: identity.id,
+        age,
+        result: Number(sugar),
+        conclusion: sugarCriteria?.label || null,
+        description: sugarCriteria?.description || null,
+        status: 'current',
+      }, { transaction: t });
     });
 
     const existingBmi = await BMI.findOne({ where: { id_identity: identity.id, status: 'current' }, order: [['id', 'DESC']] });

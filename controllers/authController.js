@@ -6,19 +6,33 @@ const { getMailTransporter } = require('../middlewares/mailTransporter');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { sendWhatsApp } = require('../utils/helpers');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-bmi-app-2024';
-const JWT_TEMP_SECRET = process.env.JWT_TEMP_SECRET || 'temp-secret-key-2fa-2024';
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_TEMP_SECRET = process.env.JWT_TEMP_SECRET;
 const SALT_ROUNDS = 10;
 
 const userSafeFields = ['id', 'username', 'email', 'phone', 'role'];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const MAX_USERNAME_LENGTH = 50;
+const MAX_EMAIL_LENGTH = 255;
+const MAX_PASSWORD_LENGTH = 128;
+const MAX_NAME_LENGTH = 100;
+
 exports.register = async (req, res) => {
   const { username, email, password, phone, nik, name, birthplace, birthdate, height, address } = req.body;
   try {
     if (!username || !email || !password) {
       return apiResponse(res, { error: 'Username, email, dan password harus diisi', status: 400 });
+    }
+    if (username.length > MAX_USERNAME_LENGTH) {
+      return apiResponse(res, { error: `Username maksimal ${MAX_USERNAME_LENGTH} karakter`, status: 400 });
+    }
+    if (email.length > MAX_EMAIL_LENGTH) {
+      return apiResponse(res, { error: `Email maksimal ${MAX_EMAIL_LENGTH} karakter`, status: 400 });
+    }
+    if (password.length > MAX_PASSWORD_LENGTH) {
+      return apiResponse(res, { error: `Password maksimal ${MAX_PASSWORD_LENGTH} karakter`, status: 400 });
     }
     if (!EMAIL_REGEX.test(email)) {
       return apiResponse(res, { error: 'Format email tidak valid', status: 400 });
@@ -43,7 +57,7 @@ exports.register = async (req, res) => {
       where: { [Op.or]: [{ username }, { email }] },
     });
     if (existing) {
-      return apiResponse(res, { error: 'Username atau email sudah terdaftar', status: 400 });
+      return apiResponse(res, { error: 'Registrasi gagal', status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
@@ -127,7 +141,7 @@ exports.send2FA = async (req, res) => {
         return apiResponse(res, { data: { sentTo: phone, channel: 'whatsapp' } });
       }
       console.log(`[2FA] WhatsApp code for ${phone}: ${code}`);
-      return apiResponse(res, { data: { sentTo: phone, channel: 'console', code } });
+      return apiResponse(res, { data: { sentTo: phone, channel: 'whatsapp', fallback: true } });
     }
 
     const mt = await getMailTransporter();
@@ -147,7 +161,7 @@ exports.send2FA = async (req, res) => {
     }
 
     console.log(`[2FA] Code for ${decoded.email}: ${code}`);
-    return apiResponse(res, { data: { sentTo: decoded.email, channel: 'console', code } });
+    return apiResponse(res, { data: { sentTo: decoded.email, channel: 'email', fallback: true } });
   } catch (err) {
     console.error('[2FA send-2fa] Error:', err.message);
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {

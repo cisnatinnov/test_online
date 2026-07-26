@@ -7,6 +7,7 @@ router.get('/rooms', authenticateToken, chatController.getRooms);
 router.post('/rooms', authenticateToken, chatController.createRoom);
 router.get('/rooms/:roomId/messages', authenticateToken, chatController.getMessages);
 router.post('/rooms/:roomId/participants', authenticateToken, chatController.addParticipants);
+router.delete('/rooms/:roomId/participants/:userId', authenticateToken, chatController.removeParticipants);
 router.get('/users', authenticateToken, chatController.getAllUsers);
 router.get('/online', authenticateToken, chatController.getOnlineUsers);
 

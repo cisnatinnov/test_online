@@ -12,10 +12,4 @@ function getHistoryDate(row) {
   });
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { getHistoryDate };
-}
-
-if (typeof window !== 'undefined') {
-  window.getHistoryDate = getHistoryDate;
-}
+module.exports = { getHistoryDate };

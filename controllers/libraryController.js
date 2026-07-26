@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const { Book, Borrowing, User, LibrarySetting } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
+const sequelize = require('../config/database');
 
 async function getSettings() {
   let setting = await LibrarySetting.findByPk(1);
@@ -185,11 +186,14 @@ exports.borrowBook = async (req, res) => {
       return apiResponse(res, { error: 'Tanggal pengembalian harus setelah hari ini', status: 400 });
     }
     const user_id = req.user.role === 'admin' && req.body.user_id ? req.body.user_id : req.user.id;
-    const borrowing = await Borrowing.create({
-      user_id, book_id: id, borrow_date: today, due_date, notes,
+    const result = await sequelize.transaction(async (t) => {
+      const borrowing = await Borrowing.create({
+        user_id, book_id: id, borrow_date: today, due_date, notes,
+      }, { transaction: t });
+      await book.update({ available: book.available - 1 }, { transaction: t });
+      return borrowing;
     });
-    await book.update({ available: book.available - 1 });
-    return apiResponse(res, { status: 201, data: borrowing });
+    return apiResponse(res, { status: 201, data: result });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
@@ -206,9 +210,11 @@ exports.returnBook = async (req, res) => {
     const settings = await getSettings();
     const today = new Date().toISOString().split('T')[0];
     const fine = calculateOverdueFine(borrowing.due_date, today, settings);
-    await borrowing.update({ return_date: today, status: 'returned', fine });
-    const book = await Book.findByPk(id);
-    await book.update({ available: book.available + 1 });
+    await sequelize.transaction(async (t) => {
+      await borrowing.update({ return_date: today, status: 'returned', fine }, { transaction: t });
+      const book = await Book.findByPk(id, { transaction: t });
+      await book.update({ available: book.available + 1 }, { transaction: t });
+    });
     return apiResponse(res, { data: borrowing });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });

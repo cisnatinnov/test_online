@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -32,15 +33,22 @@ const healthTrafficRoutes = require('./routes/healthTrafficRoutes');
 const healthTrafficMiddleware = require('./middlewares/healthTraffic');
 
 const app = express();
+app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: process.env.CORS_ORIGIN,
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 const clientDist = path.join(__dirname, 'client', 'dist');
 const fs = require('fs');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-bmi-app-2024';
+const JWT_SECRET = process.env.JWT_SECRET;
+const REQUIRED_ENV = ['JWT_SECRET', 'DB_NAME', 'DB_USER', 'DB_PASS', 'ADMIN_USERNAME', 'ADMIN_EMAIL', 'ADMIN_PASSWORD'];
+const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missing.length) {
+  console.error(`FATAL: Missing required environment variables: ${missing.join(', ')}`);
+  process.exit(1);
+}
 function secureTools(req, res, next) {
   const token = req.query.token || (req.headers.authorization && req.headers.authorization.split(' ')[1]);
   if (!token) return res.status(401).send('Unauthorized');
@@ -68,7 +76,7 @@ app.use('/api/identities', apiLimiter, identityRoutes);
 app.use('/api/export', apiLimiter, reportRoutes);
 app.use('/api/money', apiLimiter, moneyRoutes);
 app.use('/api/admin', apiLimiter, adminRoutes);
-app.use('/api/health', healthRoutes);
+app.use('/api/health', apiLimiter, healthRoutes);
 app.use('/api/patient-health', apiLimiter, patientHealthRoutes);
 app.use('/api/health-traffic', apiLimiter, healthTrafficRoutes);
 app.use('/api/vital-signs', apiLimiter, vitalSignsRoutes);
@@ -94,9 +102,17 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 
+process.on('unhandledRejection', (reason) => {
+  console.error('[UnhandledRejection]', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[UncaughtException]', err.message);
+});
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: process.env.CORS_ORIGIN,
     credentials: true,
   },
   path: '/socket.io',
@@ -108,9 +124,9 @@ sequelize.sync({ alter: false, force: false }) // force: true and alter: true in
   .then(async () => {
     console.log('Database synced successfully!');
 
-    const adminUsername = process.env.ADMIN_USERNAME || 'admin';
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@bmi-app.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
+    const adminUsername = process.env.ADMIN_USERNAME;
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
     const existingAdmin = await User.findOne({ where: { role: 'admin' } });
     if (!existingAdmin) {

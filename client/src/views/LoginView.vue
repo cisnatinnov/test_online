@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { validateEmail, validatePassword, passwordStrength } from '../utils/helpers'
 import api from '../api'
 
+const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 
@@ -21,11 +23,11 @@ const pwProgress = computed(() => (pwStrength.value.score / 5) * 100)
 const pwRules = computed(() => {
   const pw = form.value.password
   return [
-    { label: 'Minimal 8 karakter', met: pw.length >= 8 },
-    { label: 'Minimal 1 huruf kapital', met: /[A-Z]/.test(pw) },
-    { label: 'Minimal 1 huruf kecil', met: /[a-z]/.test(pw) },
-    { label: 'Minimal 1 angka', met: /[0-9]/.test(pw) },
-    { label: 'Minimal 1 simbol', met: /[!@#$%^&*(),.?":{}|<>]/.test(pw) },
+    { label: t('validation.minChars'), met: pw.length >= 8 },
+    { label: t('validation.uppercase'), met: /[A-Z]/.test(pw) },
+    { label: t('validation.lowercase'), met: /[a-z]/.test(pw) },
+    { label: t('validation.digit'), met: /[0-9]/.test(pw) },
+    { label: t('validation.symbol'), met: /[!@#$%^&*(),.?":{}|<>]/.test(pw) },
   ]
 })
 
@@ -33,7 +35,7 @@ function validateField(field) {
   touched.value[field] = true
   if (field === 'username') {
     if (!form.value.username) {
-      fieldErrors.value.username = 'Username atau email harus diisi'
+      fieldErrors.value.username = t('validation.usernameRequired')
     } else if (isEmail.value) {
       fieldErrors.value.username = validateEmail(form.value.username)
     } else {
@@ -42,7 +44,7 @@ function validateField(field) {
   }
   if (field === 'password') {
     if (!form.value.password) {
-      fieldErrors.value.password = ['Password harus diisi']
+      fieldErrors.value.password = [t('validation.passwordRequired')]
     } else {
       fieldErrors.value.password = validatePassword(form.value.password)
     }
@@ -64,7 +66,7 @@ async function login() {
       router.push('/verify-2fa')
     }
   } catch (e) {
-    error.value = e.response?.data?.error || 'Login gagal'
+    error.value = e.response?.data?.error || t('flash.loginFailed')
   } finally {
     loading.value = false
   }
@@ -74,13 +76,13 @@ async function login() {
 <template>
   <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
     <div class="card" style="width:100%;max-width:400px">
-      <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">Login</h2>
+      <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">{{ t('auth.loginTitle') }}</h2>
       <div v-if="error" class="flash flash-error">{{ error }}</div>
       <form @submit.prevent="login">
         <div style="margin-bottom:16px">
           <input
             v-model="form.username"
-            placeholder="Username atau Email"
+            :placeholder="t('auth.usernameOrEmail')"
             required
             :class="['input', touched.username && fieldErrors.username ? 'input-error' : '']"
             @focus="touched.username = true"
@@ -93,7 +95,7 @@ async function login() {
           <input
             v-model="form.password"
             type="password"
-            placeholder="Password"
+            :placeholder="t('auth.password')"
             required
             :class="['input', touched.password && fieldErrors.password.length ? 'input-error' : '']"
             @focus="touched.password = true"
@@ -114,11 +116,11 @@ async function login() {
           <div v-if="touched.password && fieldErrors.password.length" style="color:var(--accent-red);font-size:11px;margin-top:4px">{{ fieldErrors.password.join('. ') }}</div>
         </div>
         <button type="submit" :disabled="loading" class="btn btn-green btn-block">
-          {{ loading ? 'Masuk...' : 'Masuk' }}
+          {{ loading ? t('auth.loggingIn') : t('auth.loginBtn') }}
         </button>
       </form>
       <p style="text-align:center;margin-top:16px;color:var(--text-secondary)">
-        Belum punya akun? <router-link to="/register">Daftar</router-link>
+        {{ t('auth.noAccount') }} <router-link to="/register">{{ t('auth.signup') }}</router-link>
       </p>
     </div>
   </div>
