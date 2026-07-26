@@ -80,6 +80,8 @@ exports.updateBloodSugar = async (req, res) => {
 exports.getHistoryBloodSugar = async (req, res) => {
   try {
     const { identityId } = req.params;
+    const identity = await Identity.findOne({ where: { id: identityId, ...getUserIdFilter(req) } });
+    if (!identity) return apiResponse(res, { error: 'Data tidak ditemukan', status: 404 });
     const results = await BloodSugar.findAll({ where: { id_identity: identityId }, order: [['id', 'DESC']] });
     return apiResponse(res, { data: results });
   } catch (err) {

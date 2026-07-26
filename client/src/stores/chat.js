@@ -78,11 +78,21 @@ export const useChatStore = defineStore('chat', () => {
     })
   }
 
+  function handleFetchAuth(res) {
+    if (res.status === 401 || res.status === 403) {
+      auth.logout()
+      window.location.href = '/login'
+      return null
+    }
+    return res
+  }
+
   async function loadRooms() {
     try {
       const res = await fetch(`${API_BASE}/chat/rooms`, {
         headers: { Authorization: `Bearer ${auth.token}` },
       })
+      if (!handleFetchAuth(res)) return
       const json = await res.json()
       rooms.value = json.data || []
       updateRoomOnlineStatus()
@@ -94,6 +104,7 @@ export const useChatStore = defineStore('chat', () => {
       const res = await fetch(`${API_BASE}/chat/rooms/${roomId}/messages`, {
         headers: { Authorization: `Bearer ${auth.token}` },
       })
+      if (!handleFetchAuth(res)) return
       const json = await res.json()
       messages.value = json.data || []
     } catch (e) { console.error(e) }
@@ -106,6 +117,7 @@ export const useChatStore = defineStore('chat', () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
         body: JSON.stringify({ type, name, participantIds }),
       })
+      if (!handleFetchAuth(res)) return
       const json = await res.json()
       await loadRooms()
       return json.data
@@ -136,6 +148,7 @@ export const useChatStore = defineStore('chat', () => {
       const res = await fetch(`${API_BASE}/chat/users`, {
         headers: { Authorization: `Bearer ${auth.token}` },
       })
+      if (!handleFetchAuth(res)) return []
       const json = await res.json()
       return json.data || []
     } catch (e) { console.error(e); return [] }

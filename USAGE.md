@@ -39,9 +39,10 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
 13. [Health Alerts](#health-alerts)
 14. [Population Statistics](#population-statistics)
 15. [PDF Export](#pdf-export)
-16. [Admin Features](#admin-features)
-17. [System Health Monitoring](#system-health-monitoring)
-18. [Troubleshooting](#troubleshooting)
+16. [History & Summary](#history--summary)
+17. [Admin Features](#admin-features)
+18. [System Health Monitoring](#system-health-monitoring)
+19. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -289,7 +290,7 @@ Two tables below the forms show totals grouped by category:
 
 **Page:** `/estate`
 
-Manage palm oil plantation estates with interactive canvas visualization.
+Manage palm oil plantation estates with interactive canvas visualization. All estate operations require authentication. All estate operations require authentication.
 
 ### Creating Estates
 
@@ -550,6 +551,24 @@ A PDF report will be downloaded containing:
 
 ---
 
+## History & Summary
+
+**Pages:** `/history/:id` and `/summary` (requires login)
+
+Non-admin users can only view their own patients' data. Admin can view all patients.
+
+### History (`/history/:id`)
+- View historical BMI, blood sugar, and vital signs records for a specific patient
+- Age is computed from the patient's identity birthdate at query time
+- **Ownership verified**: non-admin users can only access history for identities they own; admin can access all
+
+### Summary (`/summary`)
+- Dashboard statistics cards showing aggregate counts
+- **Non-admin users see stats for their own patients only**
+- **Admin sees stats for all patients**
+
+---
+
 ## Admin Features
 
 Admin users can access all data regardless of ownership.
@@ -586,6 +605,7 @@ ADMIN_PASSWORD=Admin@123
 - Admin can **access the Health Monitor page** (`/health`) - hidden from non-admin dashboard
 - Admin can **view API traffic dashboard** with request logs, hourly charts, and status breakdowns
 - Admin can **filter traffic by period** (1h, 24h, 7d, 30d)
+- Admin can **create identities for any user** via `POST /api/identities` with `id_user` body param (email notification sent to the assigned user)
 
 ---
 
@@ -620,13 +640,13 @@ Always returns `{ status: "alive" }` with HTTP 200.
 
 ### System Statistics
 
-**Endpoint:** `GET /api/health/stats`
+**Endpoint:** `GET /api/health/stats` (requires login)
 
 Returns aggregate counts: total users, patients, BMI records, blood sugar records, uptime, Node version, platform.
 
 ### API Traffic Stats (Admin Only)
 
-**Endpoint:** `GET /api/health-traffic/stats?period=24h`
+**Endpoint:** `GET /api/health-traffic/stats?period=24h` (requires login, admin only)
 
 Returns:
 - **totalRequests**: total number of logged requests in the period
@@ -640,16 +660,26 @@ Returns:
 
 ---
 
+## Session Management
+
+- **Token Expiry**: Access tokens expire after **24 hours**. When expired, you will be automatically redirected to the login page
+- **Cross-Tab Sync**: Logging out in one browser tab automatically logs you out in all other tabs
+- **Browser History Clear**: Clearing browser history/localStorage will log you out on the next page interaction
+- **Automatic Redirect**: Any API call with an expired or invalid token triggers automatic logout and redirect to `/login`
+
+---
+
 ## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
 | "Terjadi kesalahan" on login | Check that the server is running (`npm run dev`) and database is accessible |
 | 2FA code not received | Check email spam folder; ensure SMTP credentials are correct in `.env`; try WhatsApp channel if phone number is registered |
-| "Token tidak valid" error | Your session expired. Log in again |
+| "Token tidak valid" error | Your token is invalid. Log in again |
+| "Token kedaluwarsa" error | Your session expired after 24 hours. You will be automatically redirected to the login page |
 | "Username atau email sudah terdaftar" | Choose a different username or email |
 | Password progress bar stays red | Ensure password has 8+ characters, 1 uppercase letter, and 1 symbol |
-| Cannot see patient data | Ensure you are logged in; non-admin users only see their own patients |
+| Cannot see patient data | Ensure you are logged in; non-admin users only see their own patients' data (data isolation enforced) |
 | Database connection error | Verify PostgreSQL is running and `.env` DB credentials are correct |
 | Rate limit exceeded (429) | Wait 15 minutes before trying again; auth limit is 20 requests per 15 min, API limit is 100 |
 | Canvas not showing trees | Ensure you've selected an estate and planted at least one tree |

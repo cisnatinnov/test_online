@@ -20,7 +20,7 @@ const routes = [
   { path: '/register', name: 'register', component: RegisterView, meta: { guest: true } },
   { path: '/verify-2fa', name: 'verify-2fa', component: Verify2FAView, meta: { guest: true } },
   { path: '/', name: 'dashboard', component: DashboardView, meta: { auth: true } },
-  { path: '/list', name: 'list', component: ListView, meta: { auth: true } },
+  { path: '/list', name: 'list', component: ListView, meta: { auth: true, admin: true } },
   { path: '/history/:id', name: 'history', component: HistoryView, meta: { auth: true } },
   { path: '/summary', name: 'summary', component: SummaryView, meta: { auth: true } },
   { path: '/tools', name: 'tools', component: ToolsView, meta: { auth: true } },
@@ -49,7 +49,10 @@ const router = createRouter({ history: createWebHistory(), routes })
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
-  if (to.meta.auth && !auth.isLoggedIn) return { name: 'login' }
+  if (to.meta.auth && !auth.isLoggedIn) {
+    auth.logout()
+    return { name: 'login' }
+  }
   if (to.meta.guest && auth.isLoggedIn) return { name: 'dashboard' }
   if (to.meta.admin && auth.user?.role !== 'admin') return { name: 'dashboard' }
 })

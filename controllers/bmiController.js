@@ -95,9 +95,13 @@ exports.getBMIList = async (req, res) => {
       const sugarRow = await BloodSugar.findOne({ where: { id_identity: identity.id, status: 'current' }, order: [['id', 'DESC']] });
 
       const age = calculateAge(identity.birthdate) ?? bmiRow?.age ?? sugarRow?.age ?? null;
-      const kes = hitungKesimpulan(Number(bmiRow?.weight), Number(identity.height));
       const sugarCriteria = buildSugarCriteria(sugarRow?.conclusion, sugarRow?.description);
-      formattedData.push(formatPatientResponse(identity, bmiRow, sugarRow, kes, sugarCriteria));
+      if (bmiRow) {
+        const kes = hitungKesimpulan(Number(bmiRow.weight), Number(identity.height));
+        formattedData.push(formatPatientResponse(identity, bmiRow, sugarRow, kes, sugarCriteria));
+      } else {
+        formattedData.push(formatPatientResponse(identity, bmiRow, sugarRow, null, sugarCriteria));
+      }
     }
 
     return apiResponse(res, { data: formattedData });
@@ -144,9 +148,12 @@ exports.getSummary = async (req, res) => {
 exports.getHistoryBMI = async (req, res) => {
   try {
     const { identityId } = req.params;
+    const identity = await Identity.findOne({ where: { id: identityId, ...getUserIdFilter(req) } });
+    if (!identity) return apiResponse(res, { error: 'Data tidak ditemukan', status: 404 });
     const results = await BMI.findAll({ where: { id_identity: identityId }, order: [['id', 'DESC']] });
     const enriched = results.map(r => {
       const plain = r.get({ plain: true });
+      plain.age = calculateAge(identity?.birthdate) ?? plain.age ?? null;
       plain.bmi_value = plain.result != null ? Number(plain.result) : null;
       plain.result = plain.bmi_status || null;
       return plain;

@@ -1,13 +1,53 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
+function decodeToken(t) {
+  try {
+    return JSON.parse(atob(t.split('.')[1]))
+  } catch {
+    return null
+  }
+}
+
+function isTokenExpired(t) {
+  const payload = decodeToken(t)
+  if (!payload?.exp) return true
+  return Date.now() >= payload.exp * 1000
+}
+
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref(localStorage.getItem('token') || null)
+  const storedToken = localStorage.getItem('token') || null
+  const token = ref(storedToken && !isTokenExpired(storedToken) ? storedToken : null)
   const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
   const tempToken = ref(localStorage.getItem('tempToken') || null)
   const channels = ref(JSON.parse(localStorage.getItem('channels') || '[]'))
 
-  const isLoggedIn = computed(() => !!token.value)
+  if (storedToken && isTokenExpired(storedToken)) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    user.value = null
+  }
+
+  const isLoggedIn = computed(() => !!token.value && !isTokenExpired(token.value))
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'token') {
+      if (!e.newValue || isTokenExpired(e.newValue)) {
+        token.value = null
+        user.value = null
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        localStorage.removeItem('tempToken')
+        localStorage.removeItem('channels')
+      }
+    }
+    if (e.key === null) {
+      token.value = null
+      user.value = null
+      tempToken.value = null
+      channels.value = []
+    }
+  })
 
   function setAuth(t, u) {
     token.value = t

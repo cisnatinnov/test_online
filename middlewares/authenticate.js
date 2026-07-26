@@ -8,7 +8,11 @@ function authenticateToken(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Akses ditolak, token diperlukan' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Token tidak valid' });
+    if (err) {
+      const status = err.name === 'TokenExpiredError' ? 401 : 403;
+      const message = err.name === 'TokenExpiredError' ? 'Token kedaluwarsa' : 'Token tidak valid';
+      return res.status(status).json({ error: message });
+    }
     req.user = user;
     next();
   });

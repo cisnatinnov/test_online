@@ -64,15 +64,15 @@
     - b. Health Trend Analysis (BMI and blood sugar direction tracking over time)
     - c. Health Alerts (flag high-risk patients for immediate attention)
     - d. Population Statistics (BMI, sugar, vital signs, risk distribution across all patients)
-12. **Patient Data List** (all identities with current BMI, blood sugar, and vital signs status, PDF export)
-13. **History** (full BMI, blood sugar, and vital signs records per identity)
-14. **PDF Export** (download patient examination reports)
+12. **Patient Data List** (admin-only, all identities with current BMI, blood sugar, and vital signs status, PDF export)
+13. **History** (auth required; non-admin users see only their own patients' BMI, blood sugar, and vital signs records; admin sees all)
+14. **Summary** (auth required; non-admin users see aggregate stats for their own patients only; admin sees all)
 15. **Tools & Games** (accessible from dashboard navigation):
     - a. Games: Hangman, Coin Catcher, Roleplay Adventure, Turtle Racing, Aim Trainer, Rock Paper Scissors
     - b. Math: Shapes Calculator (2D/3D), Equation Grapher, Scientific Calculator, Statistics, Quadratic Function
     - c. NER: Text Summarizer, Sentiment Analysis
 16. **System Health Monitoring** (admin-only via FE, DB connectivity, memory usage, CPU usage, uptime, readiness/liveness probes)
-17. **API Traffic Tracking** (admin-only, logs all health API requests with method, path, status, response time, user)
+17. **API Traffic Tracking** (admin-only, logs all API requests with method, path, status, response time, user)
 
 ## Password Rules
 
@@ -96,17 +96,18 @@
 
 - **ORM**: Sequelize (no raw queries)
 - **Controllers**: Separate controller per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, report, health, healthTraffic, patientHealth, estate, chat, library, admin)
-- **Middlewares**: authenticate (JWT), authorize (role-based), apiResponse (standardized response), mailTransporter (nodemailer), rateLimiter (express-rate-limit), healthTraffic (request logging)
+- **Middlewares**: authenticate (JWT, returns 401 for expired tokens, 403 for invalid), authorize (role-based), apiResponse (standardized response), mailTransporter (nodemailer), rateLimiter (express-rate-limit), healthTraffic (request logging)
 - **Models**: User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Estate, Tree, ChatRoom, ChatMessage, ChatParticipant, Book, Borrowing, LibrarySetting, HealthTraffic
 - **Routes**: Separate route file per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, report, admin, health, healthTraffic, patientHealth, estate, chat, library)
-- **Frontend**: Vue 3 SPA with Vite, Pinia store (auth), Vue Router, Axios API client
+- **Frontend**: Vue 3 SPA with Vite, Pinia store (auth with JWT expiry check and storage sync), Vue Router (route guard validates token expiry), Axios API client (auto-logout on 401/403)
   - Runs on `:5173` during development (Vite dev server)
   - Vite proxies `/api` requests to `:3000` backend
   - Built output at `client/dist/` served by Express in production
   - Health Monitor page (`/health`) restricted to admin role only via route guard
 - **Backend**: Express API server on `:3000`, serves built SPA from `client/dist` when available
 - **Real-time**: Socket.IO server for chat feature (path: `/socket.io`)
-- **Traffic Logging**: Health API requests (`/api/health/*`) are logged to `health_traffic` table via middleware
+- **Traffic Logging**: All API requests (`/api/*`) are logged to `health_traffic` table via global middleware
+- **Database Sync**: Sequelize syncs with `force: true` (resets tables on server restart)
 - **Separation**: FE and BE can run independently via `npm run dev` (BE) and `npm run dev:fe` (FE), or together via `npm run dev:all`
 - **Tests**: Jest + Supertest (62 backend tests), Vitest (6 frontend tests)
   - Estate tests use SQLite in-memory (no PostgreSQL dependency)
@@ -127,9 +128,9 @@
 | `/estate` | Auth | EstateView | Estate management: create estates, plant trees, canvas visualization, stats, drone plans |
 | `/chat` | Auth | ChatView | Real-time chat: rooms, messaging, online users, typing indicators |
 | `/library` | Auth | LibraryView | Library management: book catalog, search/filter, borrowing, return, fine display, statistics, admin settings panel |
-| `/list` | Auth | ListView | Patient data list with tabbed BMI/blood sugar view and search |
-| `/history` | Auth | HistoryView | Patient BMI and blood sugar history tables |
-| `/summary` | Auth | SummaryView | Dashboard statistics cards (total patients, BMI, sugar) |
+| `/list` | Admin Only | ListView | Patient data list with tabbed BMI/blood sugar view and search |
+| `/history/:id` | Auth | HistoryView | Patient BMI, blood sugar, and vital signs history (non-admin sees own patients only; admin sees all) |
+| `/summary` | Auth | SummaryView | Dashboard statistics cards (non-admin sees own patients only; admin sees all) |
 | `/tools` | Auth | ToolsView | Navigation hub for games, math tools, and NER tools |
 
 ### Static Pages (`client/public/` or `client/dist/`)
@@ -155,21 +156,21 @@
 
 ## Health Monitoring Endpoints
 
-### System Health (`/api/health` - no auth required, traffic logged)
-- `GET /` - Full health check: DB connectivity + latency, memory (RSS, heap), CPU usage, server/process uptime
-- `GET /ready` - Readiness probe: verifies database is reachable
-- `GET /live` - Liveness probe: confirms process is alive
-- `GET /stats` - Aggregate stats: total users, patients, BMI records, blood sugar records, uptime, Node version, platform
+### System Health (`/api/health` - traffic logged)
+- `GET /` - Full health check: DB connectivity + latency, memory (RSS, heap), CPU usage, server/process uptime (no auth required)
+- `GET /ready` - Readiness probe: verifies database is reachable (no auth required)
+- `GET /live` - Liveness probe: confirms process is alive (no auth required)
+- `GET /stats` - Aggregate stats: total users, patients, BMI records, blood sugar records, uptime, Node version, platform (auth required)
 
 ### Health Traffic (`/api/health-traffic` - admin only)
 - `GET /stats?period=24h` - API traffic stats with period filtering (1h, 24h, 7d, 30d): total requests, avg response time, status breakdown, method breakdown, hourly traffic, 50 most recent requests with user info
 
-### Vital Signs (`/api/vital-signs` - auth required)
+### Vital Signs (`/api/vital-signs` - auth required, data isolation)
 - `POST /` - Create vital signs record (BP, heart rate, temp, SpO2, respiratory rate), marks previous as past
 - `PUT /:identityId` - Update vital signs record
 - `GET /latest/:identityId` - Get latest vital signs with clinical evaluation
 - `GET /list` - List all patients with latest vital signs and evaluation
-- `GET /history/:identityId` - Full vital signs history
+- `GET /history/:identityId` - Vital signs history (ownership verified; admin sees all)
 
 ### Patient Health (`/api/patient-health` - auth required)
 - `GET /risk/:identityId` - Composite health risk score (0-10) from BMI, blood sugar, vital signs, and age. Levels: rendah (0-2), sedang (3-4), tinggi (5+)
@@ -179,7 +180,7 @@
 
 ## Estate Management Endpoints
 
-### Estate (`/api/estate` - no auth required)
+### Estate (`/api/estate` - auth required)
 - `GET /` - List all estates
 - `POST /` - Create estate (width, length must be positive integers)
 - `GET /:id/trees` - List all trees in an estate

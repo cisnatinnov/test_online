@@ -35,18 +35,39 @@ const categories = [
 </script>
 
 <template>
-  <div style="max-width:700px;margin:0 auto;padding:20px">
-    <h2 style="margin-bottom:16px">Tools</h2>
-    <div v-for="cat in categories" :key="cat.title" style="margin-bottom:20px">
-      <h3 style="margin-bottom:8px">{{ cat.title }}</h3>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        <button v-for="item in cat.items" :key="item.route" @click="router.push({ name: item.route })"
-          style="display:block;padding:16px;background:#fff;border-radius:8px;text-align:center;text-decoration:none;color:#333;box-shadow:0 1px 4px rgba(0,0,0,.1);transition:transform .2s;cursor:pointer;border:none;font-size:14px"
-          @mouseover="$event.target.style.transform='translateY(-2px)'" @mouseout="$event.target.style.transform='none'">
+  <div class="page-container">
+    <div class="page-header">
+      <h2>Tools</h2>
+    </div>
+    <div v-for="cat in categories" :key="cat.title" style="margin-bottom:24px">
+      <h3 style="margin-bottom:10px;color:var(--text-secondary);font-size:14px;text-transform:uppercase;letter-spacing:1px">{{ cat.title }}</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <button v-for="item in cat.items" :key="item.route" @click="router.push({ name: item.route })" class="tool-card">
           {{ item.name }}
         </button>
       </div>
     </div>
-    <button @click="router.push('/')" style="padding:8px 16px;background:#607d8b;color:#fff;border:none;border-radius:4px;cursor:pointer">Kembali</button>
+    <button @click="router.push('/')" class="btn btn-gray">Kembali</button>
   </div>
 </template>
+
+<style scoped>
+.tool-card {
+  display: block;
+  padding: 18px 16px;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  text-align: center;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tool-card:hover {
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  border-color: var(--accent-green);
+}
+</style>

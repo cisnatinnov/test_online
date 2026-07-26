@@ -60,6 +60,7 @@ if (fs.existsSync(clientDist)) {
   app.use(express.static(clientDist));
 }
 
+app.use('/api', healthTrafficMiddleware);
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/bmi', apiLimiter, bmiRoutes);
 app.use('/api/bloodsugar', apiLimiter, bloodSugarRoutes);
@@ -67,9 +68,9 @@ app.use('/api/identities', apiLimiter, identityRoutes);
 app.use('/api/export', apiLimiter, reportRoutes);
 app.use('/api/money', apiLimiter, moneyRoutes);
 app.use('/api/admin', apiLimiter, adminRoutes);
-app.use('/api/health', healthTrafficMiddleware, healthRoutes);
-app.use('/api/patient-health', patientHealthRoutes);
-app.use('/api/health-traffic', healthTrafficRoutes);
+app.use('/api/health', healthRoutes);
+app.use('/api/patient-health', apiLimiter, patientHealthRoutes);
+app.use('/api/health-traffic', apiLimiter, healthTrafficRoutes);
 app.use('/api/vital-signs', apiLimiter, vitalSignsRoutes);
 app.use('/api/estate', apiLimiter, estateRoutes);
 app.use('/api/chat', apiLimiter, chatRoutes);
@@ -103,7 +104,7 @@ const io = new Server(server, {
 
 chatController.initSocket(io);
 
-sequelize.sync({ alter: true, force: true }) // force: true and alter: true in development only, remove in production
+sequelize.sync({ alter: false, force: false }) // force: true and alter: true in development only, remove in production
   .then(async () => {
     console.log('Database synced successfully!');
 

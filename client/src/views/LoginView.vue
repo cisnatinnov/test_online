@@ -72,52 +72,54 @@ async function login() {
 </script>
 
 <template>
-  <div style="max-width:400px;margin:80px auto;padding:24px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)">
-    <h2 style="text-align:center;margin-bottom:16px">Login</h2>
-    <div v-if="error" style="color:#e74c3c;margin-bottom:12px;padding:10px;background:#fdecea;border-radius:4px">{{ error }}</div>
-    <form @submit.prevent="login">
-      <div style="margin-bottom:12px">
-        <input
-          v-model="form.username"
-          placeholder="Username atau Email"
-          required
-          :style="{width:'100%',padding:'10px',border:'1px solid '+(touched.username && fieldErrors.username ? '#e74c3c' : '#ccc'),borderRadius:'4px',boxSizing:'border-box'}"
-          @focus="touched.username = true"
-          @input="validateField('username')"
-          @blur="validateField('username')"
-        />
-        <div v-if="touched.username && fieldErrors.username" style="color:#e74c3c;font-size:12px;margin-top:4px">{{ fieldErrors.username }}</div>
-      </div>
-      <div style="margin-bottom:12px">
-        <input
-          v-model="form.password"
-          type="password"
-          placeholder="Password"
-          required
-          :style="{width:'100%',padding:'10px',border:'1px solid '+(touched.password && fieldErrors.password.length ? '#e74c3c' : '#ccc'),borderRadius:'4px',boxSizing:'border-box'}"
-          @focus="touched.password = true"
-          @input="validateField('password')"
-          @blur="validateField('password')"
-        />
-        <div v-if="form.password" style="margin-top:6px">
-          <div style="height:6px;background:#eee;border-radius:3px;overflow:hidden">
-            <div :style="{height:'100%',width:pwProgress+'%',background:pwStrength.color,borderRadius:'3px',transition:'width .3s,background .3s'}"></div>
-          </div>
-          <div :style="{fontSize:'11px',color:pwStrength.color,marginTop:'2px'}">{{ pwStrength.label }}</div>
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div class="card" style="width:100%;max-width:400px">
+      <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">Login</h2>
+      <div v-if="error" class="flash flash-error">{{ error }}</div>
+      <form @submit.prevent="login">
+        <div style="margin-bottom:16px">
+          <input
+            v-model="form.username"
+            placeholder="Username atau Email"
+            required
+            :class="['input', touched.username && fieldErrors.username ? 'input-error' : '']"
+            @focus="touched.username = true"
+            @input="validateField('username')"
+            @blur="validateField('username')"
+          />
+          <div v-if="touched.username && fieldErrors.username" style="color:var(--accent-red);font-size:12px;margin-top:4px">{{ fieldErrors.username }}</div>
         </div>
-        <div v-if="form.password" style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:2px">
-          <div v-for="rule in pwRules" :key="rule.label" :style="{fontSize:'11px',color:rule.met ? '#2ecc71' : '#999',display:'flex',alignItems:'center',gap:'4px'}">
-            <span>{{ rule.met ? '\u2713' : '\u25CB' }}</span> {{ rule.label }}
+        <div style="margin-bottom:16px">
+          <input
+            v-model="form.password"
+            type="password"
+            placeholder="Password"
+            required
+            :class="['input', touched.password && fieldErrors.password.length ? 'input-error' : '']"
+            @focus="touched.password = true"
+            @input="validateField('password')"
+            @blur="validateField('password')"
+          />
+          <div v-if="form.password" style="margin-top:8px">
+            <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden">
+              <div :style="{height:'100%',width:pwProgress+'%',background:pwStrength.color,borderRadius:'3px',transition:'width .3s,background .3s'}"></div>
+            </div>
+            <div :style="{fontSize:'11px',color:pwStrength.color,marginTop:'4px'}">{{ pwStrength.label }}</div>
           </div>
+          <div v-if="form.password" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px">
+            <div v-for="rule in pwRules" :key="rule.label" :style="{fontSize:'11px',color:rule.met ? '#2ecc71' : 'var(--text-muted)',display:'flex',alignItems:'center',gap:'4px'}">
+              <span>{{ rule.met ? '\u2713' : '\u25CB' }}</span> {{ rule.label }}
+            </div>
+          </div>
+          <div v-if="touched.password && fieldErrors.password.length" style="color:var(--accent-red);font-size:11px;margin-top:4px">{{ fieldErrors.password.join('. ') }}</div>
         </div>
-        <div v-if="touched.password && fieldErrors.password.length" style="color:#e74c3c;font-size:11px;margin-top:4px">{{ fieldErrors.password.join('. ') }}</div>
-      </div>
-      <button type="submit" :disabled="loading" style="width:100%;padding:10px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer">
-        {{ loading ? 'Masuk...' : 'Masuk' }}
-      </button>
-    </form>
-    <p style="text-align:center;margin-top:12px">
-      Belum punya akun? <router-link to="/register">Daftar</router-link>
-    </p>
+        <button type="submit" :disabled="loading" class="btn btn-green btn-block">
+          {{ loading ? 'Masuk...' : 'Masuk' }}
+        </button>
+      </form>
+      <p style="text-align:center;margin-top:16px;color:var(--text-secondary)">
+        Belum punya akun? <router-link to="/register">Daftar</router-link>
+      </p>
+    </div>
   </div>
 </template>

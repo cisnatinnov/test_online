@@ -17,6 +17,9 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 
 ### System & Auth
 - **Authentication**: Register, Login with 2FA (Email / WhatsApp)
+- **JWT Token Expiry**: Access tokens expire after 24 hours; backend returns 401 (expired) vs 403 (invalid) to distinguish error types
+- **Auto-Logout**: Frontend automatically logs out and redirects to login on token expiry (detected via API 401/403 response, client-side expiry check on page load, or router navigation)
+- **Storage Sync**: Logout in one browser tab automatically syncs across all tabs via `storage` event listener; clearing browser history also triggers logout
 - **Email Validation**: Format validated on both backend and frontend (`user@domain.tld`), real-time on blur/input
 - **Password Validation**: Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 symbol -- enforced on backend (register) and frontend (register + login) with real-time strength progress bar
 - **System Health Monitoring**: Server uptime, DB connectivity, memory/CPU usage, readiness/liveness probes
@@ -24,10 +27,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **Role-based Access**: Admin and user roles with data isolation
 
 ### Patient Management
-- **Patient Data List**: View all patient data with current BMI, blood sugar, and vital signs status
-- **History**: View historical BMI, blood sugar, and vital signs records per patient
-- **Dashboard Summary**: Aggregate statistics for patients, BMI, blood sugar, and vital signs
-- **PDF Export**: Download patient examination reports as PDF
+- **Identity CRUD**: Identity creation requires a valid user account; admin can assign identities to any user with email notification
+- **Data Isolation**: Non-admin users only see their own patients' data across all endpoints including BMI, blood sugar, vital signs, history, and summary
 
 ### Money Management
 - **Expense/Saving Tracking**: CRUD with category and description
@@ -75,7 +76,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **Framework**: Express.js
 - **ORM**: Sequelize
 - **Database**: PostgreSQL (tests use SQLite in-memory)
-- **Auth**: JWT with 2FA (Nodemailer / WhatsApp API)
+- **Auth**: JWT with 2FA (Nodemailer / WhatsApp API), token expiry auto-logout, cross-tab storage sync
 - **Real-time**: Socket.IO (chat feature)
 - **PDF Generation**: PDFKit
 - **Frontend**: Vue 3 SPA with Vite, Pinia store, Vue Router
@@ -111,7 +112,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── bmiController.js         # BMI CRUD, list, summary, history
 │   ├── bloodSugarController.js  # Blood sugar CRUD, history
 │   ├── vitalSignsController.js  # Vital signs CRUD, history, list
-│   ├── identityController.js    # Identity CRUD
+│   ├── identityController.js    # Identity CRUD with user validation and email notification
 │   ├── moneyController.js       # Expense/Saving CRUD, chart, summary, category breakdown
 │   ├── reportController.js      # PDF export
 │   ├── healthController.js      # System health checks (DB, memory, CPU, uptime)
@@ -122,12 +123,12 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── libraryController.js     # Book CRUD, borrow/return, overdue fine, stats, library settings
 │   └── adminController.js       # Admin user/data listing
 ├── middlewares/
-│   ├── authenticate.js          # JWT authentication
+│   ├── authenticate.js          # JWT authentication (401 for expired, 403 for invalid)
 │   ├── apiResponse.js           # Standardized API response + error handler
 │   ├── mailTransporter.js       # Nodemailer transport
 │   ├── rateLimiter.js           # Rate limiting (API & Auth)
 │   ├── authorize.js             # Role-based access control
-│   └── healthTraffic.js         # Logs health API requests to health_traffic table
+│   └── healthTraffic.js         # Logs all API requests to health_traffic table
 ├── routes/
 │   ├── authRoutes.js
 │   ├── bmiRoutes.js
@@ -158,11 +159,11 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── package.json
 │   ├── vite.config.js
 │   └── src/
-│       ├── api.js               # Axios instance with baseURL
+│       ├── api.js               # Axios instance with auth interceptors (auto-logout on 401/403)
 │       ├── App.vue
 │       ├── main.js
-│       ├── router/index.js      # Vue Router (all routes)
-│       ├── stores/auth.js       # Pinia auth store
+│       ├── router/index.js      # Vue Router (all routes, token expiry guard)
+│       ├── stores/auth.js       # Pinia auth store (JWT expiry check, storage sync)
 │       ├── utils/helpers.js     # Frontend helper functions
 │       └── views/
 │           ├── LoginView.vue
@@ -261,6 +262,8 @@ npm test
 | `npm run build:fe` | Build SPA to `client/dist/` |
 | `npm test` | Run backend unit tests |
 
+- `force: true` is set in Sequelize sync (resets tables on server restart)
+
 Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://localhost:5173`. Vite proxies `/api` requests to `http://localhost:3000`.
 
 ## API Endpoints
@@ -278,8 +281,8 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/` | List user identities | Yes |
-| POST | `/` | Create identity (admin only) | Yes (admin) |
+| GET | `/` | List user identities (own patients only, admin sees all) | Yes |
+| POST | `/` | Create identity (admin only, requires valid user account, email notification sent to assigned user) | Yes (admin) |
 | PUT | `/:id` | Update identity | Yes |
 
 ### BMI (`/api/bmi`)
@@ -331,13 +334,13 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/` | List all estates | No |
-| POST | `/` | Create estate (width, length) | No |
-| GET | `/:id/trees` | List trees in an estate | No |
-| POST | `/:id/tree` | Plant tree (x, y, height) | No |
-| GET | `/:id/stats` | Estate stats (count, max, min, median height) | No |
-| GET | `/:id/drone-plan` | Drone path with Manhattan distance | No |
-| GET | `/:id/drone-plan?max_distance=N` | Drone path with forced landing point | No |
+| GET | `/` | List all estates | Yes |
+| POST | `/` | Create estate (width, length) | Yes |
+| GET | `/:id/trees` | List trees in an estate | Yes |
+| POST | `/:id/tree` | Plant tree (x, y, height) | Yes |
+| GET | `/:id/stats` | Estate stats (count, max, min, median height) | Yes |
+| GET | `/:id/drone-plan` | Drone path with Manhattan distance | Yes |
+| GET | `/:id/drone-plan?max_distance=N` | Drone path with forced landing point | Yes |
 
 ### Chat (`/api/chat`)
 
@@ -398,7 +401,7 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | GET | `/` | Full health check (DB, memory, CPU, uptime) | No |
 | GET | `/ready` | Readiness probe (DB connectivity) | No |
 | GET | `/live` | Liveness probe | No |
-| GET | `/stats` | Aggregate system and data statistics | No |
+| GET | `/stats` | Aggregate system and data statistics | Yes |
 
 ### Health Traffic (`/api/health-traffic`)
 
@@ -541,9 +544,9 @@ Risk score is calculated from combined BMI, blood sugar, vital signs, and age fa
 | `/estate` | EstateView | Auth | Estate CRUD, tree planting, canvas visualization, drone plans |
 | `/chat` | ChatView | Auth | Real-time chat rooms, messaging, online users |
 | `/library` | LibraryView | Auth | Book catalog, search/filter, borrowing, return, fine, statistics, admin settings |
-| `/list` | ListView | Auth | Patient data list with tabs |
-| `/history` | HistoryView | Auth | Patient BMI and blood sugar history |
-| `/summary` | SummaryView | Auth | Dashboard statistics cards |
+| `/list` | ListView | Admin Only | Patient data list with tabs |
+| `/history/:id` | HistoryView | Auth | Patient BMI, blood sugar, and vital signs history (non-admin sees own patients only; admin sees all) |
+| `/summary` | SummaryView | Auth | Dashboard statistics cards (non-admin sees own patients only; admin sees all) |
 | `/tools` | ToolsView | Auth | Navigation hub for games, math, and NER tools |
 
 ## Testing

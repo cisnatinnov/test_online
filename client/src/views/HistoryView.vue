@@ -23,40 +23,42 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div style="max-width:900px;margin:0 auto;padding:20px">
-    <h2 style="margin-bottom:16px">Riwayat Pasien #{{ id }}</h2>
+  <div class="page-container">
+    <div class="page-header">
+      <h2>Riwayat Pasien #{{ id }}</h2>
+    </div>
 
-    <h3 style="margin-bottom:8px">Riwayat BMI</h3>
-    <div style="background:#fff;border-radius:8px;overflow:hidden;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="background:#4caf50;color:#fff"><th style="padding:10px">Tanggal</th><th>Berat</th><th>Umur</th><th>Hasil</th></tr></thead>
+    <h3 style="margin-bottom:10px;color:#fff">Riwayat BMI</h3>
+    <div class="table-wrap" style="margin-bottom:24px">
+      <table>
+        <thead><tr style="background:var(--accent-green)"><th>Tanggal</th><th>Berat</th><th>Umur</th><th>Hasil</th></tr></thead>
         <tbody>
-          <tr v-for="b in bmiHistory" :key="b.id" style="border-bottom:1px solid #eee">
-            <td style="padding:8px">{{ formatDate(b.createdAt) }}</td>
+          <tr v-for="b in bmiHistory" :key="b.id">
+            <td>{{ formatDate(b.createdAt) }}</td>
             <td>{{ b.weight }} kg</td>
             <td>{{ b.age ?? '-' }}</td>
-            <td :style="{ color: b.result==='Normal'?'#4caf50':'#f44336', fontWeight:'bold' }">{{ b.result }}</td>
+            <td :style="{ color: b.result==='Normal'?'var(--accent-green)':'var(--accent-red)', fontWeight:'bold' }">{{ b.result }}</td>
           </tr>
         </tbody>
       </table>
-      <p v-if="!bmiHistory.length" style="padding:16px;text-align:center;color:#999">Belum ada riwayat BMI</p>
+      <p v-if="!bmiHistory.length" class="empty-state">Belum ada riwayat BMI</p>
     </div>
 
-    <h3 style="margin-bottom:8px">Riwayat Gula Darah</h3>
-    <div style="background:#fff;border-radius:8px;overflow:hidden;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="background:#ff9800;color:#fff"><th style="padding:10px">Tanggal</th><th>Hasil</th><th>Kesimpulan</th></tr></thead>
+    <h3 style="margin-bottom:10px;color:#fff">Riwayat Gula Darah</h3>
+    <div class="table-wrap" style="margin-bottom:24px">
+      <table>
+        <thead><tr style="background:var(--accent-orange)"><th>Tanggal</th><th>Hasil</th><th>Kesimpulan</th></tr></thead>
         <tbody>
-          <tr v-for="s in sugarHistory" :key="s.id" style="border-bottom:1px solid #eee">
-            <td style="padding:8px">{{ formatDate(s.createdAt) }}</td>
+          <tr v-for="s in sugarHistory" :key="s.id">
+            <td>{{ formatDate(s.createdAt) }}</td>
             <td>{{ s.result }}</td>
             <td>{{ s.conclusion }}</td>
           </tr>
         </tbody>
       </table>
-      <p v-if="!sugarHistory.length" style="padding:16px;text-align:center;color:#999">Belum ada riwayat gula darah</p>
+      <p v-if="!sugarHistory.length" class="empty-state">Belum ada riwayat gula darah</p>
     </div>
 
-    <button @click="router.push('/list')" style="padding:8px 16px;background:#607d8b;color:#fff;border:none;border-radius:4px;cursor:pointer">Kembali</button>
+    <button @click="router.push('/list')" class="btn btn-gray">Kembali</button>
   </div>
 </template>

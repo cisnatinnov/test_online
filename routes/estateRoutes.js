@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const estateController = require('../controllers/estateController');
+const authenticateToken = require('../middlewares/authenticate');
+
+router.use(authenticateToken);
 
 router.get('/', estateController.listEstates);
 router.post('/', estateController.createEstate);

@@ -8,9 +8,10 @@ const auth = useAuthStore()
 const router = useRouter()
 
 const identities = ref([])
+const users = ref([])
 const selectedIdentity = ref(null)
 const showNewIdentity = ref(false)
-const newIdentity = ref({ nik: '', name: '', height: '', birthplace: '', birthdate: '', address: '' })
+const newIdentity = ref({ nik: '', name: '', height: '', birthplace: '', birthdate: '', address: '', id_user: '' })
 
 const bmiWeight = ref('')
 const sugarValue = ref('')
@@ -20,10 +21,12 @@ const msg = ref('')
 const msgType = ref('')
 
 function nav(path) { router.push(path) }
-
 function logout() { auth.logout(); router.push('/login') }
 
-onMounted(loadIdentities)
+onMounted(async () => {
+  await loadIdentities()
+  if (auth.user?.role === 'admin') await loadUsers()
+})
 
 async function loadIdentities() {
   try {
@@ -35,11 +38,24 @@ async function loadIdentities() {
   } catch (e) { console.error(e) }
 }
 
+async function loadUsers() {
+  try {
+    const { data: res } = await api.get('/admin/users')
+    users.value = res.data
+  } catch (e) { console.error(e) }
+}
+
 async function createIdentity() {
   try {
-    const { data: res } = await api.post('/identities', newIdentity.value)
+    const payload = { ...newIdentity.value }
+    if (auth.user?.role === 'admin' && payload.id_user) {
+      payload.id_user = Number(payload.id_user)
+    } else {
+      delete payload.id_user
+    }
+    const { data: res } = await api.post('/identities', payload)
     showNewIdentity.value = false
-    newIdentity.value = { nik: '', name: '', height: '', birthplace: '', birthdate: '', address: '' }
+    newIdentity.value = { nik: '', name: '', height: '', birthplace: '', birthdate: '', address: '', id_user: '' }
     await loadIdentities()
     selectedIdentity.value = res.data.id
     flash('Data pasien berhasil dibuat', 'success')
@@ -79,69 +95,73 @@ function flash(m, t) { msg.value = m; msgType.value = t; setTimeout(() => msg.va
 </script>
 
 <template>
-  <div style="max-width:900px;margin:0 auto;padding:20px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+  <div class="page-container">
+    <div class="page-header">
       <h2>Dashboard</h2>
-      <div>
-        <span style="margin-right:12px">Halo, {{ auth.user?.username }}</span>
-        <button v-if="auth.user?.role==='admin'" @click="nav('/health')" style="margin-right:8px;padding:6px 12px;background:#2196f3;color:#fff;border:none;border-radius:4px;cursor:pointer">Health</button>
-        <button @click="nav('/money')" style="margin-right:8px;padding:6px 12px;background:#ffc107;color:#1a1a2e;border:none;border-radius:4px;cursor:pointer;font-weight:700">Money</button>
-        <button @click="nav('/list')" style="margin-right:8px;padding:6px 12px;background:#ff9800;color:#fff;border:none;border-radius:4px;cursor:pointer">List</button>
-        <button @click="nav('/summary')" style="margin-right:8px;padding:6px 12px;background:#9c27b0;color:#fff;border:none;border-radius:4px;cursor:pointer">Ringkasan</button>
-        <button @click="nav('/tools')" style="margin-right:8px;padding:6px 12px;background:#00bcd4;color:#fff;border:none;border-radius:4px;cursor:pointer">Tools</button>
-        <button @click="nav('/estate')" style="margin-right:8px;padding:6px 12px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer">Estate</button>
-        <button @click="nav('/chat')" style="margin-right:8px;padding:6px 12px;background:#00897b;color:#fff;border:none;border-radius:4px;cursor:pointer">Chat</button>
-        <button @click="nav('/library')" style="margin-right:8px;padding:6px 12px;background:#795548;color:#fff;border:none;border-radius:4px;cursor:pointer">Perpustakaan</button>
-        <button @click="logout" style="padding:6px 12px;background:#f44336;color:#fff;border:none;border-radius:4px;cursor:pointer">Logout</button>
+      <div class="nav-bar">
+        <span class="greeting">Halo, {{ auth.user?.username }}</span>
+        <button v-if="auth.user?.role==='admin'" @click="nav('/health')" class="btn btn-blue btn-sm">Health</button>
+        <button @click="nav('/money')" class="btn btn-yellow btn-sm">Money</button>
+        <button v-if="auth.user?.role==='admin'" @click="nav('/list')" class="btn btn-orange btn-sm">List</button>
+        <button @click="nav('/summary')" class="btn btn-purple btn-sm">Ringkasan</button>
+        <button @click="nav('/tools')" class="btn btn-cyan btn-sm">Tools</button>
+        <button @click="nav('/estate')" class="btn btn-green btn-sm">Estate</button>
+        <button @click="nav('/chat')" class="btn btn-teal btn-sm">Chat</button>
+        <button @click="nav('/library')" class="btn btn-brown btn-sm">Perpustakaan</button>
+        <button @click="logout" class="btn btn-red btn-sm">Logout</button>
       </div>
     </div>
 
-    <div v-if="msg" :style="{ padding:'10px',marginBottom:'12px',borderRadius:'4px',color:'#fff',background: msgType==='success'?'#4caf50':'#f44336' }">{{ msg }}</div>
+    <div v-if="msg" :class="['flash', msgType === 'success' ? 'flash-success' : 'flash-error']">{{ msg }}</div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-      <div style="padding:16px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-        <h3 v-if="auth.user?.role==='admin'">Pilih / Buat Pasien</h3>
-        <select v-model="selectedIdentity" :disabled="auth.user?.role !== 'admin'" style="width:100%;padding:8px;margin:8px 0;border:1px solid #ccc;border-radius:4px">
+    <div class="grid-2" style="margin-bottom:20px">
+      <div class="card">
+        <h3 v-if="auth.user?.role==='admin'" style="margin-bottom:8px;color:#fff">Pilih / Buat Pasien</h3>
+        <select v-model="selectedIdentity" :disabled="auth.user?.role !== 'admin'" class="select">
           <option :value="null" disabled>Pilih pasien...</option>
           <option v-for="i in identities" :key="i.id" :value="i.id">{{ i.name }} ({{ i.nik || '-' }})</option>
         </select>
-        <button v-if="auth.user?.role==='admin'" @click="showNewIdentity = !showNewIdentity" style="padding:6px 12px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer;width:100%">
+        <button v-if="auth.user?.role==='admin'" @click="showNewIdentity = !showNewIdentity" class="btn btn-green btn-block" style="margin-top:8px">
           {{ showNewIdentity ? 'Batal' : '+ Pasien Baru' }}
         </button>
-        <div v-if="showNewIdentity" style="margin-top:12px">
-          <input v-model="newIdentity.name" placeholder="Nama *" required style="width:100%;padding:8px;margin-bottom:6px;border:1px solid #ccc;border-radius:4px" />
-          <input v-model="newIdentity.nik" placeholder="NIK" style="width:100%;padding:8px;margin-bottom:6px;border:1px solid #ccc;border-radius:4px" />
-          <input v-model="newIdentity.height" type="number" placeholder="Tinggi (cm) *" required style="width:100%;padding:8px;margin-bottom:6px;border:1px solid #ccc;border-radius:4px" />
-          <input v-model="newIdentity.birthplace" placeholder="Tempat Lahir" style="width:100%;padding:8px;margin-bottom:6px;border:1px solid #ccc;border-radius:4px" />
-          <input v-model="newIdentity.birthdate" type="date" placeholder="Tanggal Lahir" style="width:100%;padding:8px;margin-bottom:6px;border:1px solid #ccc;border-radius:4px" />
-          <input v-model="newIdentity.address" placeholder="Alamat" style="width:100%;padding:8px;margin-bottom:6px;border:1px solid #ccc;border-radius:4px" />
-          <button @click="createIdentity" style="width:100%;padding:8px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer">Simpan</button>
+        <div v-if="showNewIdentity" style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+          <select v-if="auth.user?.role==='admin'" v-model="newIdentity.id_user" class="select">
+            <option value="" disabled>Pilih user...</option>
+            <option v-for="u in users" :key="u.id" :value="u.id">{{ u.username }} ({{ u.email }})</option>
+          </select>
+          <input v-model="newIdentity.name" placeholder="Nama *" required class="input" />
+          <input v-model="newIdentity.nik" placeholder="NIK" class="input" />
+          <input v-model="newIdentity.height" type="number" placeholder="Tinggi (cm) *" required class="input" />
+          <input v-model="newIdentity.birthplace" placeholder="Tempat Lahir" class="input" />
+          <input v-model="newIdentity.birthdate" type="date" class="input" />
+          <input v-model="newIdentity.address" placeholder="Alamat" class="input" />
+          <button @click="createIdentity" class="btn btn-green btn-block">Simpan</button>
         </div>
       </div>
 
-      <div style="padding:16px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-        <h3 style="margin-bottom:8px">BMI</h3>
-        <input v-model="bmiWeight" type="number" placeholder="Berat badan (kg)" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid #ccc;border-radius:4px" />
-        <button @click="submitBMI" style="width:100%;padding:8px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer">Simpan BMI</button>
+      <div class="card">
+        <h3 style="margin-bottom:12px;color:#fff">BMI</h3>
+        <input v-model="bmiWeight" type="number" placeholder="Berat badan (kg)" class="input" style="margin-bottom:8px" />
+        <button @click="submitBMI" class="btn btn-green btn-block">Simpan BMI</button>
       </div>
 
-      <div style="padding:16px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-        <h3 style="margin-bottom:8px">Gula Darah</h3>
-        <input v-model="sugarValue" type="number" placeholder="Gula darah (mg/dL)" style="width:100%;padding:8px;margin-bottom:8px;border:1px solid #ccc;border-radius:4px" />
-        <button @click="submitSugar" style="width:100%;padding:8px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer">Simpan Gula Darah</button>
+      <div class="card">
+        <h3 style="margin-bottom:12px;color:#fff">Gula Darah</h3>
+        <input v-model="sugarValue" type="number" placeholder="Gula darah (mg/dL)" class="input" style="margin-bottom:8px" />
+        <button @click="submitSugar" class="btn btn-green btn-block">Simpan Gula Darah</button>
       </div>
 
-      <div style="padding:16px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-        <h3 style="margin-bottom:8px">Tanda Vital</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-          <input v-model="vitals.systolic" type="number" placeholder="Sistole" style="padding:8px;border:1px solid #ccc;border-radius:4px" />
-          <input v-model="vitals.diastolic" type="number" placeholder="Diastole" style="padding:8px;border:1px solid #ccc;border-radius:4px" />
-          <input v-model="vitals.heart_rate" type="number" placeholder="Denyut Jantung" style="padding:8px;border:1px solid #ccc;border-radius:4px" />
-          <input v-model="vitals.temperature" type="number" step="0.1" placeholder="Suhu (C)" style="padding:8px;border:1px solid #ccc;border-radius:4px" />
-          <input v-model="vitals.spo2" type="number" placeholder="SpO2 (%)" style="padding:8px;border:1px solid #ccc;border-radius:4px" />
-          <input v-model="vitals.respiratory_rate" type="number" placeholder="Respirasi/mnt" style="padding:8px;border:1px solid #ccc;border-radius:4px" />
+      <div class="card">
+        <h3 style="margin-bottom:12px;color:#fff">Tanda Vital</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <input v-model="vitals.systolic" type="number" placeholder="Sistole" class="input" />
+          <input v-model="vitals.diastolic" type="number" placeholder="Diastole" class="input" />
+          <input v-model="vitals.heart_rate" type="number" placeholder="Denyut Jantung" class="input" />
+          <input v-model="vitals.temperature" type="number" step="0.1" placeholder="Suhu (C)" class="input" />
+          <input v-model="vitals.spo2" type="number" placeholder="SpO2 (%)" class="input" />
+          <input v-model="vitals.respiratory_rate" type="number" placeholder="Respirasi/mnt" class="input" />
         </div>
-        <button @click="submitVitals" style="width:100%;padding:8px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-top:8px">Simpan Tanda Vital</button>
+        <button @click="submitVitals" class="btn btn-green btn-block" style="margin-top:8px">Simpan Tanda Vital</button>
       </div>
     </div>
   </div>

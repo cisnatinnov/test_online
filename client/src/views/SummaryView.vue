@@ -13,22 +13,24 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div style="max-width:700px;margin:0 auto;padding:20px">
-    <h2 style="margin-bottom:16px">Ringkasan</h2>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-      <div style="padding:20px;background:#fff;border-radius:8px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-        <div style="font-size:32px;font-weight:bold;color:#4caf50">{{ summary.totalPatients }}</div>
-        <div>Total Pasien</div>
+  <div class="page-container">
+    <div class="page-header">
+      <h2>Ringkasan</h2>
+    </div>
+    <div class="grid-3" style="margin-bottom:20px">
+      <div class="card" style="text-align:center">
+        <div style="font-size:36px;font-weight:bold;color:var(--accent-green)">{{ summary.totalPatients }}</div>
+        <div style="color:var(--text-secondary);margin-top:4px">Total Pasien</div>
       </div>
-      <div style="padding:20px;background:#fff;border-radius:8px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-        <div style="font-size:32px;font-weight:bold;color:#2196f3">{{ summary.normalBmi }}</div>
-        <div>BMI Normal</div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:36px;font-weight:bold;color:var(--accent-blue)">{{ summary.normalBmi }}</div>
+        <div style="color:var(--text-secondary);margin-top:4px">BMI Normal</div>
       </div>
-      <div style="padding:20px;background:#fff;border-radius:8px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-        <div style="font-size:32px;font-weight:bold;color:#f44336">{{ summary.highSugar }}</div>
-        <div>Gula Darah Tinggi</div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:36px;font-weight:bold;color:var(--accent-red)">{{ summary.highSugar }}</div>
+        <div style="color:var(--text-secondary);margin-top:4px">Gula Darah Tinggi</div>
       </div>
     </div>
-    <button @click="$router.push('/')" style="margin-top:16px;padding:8px 16px;background:#607d8b;color:#fff;border:none;border-radius:4px;cursor:pointer">Kembali</button>
+    <button @click="$router.push('/')" class="btn btn-gray">Kembali</button>
   </div>
 </template>
