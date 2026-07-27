@@ -22,8 +22,6 @@ exports.getNews = async (req, res) => {
     return apiResponse(res, {
       data: paginateResponse({ total: count, page, limit, items: rows, itemName: 'news' }),
     });
-      },
-    });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
