@@ -30,6 +30,9 @@ const estateRoutes = require('./routes/estateRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const libraryRoutes = require('./routes/libraryRoutes');
 const healthTrafficRoutes = require('./routes/healthTrafficRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const newsRoutes = require('./routes/newsRoutes');
+const newsController = require('./controllers/newsController');
 const healthTrafficMiddleware = require('./middlewares/healthTraffic');
 
 const app = express();
@@ -83,6 +86,8 @@ app.use('/api/vital-signs', apiLimiter, vitalSignsRoutes);
 app.use('/api/estate', apiLimiter, estateRoutes);
 app.use('/api/chat', apiLimiter, chatRoutes);
 app.use('/api/library', apiLimiter, libraryRoutes);
+app.use('/api/categories', apiLimiter, categoryRoutes);
+app.use('/api/news', apiLimiter, newsRoutes);
 
 app.get('/api/dashboard/summary', authenticateToken, bmiController.getSummary);
 app.get('/api/history/:identityId/bmi', authenticateToken, bmiController.getHistoryBMI);
@@ -140,7 +145,28 @@ sequelize.sync({ alter: false, force: false }) // force: true and alter: true in
       console.log(`Admin account created: ${adminUsername}`);
     }
 
-    server.listen(PORT, () => console.log(`Server berjalan di http://localhost:${PORT}`));
+    server.listen(PORT, () => {
+      console.log(`Server berjalan di http://localhost:${PORT}`);
+
+      const startNewsScheduler = () => {
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(6, 0, 0, 0);
+        const msUntilTomorrow = tomorrow.getTime() - now.getTime();
+
+        setTimeout(async () => {
+          await newsController.autoRefreshAndCleanup();
+          setInterval(async () => {
+            await newsController.autoRefreshAndCleanup();
+          }, 24 * 60 * 60 * 1000);
+        }, msUntilTomorrow);
+
+        console.log(`[NewsScheduler] Next auto-refresh at ${tomorrow.toISOString()}`);
+      };
+
+      startNewsScheduler();
+    });
   })
   .catch((err) => {
     console.error('Error syncing database:', err);

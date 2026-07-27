@@ -11,33 +11,20 @@ const languages = [
   { code: 'pt', label: 'Portugu\u00eas' },
 ]
 
-function switchLang(code) {
-  locale.value = code
-  localStorage.setItem('locale', code)
+function switchLang(e) {
+  locale.value = e.target.value
+  localStorage.setItem('locale', e.target.value)
 }
 </script>
 
 <template>
-  <div class="lang-switcher">
-    <button
-      v-for="lang in languages"
-      :key="lang.code"
-      :class="['lang-btn', { active: locale === lang.code }]"
-      @click="switchLang(lang.code)"
-      :title="lang.label"
-    >
-      {{ lang.code.toUpperCase() }}
-    </button>
-  </div>
+  <select class="lang-select" :value="locale" @change="switchLang">
+    <option v-for="lang in languages" :key="lang.code" :value="lang.code">{{ lang.label }}</option>
+  </select>
 </template>
 
 <style scoped>
-.lang-switcher {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-.lang-btn {
+.lang-select {
   padding: 4px 8px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
@@ -47,14 +34,17 @@ function switchLang(code) {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  outline: none;
 }
-.lang-btn:hover {
+.lang-select:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
 }
-.lang-btn.active {
-  background: var(--accent-green);
-  color: #fff;
+.lang-select:focus {
   border-color: var(--accent-green);
+}
+.lang-select option {
+  background: #1b2838;
+  color: #fff;
 }
 </style>

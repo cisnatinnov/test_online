@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 const router = useRouter()
 
 const categories = [
@@ -38,6 +39,9 @@ const categories = [
   <div class="page-container">
     <div class="page-header">
       <h2>Tools</h2>
+      <div class="nav-bar">
+        <LanguageSwitcher />
+      </div>
     </div>
     <div v-for="cat in categories" :key="cat.title" style="margin-bottom:24px">
       <h3 style="margin-bottom:10px;color:var(--text-secondary);font-size:14px;text-transform:uppercase;letter-spacing:1px">{{ cat.title }}</h3>

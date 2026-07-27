@@ -1,5 +1,5 @@
 {
-  "app": { "title": "App de IMC" },
+  "app": { "title": "VitaSuite" },
   "nav": {
     "dashboard": "Panel",
     "health": "Salud",
@@ -11,7 +11,14 @@
     "chat": "Chat",
     "library": "Biblioteca",
     "logout": "Cerrar sesion",
-    "back": "Volver"
+    "back": "Volver",
+    "language": "Idioma",
+    "profile": "Perfil",
+    "admin": "Admin",
+    "more": "Mas",
+    "expandSidebar": "Expandir barra lateral",
+    "collapseSidebar": "Contraer barra lateral",
+    "user": "Usuario"
   },
   "auth": {
     "login": "Iniciar sesion",
@@ -19,12 +26,14 @@
     "loginTitle": "Iniciar sesion",
     "registerTitle": "Registrarse",
     "usernameOrEmail": "Usuario o Correo electronico",
+    "username": "Usuario",
     "email": "Correo electronico",
     "password": "Contrasena",
     "phone": "Telefono",
     "fullName": "Nombre completo",
     "nik": "NIK",
     "birthplace": "Lugar de nacimiento",
+    "birthdate": "Fecha de nacimiento",
     "height": "Estatura (cm)",
     "address": "Direccion",
     "loggingIn": "Iniciando sesion...",
@@ -228,7 +237,23 @@
     "saveExpense": "Guardar Gasto",
     "saveSaving": "Guardar Ahorro",
     "addExpense": "+ Agregar Gasto",
-    "addSaving": "+ Agregar Ahorro"
+    "addSaving": "+ Agregar Ahorro",
+    "categories": "Categorias",
+    "categoryName": "Nombre de Categoria",
+    "addCategory": "+ Agregar Categoria",
+    "editCategory": "Editar Categoria",
+    "deleteCategory": "Eliminar Categoria",
+    "categoryExists": "La categoria ya existe",
+    "categorySaved": "Categoria guardada",
+    "categoryDeleted": "Categoria eliminada",
+    "categoryDeleteFailed": "Error al eliminar la categoria",
+    "categorySaveFailed": "Error al guardar la categoria",
+    "noCategories": "No hay categorias aun",
+    "confirmDeleteCategory": "Eliminar esta categoria?",
+    "manageCategories": "Gestionar Categorias",
+    "spendingCategory": "Categoria de Gastos",
+    "savingCategory": "Categoria de Ahorros",
+    "selectCategory": "Seleccionar categoria..."
   },
   "estate": {
     "title": "Finca Palma",

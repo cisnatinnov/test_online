@@ -13,8 +13,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['vite.svg', 'icons/icon.svg'],
       manifest: {
-        name: 'BMI App - Health Monitoring',
-        short_name: 'BMI App',
+        name: 'VitaSuite - Health Monitoring',
+        short_name: 'VitaSuite',
         description: 'Health monitoring web application with BMI tracking, blood sugar, vital signs, and more',
         theme_color: '#0d1b2a',
         background_color: '#0d1b2a',

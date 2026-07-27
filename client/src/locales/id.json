@@ -1,5 +1,5 @@
 {
-  "app": { "title": "Aplikasi BMI" },
+  "app": { "title": "VitaSuite" },
   "nav": {
     "dashboard": "Dasbor",
     "health": "Kesehatan",
@@ -11,7 +11,14 @@
     "chat": "Obrolan",
     "library": "Perpustakaan",
     "logout": "Keluar",
-    "back": "Kembali"
+    "back": "Kembali",
+    "language": "Bahasa",
+    "profile": "Profil",
+    "admin": "Admin",
+    "more": "Lainnya",
+    "expandSidebar": "Perluas panel samping",
+    "collapseSidebar": "Ciutkan panel samping",
+    "user": "Pengguna"
   },
   "auth": {
     "login": "Masuk",
@@ -19,12 +26,14 @@
     "loginTitle": "Masuk",
     "registerTitle": "Daftar",
     "usernameOrEmail": "Nama Pengguna atau Email",
+    "username": "Nama Pengguna",
     "email": "Email",
     "password": "Kata Sandi",
     "phone": "Telepon",
     "fullName": "Nama Lengkap",
     "nik": "NIK",
     "birthplace": "Tempat Lahir",
+    "birthdate": "Tanggal Lahir",
     "height": "Tinggi Badan (cm)",
     "address": "Alamat",
     "loggingIn": "Sedang masuk...",
@@ -228,7 +237,23 @@
     "saveExpense": "Simpan Pengeluaran",
     "saveSaving": "Simpan Tabungan",
     "addExpense": "+ Tambah Pengeluaran",
-    "addSaving": "+ Tambah Tabungan"
+    "addSaving": "+ Tambah Tabungan",
+    "categories": "Kategori",
+    "categoryName": "Nama Kategori",
+    "addCategory": "+ Tambah Kategori",
+    "editCategory": "Edit Kategori",
+    "deleteCategory": "Hapus Kategori",
+    "categoryExists": "Kategori sudah ada",
+    "categorySaved": "Kategori tersimpan",
+    "categoryDeleted": "Kategori dihapus",
+    "categoryDeleteFailed": "Gagal menghapus kategori",
+    "categorySaveFailed": "Gagal menyimpan kategori",
+    "noCategories": "Belum ada kategori",
+    "confirmDeleteCategory": "Hapus kategori ini?",
+    "manageCategories": "Kelola Kategori",
+    "spendingCategory": "Kategori Pengeluaran",
+    "savingCategory": "Kategori Tabungan",
+    "selectCategory": "Pilih kategori..."
   },
   "estate": {
     "title": "Perkebunan Kelapa Sawit",

@@ -1,11 +1,17 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
+import Sidebar from '../components/Sidebar.vue'
 import api from '../api'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
+const sidebarOpen = ref(false)
+const sidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
+function onCollapsedChange(v) { sidebarCollapsed.value = v }
 
 const estates = ref([])
 const selectedEstateId = ref(null)
@@ -21,7 +27,7 @@ const canvasRef = ref(null)
 
 const selectedEstate = computed(() => estates.value.find(e => e.id === selectedEstateId.value))
 
-function flash(m, t) { msg.value = m; msgType.value = t; setTimeout(() => msg.value = '', 4000) }
+function flash(m, type) { msg.value = m; msgType.value = type; setTimeout(() => msg.value = '', 4000) }
 
 async function loadEstates() {
   try {
@@ -32,13 +38,13 @@ async function loadEstates() {
 
 async function createEstate() {
   try {
-    if (!newEstate.value.width || !newEstate.value.length) { flash('Width and length are required', 'error'); return }
+    if (!newEstate.value.width || !newEstate.value.length) { flash(t('flash.allFieldsRequired'), 'error'); return }
     const { data: res } = await api.post('/estate', { width: Number(newEstate.value.width), length: Number(newEstate.value.length) })
     newEstate.value = { width: '', length: '' }
     await loadEstates()
     selectedEstateId.value = res.data.id
-    flash('Estate created!', 'success')
-  } catch (e) { flash(e.response?.data?.error || 'Failed to create estate', 'error') }
+    flash(t('flash.estateCreated'), 'success')
+  } catch (e) { flash(e.response?.data?.error || t('flash.estateCreateFailed'), 'error') }
 }
 
 async function selectEstate(id) {
@@ -55,19 +61,19 @@ async function loadStats() {
     stats.value = res.data
     await nextTick()
     drawEstate()
-  } catch (e) { flash(e.response?.data?.error || 'Failed to load stats', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.statsLoadFailed'), 'error') }
 }
 
 async function addTree() {
-  if (!selectedEstateId.value) { flash('Select an estate first', 'error'); return }
+  if (!selectedEstateId.value) { flash(t('flash.selectEstateFirst'), 'error'); return }
   try {
     const { x, y, height } = newTree.value
-    if (!x || !y || !height) { flash('All fields are required', 'error'); return }
+    if (!x || !y || !height) { flash(t('flash.allFieldsRequired'), 'error'); return }
     await api.post(`/estate/${selectedEstateId.value}/tree`, { x: Number(x), y: Number(y), height: Number(height) })
     newTree.value = { x: '', y: '', height: '' }
-    flash('Tree planted!', 'success')
+    flash(t('flash.treePlanted'), 'success')
     await loadStats()
-  } catch (e) { flash(e.response?.data?.error || 'Failed to add tree', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.treePlantFailed'), 'error') }
 }
 
 async function loadDronePlan() {
@@ -77,7 +83,7 @@ async function loadDronePlan() {
     if (maxDistance.value) url += `?max_distance=${maxDistance.value}`
     const { data: res } = await api.get(url)
     dronePlan.value = res.data
-  } catch (e) { flash(e.response?.data?.error || 'Failed to load drone plan', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.droneLoadFailed'), 'error') }
 }
 
 function drawEstate() {
@@ -179,13 +185,14 @@ loadEstates()
 </script>
 
 <template>
-  <div class="estate-page">
+  <div class="estate-page" :style="{ marginLeft: sidebarCollapsed ? '60px' : '240px' }">
+    <Sidebar :open="sidebarOpen" @close="sidebarOpen = false" @collapsed-change="onCollapsedChange" />
     <nav class="top-nav">
-      <h1 class="logo">Palm Estate</h1>
-      <div class="nav-links">
-        <button @click="router.push('/')" class="nav-btn back">Dashboard</button>
-        <span class="user-badge">{{ auth.user?.username }}</span>
-      </div>
+      <button class="hamburger" @click="sidebarOpen = true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <h1 class="logo">{{ t('estate.title') }}</h1>
+      <span class="user-badge">{{ auth.user?.username }}</span>
     </nav>
 
     <div v-if="msg" :class="['toast', msgType]">{{ msg }}</div>
@@ -193,23 +200,23 @@ loadEstates()
     <div class="main-grid">
       <aside class="sidebar">
         <div class="card sidebar-card">
-          <h3 class="card-title">Create Estate</h3>
+          <h3 class="card-title">{{ t('estate.createEstate') }}</h3>
           <div class="form-stack">
             <div class="input-group">
-              <label>Width (m)</label>
+              <label>{{ t('estate.widthM') }}</label>
               <input v-model="newEstate.width" type="number" min="1" placeholder="e.g. 40" />
             </div>
             <div class="input-group">
-              <label>Length (m)</label>
+              <label>{{ t('estate.lengthM') }}</label>
               <input v-model="newEstate.length" type="number" min="1" placeholder="e.g. 60" />
             </div>
-            <button class="btn btn-primary" @click="createEstate">Create Estate</button>
+            <button class="btn btn-primary" @click="createEstate">{{ t('estate.createEstate') }}</button>
           </div>
         </div>
 
         <div class="card sidebar-card">
-          <h3 class="card-title">Estates</h3>
-          <div v-if="estates.length === 0" class="empty-state">No estates yet</div>
+          <h3 class="card-title">{{ t('estate.estates') }}</h3>
+          <div v-if="estates.length === 0" class="empty-state">{{ t('estate.noEstates') }}</div>
           <div v-for="e in estates" :key="e.id" :class="['estate-item', { active: selectedEstateId === e.id }]" @click="selectEstate(e.id)">
             <span class="estate-icon">E#{{ e.id }}</span>
             <span class="estate-info">{{ e.width }}x{{ e.length }}m</span>
@@ -217,7 +224,7 @@ loadEstates()
         </div>
 
         <div v-if="selectedEstate" class="card sidebar-card">
-          <h3 class="card-title">Add Tree</h3>
+          <h3 class="card-title">{{ t('estate.addTree') }}</h3>
           <div class="form-stack">
             <div class="form-row">
               <div class="input-group">
@@ -230,10 +237,10 @@ loadEstates()
               </div>
             </div>
             <div class="input-group">
-              <label>Height (1-30m)</label>
+              <label>{{ t('estate.heightRange') }}</label>
               <input v-model="newTree.height" type="number" min="1" max="30" placeholder="15" />
             </div>
-            <button class="btn btn-green" @click="addTree">Plant Tree</button>
+            <button class="btn btn-green" @click="addTree">{{ t('estate.plantTree') }}</button>
           </div>
         </div>
       </aside>
@@ -241,13 +248,13 @@ loadEstates()
       <main class="content">
         <div v-if="!selectedEstate" class="hero-empty">
           <div class="hero-icon">Palm</div>
-          <h2>Select or Create an Estate</h2>
-          <p>Choose an estate from the sidebar to view its trees, stats, and drone monitoring plan.</p>
+          <h2>{{ t('estate.selectOrCreate') }}</h2>
+          <p>{{ t('estate.selectOrCreateDesc') }}</p>
         </div>
 
         <template v-else>
           <div class="section-header">
-            <h2>Estate #{{ selectedEstate.id }} <span class="badge">{{ selectedEstate.width }}x{{ selectedEstate.length }}m</span></h2>
+            <h2>{{ t('estate.estatePrefix') }}{{ selectedEstate.id }} <span class="badge">{{ selectedEstate.width }}x{{ selectedEstate.length }}m</span></h2>
           </div>
 
           <div class="estate-visual">
@@ -257,38 +264,38 @@ loadEstates()
           <div class="stats-grid" v-if="stats">
             <div class="stat-card stat-count">
               <div class="stat-value">{{ stats.count }}</div>
-              <div class="stat-label">Trees</div>
+              <div class="stat-label">{{ t('estate.trees') }}</div>
             </div>
             <div class="stat-card stat-max">
               <div class="stat-value">{{ stats.max }}<small>m</small></div>
-              <div class="stat-label">Max Height</div>
+              <div class="stat-label">{{ t('estate.maxHeight') }}</div>
             </div>
             <div class="stat-card stat-min">
               <div class="stat-value">{{ stats.min }}<small>m</small></div>
-              <div class="stat-label">Min Height</div>
+              <div class="stat-label">{{ t('estate.minHeight') }}</div>
             </div>
             <div class="stat-card stat-median">
               <div class="stat-value">{{ stats.median }}<small>m</small></div>
-              <div class="stat-label">Median</div>
+              <div class="stat-label">{{ t('estate.median') }}</div>
             </div>
           </div>
 
           <div class="card drone-section">
-            <h3 class="card-title">Drone Monitoring Plan</h3>
+            <h3 class="card-title">{{ t('estate.dronePlan') }}</h3>
             <div class="drone-controls">
               <div class="input-group inline">
-                <label>Max Distance (m)</label>
-                <input v-model="maxDistance" type="number" min="0" placeholder="Optional" class="drone-input" />
+                <label>{{ t('estate.maxDistanceM') }}</label>
+                <input v-model="maxDistance" type="number" min="0" :placeholder="t('estate.optional')" class="drone-input" />
               </div>
-              <button class="btn btn-blue" @click="loadDronePlan">Calculate</button>
+              <button class="btn btn-blue" @click="loadDronePlan">{{ t('estate.calculate') }}</button>
             </div>
             <div v-if="dronePlan" class="drone-result">
               <div class="drone-metric">
-                <span class="drone-metric-label">Total Distance</span>
+                <span class="drone-metric-label">{{ t('estate.totalDistance') }}</span>
                 <span class="drone-metric-value">{{ dronePlan.sum_distance }}m</span>
               </div>
               <div v-if="dronePlan.rest" class="drone-landing">
-                <span class="drone-metric-label">Forced Landing Point</span>
+                <span class="drone-metric-label">{{ t('estate.forcedLanding') }}</span>
                 <span class="drone-metric-value">({{ dronePlan.rest.x }}, {{ dronePlan.rest.y }})</span>
               </div>
             </div>
@@ -302,15 +309,28 @@ loadEstates()
 <style scoped>
 .estate-page {
   min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   color: #e0e0e0;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #ccc);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.hamburger:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
 .top-nav {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 16px 24px;
   background: rgba(0,0,0,0.3);
   backdrop-filter: blur(10px);
@@ -326,21 +346,6 @@ loadEstates()
   letter-spacing: -0.5px;
 }
 
-.nav-links { display: flex; align-items: center; gap: 12px; }
-
-.nav-btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.nav-btn.back { background: rgba(255,255,255,0.12); color: #ccc; }
-.nav-btn.back:hover { background: rgba(255,255,255,0.2); color: #fff; }
-
 .user-badge {
   padding: 4px 10px;
   background: rgba(76,175,80,0.2);
@@ -348,6 +353,7 @@ loadEstates()
   border-radius: 20px;
   font-size: 0.8rem;
   color: #81c784;
+  margin-left: auto;
 }
 
 .toast {
@@ -607,6 +613,8 @@ loadEstates()
 .drone-landing .drone-metric-value { color: #ff7043; }
 
 @media (max-width: 768px) {
+  .estate-page { margin-left: 0 !important; }
+  .hamburger { display: flex; }
   .main-grid { grid-template-columns: 1fr; }
   .sidebar { max-height: none; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
   .content { max-height: none; }

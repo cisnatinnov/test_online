@@ -1,9 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import api from '../api'
 import { formatDate } from '../utils/helpers'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const id = route.params.id
@@ -25,13 +28,16 @@ onMounted(async () => {
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h2>Riwayat Pasien #{{ id }}</h2>
+      <h2>{{ t('history.title') }}{{ id }}</h2>
+      <div class="nav-bar">
+        <LanguageSwitcher />
+      </div>
     </div>
 
-    <h3 style="margin-bottom:10px;color:#fff">Riwayat BMI</h3>
+    <h3 style="margin-bottom:10px;color:#fff">{{ t('history.bmiHistory') }}</h3>
     <div class="table-wrap" style="margin-bottom:24px">
       <table>
-        <thead><tr style="background:var(--accent-green)"><th>Tanggal</th><th>Berat</th><th>Umur</th><th>Hasil</th></tr></thead>
+        <thead><tr style="background:var(--accent-green)"><th>{{ t('history.date') }}</th><th>{{ t('history.weight') }}</th><th>{{ t('history.age') }}</th><th>{{ t('history.result') }}</th></tr></thead>
         <tbody>
           <tr v-for="b in bmiHistory" :key="b.id">
             <td>{{ formatDate(b.createdAt) }}</td>
@@ -41,13 +47,13 @@ onMounted(async () => {
           </tr>
         </tbody>
       </table>
-      <p v-if="!bmiHistory.length" class="empty-state">Belum ada riwayat BMI</p>
+      <p v-if="!bmiHistory.length" class="empty-state">{{ t('history.noBmiHistory') }}</p>
     </div>
 
-    <h3 style="margin-bottom:10px;color:#fff">Riwayat Gula Darah</h3>
+    <h3 style="margin-bottom:10px;color:#fff">{{ t('history.sugarHistory') }}</h3>
     <div class="table-wrap" style="margin-bottom:24px">
       <table>
-        <thead><tr style="background:var(--accent-orange)"><th>Tanggal</th><th>Hasil</th><th>Kesimpulan</th></tr></thead>
+        <thead><tr style="background:var(--accent-orange)"><th>{{ t('history.date') }}</th><th>{{ t('history.result') }}</th><th>{{ t('history.conclusion') }}</th></tr></thead>
         <tbody>
           <tr v-for="s in sugarHistory" :key="s.id">
             <td>{{ formatDate(s.createdAt) }}</td>
@@ -56,9 +62,9 @@ onMounted(async () => {
           </tr>
         </tbody>
       </table>
-      <p v-if="!sugarHistory.length" class="empty-state">Belum ada riwayat gula darah</p>
+      <p v-if="!sugarHistory.length" class="empty-state">{{ t('history.noSugarHistory') }}</p>
     </div>
 
-    <button @click="router.push('/list')" class="btn btn-gray">Kembali</button>
+    <button @click="router.push('/list')" class="btn btn-gray">{{ t('history.back') }}</button>
   </div>
 </template>

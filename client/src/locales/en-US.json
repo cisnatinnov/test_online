@@ -1,5 +1,5 @@
 {
-  "app": { "title": "BMI App" },
+  "app": { "title": "VitaSuite" },
   "nav": {
     "dashboard": "Dashboard",
     "health": "Health",
@@ -11,7 +11,14 @@
     "chat": "Chat",
     "library": "Library",
     "logout": "Logout",
-    "back": "Back"
+    "back": "Back",
+    "language": "Language",
+    "profile": "Profile",
+    "admin": "Admin",
+    "more": "More",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "user": "User"
   },
   "auth": {
     "login": "Login",
@@ -19,12 +26,14 @@
     "loginTitle": "Login",
     "registerTitle": "Register",
     "usernameOrEmail": "Username or Email",
+    "username": "Username",
     "email": "Email",
     "password": "Password",
     "phone": "Phone",
     "fullName": "Full Name",
     "nik": "NIK",
     "birthplace": "Place of Birth",
+    "birthdate": "Date of Birth",
     "height": "Height (cm)",
     "address": "Address",
     "loggingIn": "Logging in...",
@@ -228,7 +237,23 @@
     "saveExpense": "Save Expense",
     "saveSaving": "Save Saving",
     "addExpense": "+ Add Expense",
-    "addSaving": "+ Add Saving"
+    "addSaving": "+ Add Saving",
+    "categories": "Categories",
+    "categoryName": "Category Name",
+    "addCategory": "+ Add Category",
+    "editCategory": "Edit Category",
+    "deleteCategory": "Delete Category",
+    "categoryExists": "Category already exists",
+    "categorySaved": "Category saved",
+    "categoryDeleted": "Category deleted",
+    "categoryDeleteFailed": "Failed to delete category",
+    "categorySaveFailed": "Failed to save category",
+    "noCategories": "No categories yet",
+    "confirmDeleteCategory": "Delete this category?",
+    "manageCategories": "Manage Categories",
+    "spendingCategory": "Spending Category",
+    "savingCategory": "Saving Category",
+    "selectCategory": "Select category..."
   },
   "estate": {
     "title": "Palm Estate",

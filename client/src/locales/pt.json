@@ -1,5 +1,5 @@
 {
-  "app": { "title": "App de IMC" },
+  "app": { "title": "VitaSuite" },
   "nav": {
     "dashboard": "Painel",
     "health": "Saude",
@@ -11,7 +11,14 @@
     "chat": "Chat",
     "library": "Biblioteca",
     "logout": "Sair",
-    "back": "Voltar"
+    "back": "Voltar",
+    "language": "Idioma",
+    "profile": "Perfil",
+    "admin": "Admin",
+    "more": "Mais",
+    "expandSidebar": "Expandir barra lateral",
+    "collapseSidebar": "Recolher barra lateral",
+    "user": "Usuario"
   },
   "auth": {
     "login": "Entrar",
@@ -19,12 +26,14 @@
     "loginTitle": "Entrar",
     "registerTitle": "Cadastrar",
     "usernameOrEmail": "Usuario ou E-mail",
+    "username": "Usuario",
     "email": "E-mail",
     "password": "Senha",
     "phone": "Telefone",
     "fullName": "Nome Completo",
     "nik": "NIK",
     "birthplace": "Local de Nascimento",
+    "birthdate": "Data de Nascimento",
     "height": "Altura (cm)",
     "address": "Endereco",
     "loggingIn": "Entrando...",
@@ -228,7 +237,23 @@
     "saveExpense": "Salvar Despesa",
     "saveSaving": "Salvar Economia",
     "addExpense": "+ Adicionar Despesa",
-    "addSaving": "+ Adicionar Economia"
+    "addSaving": "+ Adicionar Economia",
+    "categories": "Categorias",
+    "categoryName": "Nome da Categoria",
+    "addCategory": "+ Adicionar Categoria",
+    "editCategory": "Editar Categoria",
+    "deleteCategory": "Excluir Categoria",
+    "categoryExists": "A categoria ja existe",
+    "categorySaved": "Categoria salva",
+    "categoryDeleted": "Categoria excluida",
+    "categoryDeleteFailed": "Falha ao excluir categoria",
+    "categorySaveFailed": "Falha ao salvar categoria",
+    "noCategories": "Nenhuma categoria ainda",
+    "confirmDeleteCategory": "Excluir esta categoria?",
+    "manageCategories": "Gerenciar Categorias",
+    "spendingCategory": "Categoria de Despesas",
+    "savingCategory": "Categoria de Economias",
+    "selectCategory": "Selecionar categoria..."
   },
   "estate": {
     "title": "Fazenda Palmeira",

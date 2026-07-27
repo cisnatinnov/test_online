@@ -1,11 +1,17 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
+import Sidebar from '../components/Sidebar.vue'
 import api from '../api'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
+const sidebarOpen = ref(false)
+const sidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
+function onCollapsedChange(v) { sidebarCollapsed.value = v }
 
 const identities = ref([])
 const selectedIdentity = ref(null)
@@ -34,27 +40,27 @@ const metrics = computed(() => {
 
   const items = []
   if (ev.bloodPressure) {
-    items.push({ label: 'Blood Pressure', value: `${v.systolic}/${v.diastolic}`, unit: 'mmHg', ...mapStatus(ev.bloodPressure.label) })
+    items.push({ label: t('healthMonitor.bloodPressure'), value: `${v.systolic}/${v.diastolic}`, unit: t('healthMonitor.mmHg'), ...mapStatus(ev.bloodPressure.label) })
   }
   if (ev.heartRate) {
-    items.push({ label: 'Heart Rate', value: v.heart_rate, unit: 'bpm', ...mapStatus(ev.heartRate.label) })
+    items.push({ label: t('healthMonitor.heartRate'), value: v.heart_rate, unit: t('healthMonitor.bpm'), ...mapStatus(ev.heartRate.label) })
   }
   if (ev.temperature) {
-    items.push({ label: 'Temperature', value: v.temperature, unit: 'C', ...mapStatus(ev.temperature.label) })
+    items.push({ label: t('healthMonitor.temperature'), value: v.temperature, unit: t('healthMonitor.celsius'), ...mapStatus(ev.temperature.label) })
   }
   if (ev.spo2) {
-    items.push({ label: 'SpO2', value: v.spo2, unit: '%', ...mapStatus(ev.spo2.label) })
+    items.push({ label: t('healthMonitor.spo2Label'), value: v.spo2, unit: '%', ...mapStatus(ev.spo2.label) })
   }
   if (ev.respiratoryRate) {
-    items.push({ label: 'Respiratory Rate', value: v.respiratory_rate, unit: '/min', ...mapStatus(ev.respiratoryRate.label) })
+    items.push({ label: t('healthMonitor.respiratoryRate'), value: v.respiratory_rate, unit: t('healthMonitor.perMin'), ...mapStatus(ev.respiratoryRate.label) })
   }
   if (latestBmi.value) {
-    items.push({ label: 'BMI', value: latestBmi.value.bmi_value ?? latestBmi.value.bmi, unit: 'kg/m²', ...mapBMIStatus(latestBmi.value.status) })
+    items.push({ label: t('healthMonitor.bmiHeader'), value: latestBmi.value.bmi_value ?? latestBmi.value.bmi, unit: t('healthMonitor.kgM2'), ...mapBMIStatus(latestBmi.value.status) })
   }
   if (latestBloodSugar.value) {
     const sugarVal = latestBloodSugar.value.result
-    const sugarUnit = sugarVal != null ? 'mg/dL' : ''
-    items.push({ label: 'Blood Sugar', value: sugarVal, unit: sugarUnit, ...mapSugarStatus(latestBloodSugar.value.conclusion) })
+    const sugarUnit = sugarVal != null ? t('healthMonitor.mgDl') : ''
+    items.push({ label: t('healthMonitor.bloodSugarLabel'), value: sugarVal, unit: sugarUnit, ...mapSugarStatus(latestBloodSugar.value.conclusion) })
   }
   return items
 })
@@ -66,26 +72,26 @@ const overallStatus = computed(() => {
 
 function mapStatus(label) {
   const l = (label || '').toLowerCase()
-  if (l.includes('normal')) return { status: 'normal', color: '#4caf50', bg: 'rgba(76,175,80,0.12)', icon: 'Normal' }
-  if (l.includes('rendah') || l.includes('kritis') || l.includes('hipotermia') || l.includes('bradikardia') || l.includes('bradipnea')) return { status: 'low', color: '#ff9800', bg: 'rgba(255,152,0,0.12)', icon: 'Low' }
-  return { status: 'high', color: '#f44336', bg: 'rgba(244,67,54,0.12)', icon: 'High/Risk' }
+  if (l.includes('normal')) return { status: 'normal', color: '#4caf50', bg: 'rgba(76,175,80,0.12)', icon: t('healthMonitor.normal') }
+  if (l.includes('rendah') || l.includes('kritis') || l.includes('hipotermia') || l.includes('bradikardia') || l.includes('bradipnea') || l.includes('low') || l.includes('critical')) return { status: 'low', color: '#ff9800', bg: 'rgba(255,152,0,0.12)', icon: t('healthMonitor.low') }
+  return { status: 'high', color: '#f44336', bg: 'rgba(244,67,54,0.12)', icon: t('healthMonitor.highRisk') }
 }
 
 function mapBMIStatus(status) {
   const s = (status || '').toLowerCase()
-  if (s.includes('normal')) return { status: 'normal', color: '#4caf50', bg: 'rgba(76,175,80,0.12)', icon: 'Normal' }
-  if (s.includes('kurus') || s.includes('sangat kurus')) return { status: 'low', color: '#ff9800', bg: 'rgba(255,152,0,0.12)', icon: 'Underweight' }
-  return { status: 'high', color: '#f44336', bg: 'rgba(244,67,54,0.12)', icon: 'Overweight' }
+  if (s.includes('normal')) return { status: 'normal', color: '#4caf50', bg: 'rgba(76,175,80,0.12)', icon: t('healthMonitor.normal') }
+  if (s.includes('kurus') || s.includes('sangat kurus')) return { status: 'low', color: '#ff9800', bg: 'rgba(255,152,0,0.12)', icon: t('healthMonitor.underweight') }
+  return { status: 'high', color: '#f44336', bg: 'rgba(244,67,54,0.12)', icon: t('healthMonitor.overweight') }
 }
 
 function mapSugarStatus(result) {
   const r = (result || '').toLowerCase()
-  if (r.includes('normal')) return { status: 'normal', color: '#4caf50', bg: 'rgba(76,175,80,0.12)', icon: 'Normal' }
-  if (r.includes('rendah')) return { status: 'low', color: '#ff9800', bg: 'rgba(255,152,0,0.12)', icon: 'Low' }
-  return { status: 'high', color: '#f44336', bg: 'rgba(244,67,54,0.12)', icon: 'High' }
+  if (r.includes('normal')) return { status: 'normal', color: '#4caf50', bg: 'rgba(76,175,80,0.12)', icon: t('healthMonitor.normal') }
+  if (r.includes('rendah')) return { status: 'low', color: '#ff9800', bg: 'rgba(255,152,0,0.12)', icon: t('healthMonitor.low') }
+  return { status: 'high', color: '#f44336', bg: 'rgba(244,67,54,0.12)', icon: t('healthMonitor.high') }
 }
 
-function flash(m, t) { msg.value = m; msgType.value = t; setTimeout(() => msg.value = '', 4000) }
+function flash(m, type) { msg.value = m; msgType.value = type; setTimeout(() => msg.value = '', 4000) }
 
 async function loadTrafficStats() {
   trafficLoading.value = true
@@ -167,7 +173,7 @@ async function loadPatientHealth() {
 }
 
 async function submitVitals() {
-  if (!selectedIdentity.value) { flash('Select a patient first', 'error'); return }
+  if (!selectedIdentity.value) { flash(t('flash.selectPatientFirst'), 'error'); return }
   loading.value = true
   try {
     await api.post('/vital-signs', { identity_id: selectedIdentity.value, ...vitals.value })
@@ -181,9 +187,9 @@ async function submitVitals() {
     }
     lastSaved.value = { weight: savedWeight, sugar: savedSugar, time: new Date() }
     vitals.value = { systolic: '', diastolic: '', heart_rate: '', temperature: '', spo2: '', respiratory_rate: '', weight: '', blood_sugar: '' }
-    flash('Vital signs saved successfully', 'success')
+    flash(t('flash.vitalsSaved'), 'success')
     await loadPatientHealth()
-  } catch (e) { flash(e.response?.data?.error || 'Failed to save vital signs', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.vitalsSaveFailed'), 'error') }
   loading.value = false
 }
 
@@ -195,51 +201,50 @@ function formatDate(d) {
 function evalRow(vs) {
   if (!vs) return []
   const items = []
-  if (vs.systolic != null && vs.diastolic != null) items.push({ label: 'BP', val: `${vs.systolic}/${vs.diastolic}`, ...mapStatus(evalBPLabel(vs.systolic, vs.diastolic)) })
-  if (vs.heart_rate != null) items.push({ label: 'HR', val: vs.heart_rate, ...mapStatus(evalHRLabel(vs.heart_rate)) })
-  if (vs.temperature != null) items.push({ label: 'Temp', val: vs.temperature, ...mapStatus(evalTempLabel(vs.temperature)) })
-  if (vs.spo2 != null) items.push({ label: 'SpO2', val: vs.spo2, ...mapStatus(evalSpO2Label(vs.spo2)) })
-  if (vs.respiratory_rate != null) items.push({ label: 'Resp', val: vs.respiratory_rate, ...mapStatus(evalRespLabel(vs.respiratory_rate)) })
+  if (vs.systolic != null && vs.diastolic != null) items.push({ label: t('healthMonitor.bp'), val: `${vs.systolic}/${vs.diastolic}`, ...mapStatus(evalBPLabel(vs.systolic, vs.diastolic)) })
+  if (vs.heart_rate != null) items.push({ label: t('healthMonitor.hr'), val: vs.heart_rate, ...mapStatus(evalHRLabel(vs.heart_rate)) })
+  if (vs.temperature != null) items.push({ label: t('healthMonitor.temp'), val: vs.temperature, ...mapStatus(evalTempLabel(vs.temperature)) })
+  if (vs.spo2 != null) items.push({ label: t('healthMonitor.spo2Header'), val: vs.spo2, ...mapStatus(evalSpO2Label(vs.spo2)) })
+  if (vs.respiratory_rate != null) items.push({ label: t('healthMonitor.resp'), val: vs.respiratory_rate, ...mapStatus(evalRespLabel(vs.respiratory_rate)) })
   return items
 }
 
 function evalBPLabel(sys, dia) {
-  if (sys < 90 || dia < 60) return 'Rendah'
-  if (sys <= 120 && dia <= 80) return 'Normal'
-  return 'Tinggi Stage 1'
+  if (sys < 90 || dia < 60) return t('healthMonitor.low')
+  if (sys <= 120 && dia <= 80) return t('healthMonitor.normal')
+  return t('healthMonitor.high')
 }
 function evalHRLabel(hr) {
-  if (hr < 60) return 'Rendah'
-  if (hr <= 100) return 'Normal'
-  return 'Tinggi'
+  if (hr < 60) return t('healthMonitor.low')
+  if (hr <= 100) return t('healthMonitor.normal')
+  return t('healthMonitor.high')
 }
 function evalTempLabel(t) {
-  if (t < 35) return 'Rendah'
-  if (t <= 37.2) return 'Normal'
-  return 'Demam'
+  if (t < 35) return t('healthMonitor.low')
+  if (t <= 37.2) return t('healthMonitor.normal')
+  return t('healthMonitor.high')
 }
 function evalSpO2Label(s) {
-  if (s < 90) return 'Kritis'
-  if (s < 95) return 'Rendah'
-  return 'Normal'
+  if (s < 90) return t('healthMonitor.highRisk')
+  if (s < 95) return t('healthMonitor.low')
+  return t('healthMonitor.normal')
 }
 function evalRespLabel(r) {
-  if (r < 12) return 'Rendah'
-  if (r <= 20) return 'Normal'
-  return 'Tinggi'
+  if (r < 12) return t('healthMonitor.low')
+  if (r <= 20) return t('healthMonitor.normal')
+  return t('healthMonitor.high')
 }
 </script>
 
 <template>
-  <div class="health-page">
+  <div class="health-page" :style="{ marginLeft: sidebarCollapsed ? '60px' : '240px' }">
+    <Sidebar :open="sidebarOpen" @close="sidebarOpen = false" @collapsed-change="onCollapsedChange" />
     <nav class="top-nav">
-      <h1 class="logo" @click="router.push('/')" style="cursor:pointer">Health Monitor</h1>
-      <div class="nav-links">
-        <button @click="router.push('/')" class="nav-btn">Dashboard</button>
-        <button @click="router.push('/money')" class="nav-btn">Money</button>
-        <button @click="router.push('/chat')" class="nav-btn">Chat</button>
-        <span class="user-badge">{{ auth.user?.username }}</span>
-      </div>
+      <button class="hamburger" @click="sidebarOpen = true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <h1 class="logo" @click="router.push('/')" style="cursor:pointer">{{ t('healthMonitor.title') }}</h1>
+      <span class="user-badge">{{ auth.user?.username }}</span>
     </nav>
 
     <div v-if="msg" :class="['toast', msgType]">{{ msg }}</div>
@@ -247,63 +252,63 @@ function evalRespLabel(r) {
     <div class="layout">
       <aside class="sidebar">
         <div class="card">
-          <h3 class="card-title">Select Patient</h3>
+          <h3 class="card-title">{{ t('healthMonitor.selectPatient') }}</h3>
           <select v-model="selectedIdentity" @change="loadPatientHealth" class="select-input">
-            <option :value="null" disabled>Choose patient...</option>
+            <option :value="null" disabled>{{ t('healthMonitor.choosePatient') }}</option>
             <option v-for="i in identities" :key="i.id" :value="i.id">{{ i.name }} ({{ i.nik || '-' }})</option>
           </select>
         </div>
 
         <div class="card">
-          <h3 class="card-title">Record Vitals</h3>
+          <h3 class="card-title">{{ t('healthMonitor.recordVitals') }}</h3>
           <div class="form-stack">
             <div class="input-row">
               <div class="input-group">
-                <label>Systolic (mmHg)</label>
+                <label>{{ t('healthMonitor.systolicMmHg') }}</label>
                 <input v-model="vitals.systolic" type="number" placeholder="e.g. 120" />
               </div>
               <div class="input-group">
-                <label>Diastolic (mmHg)</label>
+                <label>{{ t('healthMonitor.diastolicMmHg') }}</label>
                 <input v-model="vitals.diastolic" type="number" placeholder="e.g. 80" />
               </div>
             </div>
             <div class="input-group">
-              <label>Heart Rate (bpm)</label>
+              <label>{{ t('healthMonitor.heartRateBpm') }}</label>
               <input v-model="vitals.heart_rate" type="number" placeholder="e.g. 72" />
             </div>
             <div class="input-group">
-              <label>Temperature (C)</label>
+              <label>{{ t('healthMonitor.tempC') }}</label>
               <input v-model="vitals.temperature" type="number" step="0.1" placeholder="e.g. 36.5" />
             </div>
             <div class="input-group">
-              <label>SpO2 (%)</label>
+              <label>{{ t('healthMonitor.spo2Percent') }}</label>
               <input v-model="vitals.spo2" type="number" placeholder="e.g. 98" />
             </div>
             <div class="input-group">
-              <label>Respiratory Rate (/min)</label>
+              <label>{{ t('healthMonitor.respRateMin') }}</label>
               <input v-model="vitals.respiratory_rate" type="number" placeholder="e.g. 16" />
             </div>
             <div class="input-row">
               <div class="input-group">
-                <label>Weight (kg)</label>
+                <label>{{ t('healthMonitor.weightKg') }}</label>
                 <input v-model="vitals.weight" type="number" step="0.1" placeholder="e.g. 65" />
               </div>
               <div class="input-group">
-                <label>Height (cm)</label>
+                <label>{{ t('healthMonitor.heightCm') }}</label>
                 <input :value="selectedIdentityData?.height || '-'" type="text" disabled class="input-disabled" />
               </div>
             </div>
             <div class="input-group">
-              <label>Blood Sugar (mg/dL)</label>
+              <label>{{ t('healthMonitor.bloodSugarMgDl') }}</label>
               <input v-model="vitals.blood_sugar" type="number" placeholder="e.g. 85" />
             </div>
             <button class="btn btn-primary" @click="submitVitals" :disabled="loading">
-              {{ loading ? 'Saving...' : 'Save Vitals' }}
+              {{ loading ? t('healthMonitor.saving') : t('healthMonitor.saveVitals') }}
             </button>
             <div v-if="lastSaved" style="margin-top:8px;padding:8px 12px;background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.3);border-radius:8px;font-size:0.78rem;color:#81c784">
-              <template v-if="lastSaved.weight">Weight saved: <strong>{{ lastSaved.weight }} kg</strong></template>
+              <template v-if="lastSaved.weight">{{ t('healthMonitor.weightSaved') }} <strong>{{ lastSaved.weight }} kg</strong></template>
               <template v-if="lastSaved.weight && lastSaved.sugar"> &middot; </template>
-              <template v-if="lastSaved.sugar">Sugar saved: <strong>{{ lastSaved.sugar }} mg/dL</strong></template>
+              <template v-if="lastSaved.sugar">{{ t('healthMonitor.sugarSaved') }} <strong>{{ lastSaved.sugar }} mg/dL</strong></template>
             </div>
           </div>
         </div>
@@ -313,16 +318,16 @@ function evalRespLabel(r) {
         <template v-if="!selectedIdentity">
           <div class="hero-empty">
             <div class="hero-icon">+</div>
-            <h2>Select a Patient</h2>
-            <p>Choose a patient from the sidebar to view and record health data.</p>
+            <h2>{{ t('healthMonitor.selectPatient') }}</h2>
+            <p>{{ t('healthMonitor.choosePatientDesc') }}</p>
           </div>
         </template>
 
         <template v-else>
           <div class="section-header">
-            <h2>Health Dashboard</h2>
+            <h2>{{ t('healthMonitor.healthDashboard') }}</h2>
             <span :class="['overall-badge', overallStatus]">
-              {{ overallStatus === 'normal' ? 'All Normal' : overallStatus === 'risk' ? 'Abnormal Detected' : 'No Data' }}
+              {{ overallStatus === 'normal' ? t('healthMonitor.allNormal') : overallStatus === 'risk' ? t('healthMonitor.abnormalDetected') : t('healthMonitor.noData') }}
             </span>
           </div>
 
@@ -340,24 +345,24 @@ function evalRespLabel(r) {
           </div>
 
           <div v-if="metrics.length === 0" class="empty-metrics">
-            No vital signs recorded yet. Use the form to record your first reading.
+            {{ t('healthMonitor.noVitalsYet') }}
           </div>
 
           <div class="card" v-if="vitalHistory.length > 0">
-            <h3 class="card-title">Recent History</h3>
+            <h3 class="card-title">{{ t('healthMonitor.recentHistory') }}</h3>
             <div class="history-table-wrap">
               <table class="history-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>BP</th>
-                    <th>HR</th>
-                    <th>Temp</th>
-                    <th>SpO2</th>
-                    <th>Resp</th>
-                    <th>BMI</th>
-                    <th>Sugar</th>
-                    <th>Status</th>
+                    <th>{{ t('healthMonitor.date') }}</th>
+                    <th>{{ t('healthMonitor.bp') }}</th>
+                    <th>{{ t('healthMonitor.hr') }}</th>
+                    <th>{{ t('healthMonitor.temp') }}</th>
+                    <th>{{ t('healthMonitor.spo2Header') }}</th>
+                    <th>{{ t('healthMonitor.resp') }}</th>
+                    <th>{{ t('healthMonitor.bmiHeader') }}</th>
+                    <th>{{ t('healthMonitor.sugarHeader') }}</th>
+                    <th>{{ t('healthMonitor.status') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -397,22 +402,22 @@ function evalRespLabel(r) {
           </div>
 
           <div class="card" v-if="systemHealth">
-            <h3 class="card-title">System Health</h3>
+            <h3 class="card-title">{{ t('healthMonitor.systemHealth') }}</h3>
             <div class="sys-grid">
               <div class="sys-item">
-                <span class="sys-label">Status</span>
+                <span class="sys-label">{{ t('healthMonitor.status') }}</span>
                 <span :class="['sys-val', systemHealth.status === 'healthy' ? 'ok' : 'bad']">{{ systemHealth.status }}</span>
               </div>
               <div class="sys-item">
-                <span class="sys-label">Database</span>
+                <span class="sys-label">{{ t('healthMonitor.database') }}</span>
                 <span :class="['sys-val', systemHealth.checks?.database?.status === 'up' ? 'ok' : 'bad']">{{ systemHealth.checks?.database?.status }} ({{ systemHealth.checks?.database?.latencyMs }}ms)</span>
               </div>
               <div class="sys-item">
-                <span class="sys-label">Memory</span>
+                <span class="sys-label">{{ t('healthMonitor.memory') }}</span>
                 <span class="sys-val">{{ systemHealth.checks?.memory?.heapUsed }}</span>
               </div>
               <div class="sys-item">
-                <span class="sys-label">Uptime</span>
+                <span class="sys-label">{{ t('healthMonitor.uptime') }}</span>
                 <span class="sys-val">{{ Math.floor((systemHealth.checks?.uptime?.serverSeconds || 0) / 60) }}m</span>
               </div>
             </div>
@@ -420,41 +425,41 @@ function evalRespLabel(r) {
 
           <div class="card" v-if="auth.user?.role === 'admin'">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <h3 class="card-title" style="margin-bottom:0">API Traffic</h3>
+              <h3 class="card-title" style="margin-bottom:0">{{ t('healthMonitor.apiTraffic') }}</h3>
               <div style="display:flex;gap:6px">
-                <button v-for="p in ['1h','24h','7d','30d']" :key="p" @click="trafficPeriod = p; loadTrafficStats()" :style="{ padding:'4px 10px', borderRadius:'6px', border:'none', cursor:'pointer', fontSize:'0.72rem', fontWeight:700, background: trafficPeriod === p ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.08)', color: trafficPeriod === p ? '#81c784' : '#999' }">{{ p }}</button>
+                <button v-for="p in [t('healthMonitor.period1h'),t('healthMonitor.period24h'),t('healthMonitor.period7d'),t('healthMonitor.period30d')]" :key="p" @click="trafficPeriod = p; loadTrafficStats()" :style="{ padding:'4px 10px', borderRadius:'6px', border:'none', cursor:'pointer', fontSize:'0.72rem', fontWeight:700, background: trafficPeriod === p ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.08)', color: trafficPeriod === p ? '#81c784' : '#999' }">{{ p }}</button>
               </div>
             </div>
-            <div v-if="trafficLoading" style="text-align:center;padding:20px;color:#666">Loading...</div>
+            <div v-if="trafficLoading" style="text-align:center;padding:20px;color:#666">{{ t('healthMonitor.loading') }}</div>
             <div v-else-if="trafficStats">
               <div class="traffic-kpi-grid">
                 <div class="traffic-kpi">
                   <span class="traffic-kpi-val">{{ trafficStats.totalRequests }}</span>
-                  <span class="traffic-kpi-label">Total Requests</span>
+                  <span class="traffic-kpi-label">{{ t('healthMonitor.totalRequests') }}</span>
                 </div>
                 <div class="traffic-kpi">
                   <span class="traffic-kpi-val">{{ trafficStats.avgResponseTime }}ms</span>
-                  <span class="traffic-kpi-label">Avg Response</span>
+                  <span class="traffic-kpi-label">{{ t('healthMonitor.avgResponse') }}</span>
                 </div>
                 <div class="traffic-kpi">
                   <span class="traffic-kpi-val" style="color:#66bb6a">{{ trafficStats.statusBreakdown?.[200] || 0 }}</span>
-                  <span class="traffic-kpi-label">200 OK</span>
+                  <span class="traffic-kpi-label">{{ t('healthMonitor.ok200') }}</span>
                 </div>
                 <div class="traffic-kpi">
                   <span class="traffic-kpi-val" style="color:#ef5350">{{ (trafficStats.statusBreakdown?.[400] || 0) + (trafficStats.statusBreakdown?.[401] || 0) + (trafficStats.statusBreakdown?.[403] || 0) + (trafficStats.statusBreakdown?.[404] || 0) + (trafficStats.statusBreakdown?.[500] || 0) }}</span>
-                  <span class="traffic-kpi-label">Errors</span>
+                  <span class="traffic-kpi-label">{{ t('healthMonitor.errors') }}</span>
                 </div>
               </div>
 
               <div style="margin-top:14px">
-                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Requests by Method</h4>
+                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">{{ t('healthMonitor.requestsByMethod') }}</h4>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                   <span v-for="(count, method) in trafficStats.methodBreakdown" :key="method" style="padding:4px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;background:rgba(255,255,255,0.06);color:#bbb">{{ method }}: {{ count }}</span>
                 </div>
               </div>
 
               <div style="margin-top:14px">
-                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Hourly Traffic</h4>
+                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">{{ t('healthMonitor.hourlyTraffic') }}</h4>
                 <div class="traffic-chart">
                   <div v-for="(h, idx) in trafficStats.hourlyTraffic" :key="idx" class="traffic-bar-wrap">
                     <div class="traffic-bar" :style="{ height: Math.max(4, (h.count / Math.max(...trafficStats.hourlyTraffic.map(x => x.count), 1)) * 80) + 'px' }">
@@ -466,11 +471,11 @@ function evalRespLabel(r) {
               </div>
 
               <div style="margin-top:14px">
-                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Recent Requests</h4>
+                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">{{ t('healthMonitor.recentRequests') }}</h4>
                 <div class="traffic-table-wrap">
                   <table class="traffic-table">
                     <thead>
-                      <tr><th>Method</th><th>Path</th><th>Status</th><th>Time</th><th>User</th><th>Date</th></tr>
+                      <tr><th>{{ t('healthMonitor.method') }}</th><th>{{ t('healthMonitor.path') }}</th><th>{{ t('healthMonitor.status') }}</th><th>{{ t('healthMonitor.time') }}</th><th>{{ t('healthMonitor.user') }}</th><th>{{ t('healthMonitor.date') }}</th></tr>
                     </thead>
                     <tbody>
                       <tr v-for="r in trafficStats.recentRequests" :key="r.id">
@@ -496,15 +501,28 @@ function evalRespLabel(r) {
 <style scoped>
 .health-page {
   min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg, #0d1b2a, #1b2838, #172a3a);
   color: #e0e0e0;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #ccc);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.hamburger:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
 .top-nav {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 14px 24px;
   background: rgba(0,0,0,0.35);
   backdrop-filter: blur(10px);
@@ -519,21 +537,6 @@ function evalRespLabel(r) {
   -webkit-text-fill-color: transparent;
 }
 
-.nav-links { display: flex; align-items: center; gap: 10px; }
-
-.nav-btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-weight: 600;
-  background: rgba(255,255,255,0.1);
-  color: #ccc;
-  transition: all 0.2s;
-}
-.nav-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
-
 .user-badge {
   padding: 4px 10px;
   background: rgba(76,175,80,0.2);
@@ -541,6 +544,7 @@ function evalRespLabel(r) {
   border-radius: 20px;
   font-size: 0.78rem;
   color: #81c784;
+  margin-left: auto;
 }
 
 .toast {
@@ -852,6 +856,8 @@ function evalRespLabel(r) {
 .status-badge.err { background: rgba(244,67,54,0.2); color: #ef5350; }
 
 @media (max-width: 768px) {
+  .health-page { margin-left: 0 !important; }
+  .hamburger { display: flex; }
   .layout { grid-template-columns: 1fr; }
   .metrics-grid { grid-template-columns: repeat(2, 1fr); }
   .sys-grid { grid-template-columns: repeat(2, 1fr); }

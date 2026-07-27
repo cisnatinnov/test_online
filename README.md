@@ -1,10 +1,10 @@
-# BMI App
+# VitaSuite
 
 A health monitoring web application with BMI tracking, blood sugar monitoring, vital signs monitoring, patient health risk assessment, money management, palm oil estate management, real-time chat, and library management. Built with Node.js, Express, Sequelize ORM, PostgreSQL, and Vue 3.
 
 ## Features
 
-### Health Monitoring (Admin Only)
+### Health Monitoring
 - **BMI Calculator**: Calculate and track Body Mass Index with category classification (Sangat kurus / Kurus / Normal / Gemuk / Obesitas)
 - **Blood Sugar Monitor**: Track blood sugar levels with age-based threshold evaluation
 - **Vital Signs Monitor**: Blood pressure (systolic/diastolic), heart rate, body temperature, SpO2, respiratory rate with clinical evaluation
@@ -13,12 +13,13 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **Health Alerts**: Flag patients with high-risk health status
 - **Population Statistics**: BMI, blood sugar, vital signs, and risk distribution across all patients
 - **API Traffic Tracking**: Monitor API request logs with method, path, status, response time, and user info
-- **Admin-only Access**: The Health Monitor page (`/health`) and API traffic dashboard are restricted to admin users only
+- **Accessible to All Users**: The Health Monitor page (`/health`) is accessible to all authenticated users (non-admin sees only own patients); API traffic dashboard section remains admin-only
+- **Sidebar Navigation**: All authenticated pages now use a unified sidebar navigation component (`Sidebar.vue`) with sectioned links (main menu, admin items, extra items), language switcher, and logout. Sidebar supports collapse/expand toggle (persisted in localStorage) for compact icon-only mode on desktop
 
 ### Internationalization (i18n)
 - **5 Language Options**: English (UK), English (US), Bahasa Indonesia, Espanol, Portugues
 - **Language Preference**: Saved in localStorage and persists across sessions
-- **Language Switcher**: Available in the dashboard navbar for easy language switching
+- **Language Switcher**: Dropdown select component available on login, register, and sidebar on all authenticated pages
 
 ### Progressive Web App (PWA)
 - **Installable**: Can be installed on Android and iOS devices
@@ -90,13 +91,32 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **Library Statistics**: Total books, available, borrowed, overdue counts, category breakdown, fine/duration settings
 - **Role-based Access**: Admin can manage all books, view all borrowings, and configure library settings; users manage their own borrowings
 
+### Indonesian News
+- **Daily Auto-refresh**: News fetched from Indonesian RSS feeds (Kompas, Detik, CNN Indonesia) daily at 6:00 AM
+- **Categories**: Sports, Politics, Criminal news
+- **Auto-cleanup**: News older than 3 days is automatically deleted
+- **Manual Refresh**: Admin can trigger manual news refresh via API
+- **News Statistics**: Total articles, per-category counts, recent articles count
+
+### Pagination
+- All list endpoints support pagination with `page` (default 1) and `limit` (default 20) query parameters
+- Allowed limit values: 5, 10, 20, 50, 100 (invalid values default to 20)
+- Response includes: `total`, `page`, `limit`, `pages` (total pages), and the items array
+
+### Money Management PDF Export
+- **Daily Report**: Export expense/saving data for a specific day
+- **Weekly Report**: Export expense/saving data for a specific week
+- **Monthly Report**: Export expense/saving data for a specific month
+- PDF includes: summary (total expense, saving, balance), itemized tables with date, category, description, and amount
+
 ### Frontend (Vue 3 SPA)
-- **Health Monitor Page** (Admin Only): Record vitals (BP, HR, temp, SpO2, resp rate, weight, BMI), color-coded metric cards, history table, API traffic dashboard with request logs, hourly charts, and status breakdowns
-- **Money Dashboard Page**: Expense/saving CRUD, category breakdowns, trend charts, financial summary
+- **Health Monitor Page**: Record vitals (BP, HR, temp, SpO2, resp rate, weight, BMI), color-coded metric cards, history table, API traffic dashboard with request logs, hourly charts, and status breakdowns (admin-only API traffic section)
+- **Money Dashboard Page**: Expense/saving CRUD, category dropdowns (from Category API), category breakdowns, trend charts, financial summary
 - **Estate View Page**: Create estates, plant trees, view canvas visualization, stats, drone plans
 - **Chat Page**: Real-time messaging with chat rooms, online users, typing indicators
+- **Category Management Page**: Spending/saving category CRUD with duplicate prevention, integrated with Money Dashboard dropdowns
 - **Library Page**: Book catalog with search/filter, borrowing management, fine display, library statistics with category breakdown, admin-only fine/duration settings panel
-- **Dashboard Page**: Navigation hub to Health (admin only), Money, Estate, Chat, Library, and other features
+- **Dashboard Page**: Main hub with sidebar navigation to all features; patient identity selection, BMI/blood sugar/vital signs data entry cards
 
 ## Tech Stack
 
@@ -109,7 +129,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **PDF Generation**: PDFKit
 - **Frontend**: Vue 3 SPA with Vite, Pinia store, Vue Router
 - **Testing**: Jest + Supertest (backend), Vitest (frontend)
-- **i18n**: vue-i18n v10
+- **i18n**: vue-i18n v10 — all views (Dashboard, Health Monitor, Money, Estate, Chat, Library) fully internationalized with reactive language switching across 5 locales
 - **PWA**: vite-plugin-pwa (Workbox)
 - **Security**: Helmet.js
 
@@ -137,7 +157,9 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── Book.js                  # Library books (title, author, isbn, publisher, year, category, quantity, available, shelf)
 │   ├── Borrowing.js             # Book borrowings (user_id, book_id, borrow_date, due_date, return_date, status, fine, notes)
 │   ├── LibrarySetting.js        # Library config (borrow_duration_days, fine_per_day, overdue_tolerance_days)
-│   └── HealthTraffic.js         # API traffic logs (method, path, status_code, response_time_ms, user_id, ip, user_agent)
+│   ├── HealthTraffic.js         # API traffic logs (method, path, status_code, response_time_ms, user_id, ip, user_agent)
+│   ├── News.js                  # Indonesian news articles (title, content, category [sports/politics/criminal], source, url, published_at)
+│   └── Category.js              # Spending/saving categories (name, type [spending/saving], unique name+type)
 ├── controllers/
 │   ├── authController.js        # Register, Login, 2FA
 │   ├── bmiController.js         # BMI CRUD, list, summary, history
@@ -145,9 +167,11 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── vitalSignsController.js  # Vital signs CRUD, history, list
 │   ├── identityController.js    # Identity CRUD with user validation and email notification
 │   ├── moneyController.js       # Expense/Saving CRUD, chart, summary, category breakdown
+│   ├── categoryController.js    # Category CRUD (spending/saving, duplicate name prevention)
 │   ├── reportController.js      # PDF export
 │   ├── healthController.js      # System health checks (DB, memory, CPU, uptime)
 │   ├── healthTrafficController.js # API traffic stats (total requests, avg response, status/method breakdown, hourly, recent)
+│   ├── newsController.js          # Indonesian news CRUD, RSS fetch, auto-cleanup, scheduler
 │   ├── patientHealthController.js # Patient risk scoring, trends, alerts, population stats
 │   ├── estateController.js      # Estate CRUD, tree CRUD, stats, drone plan
 │   ├── chatController.js        # Real-time chat (Socket.IO + REST)
@@ -167,6 +191,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── vitalSignsRoutes.js
 │   ├── identityRoutes.js
 │   ├── moneyRoutes.js
+│   ├── categoryRoutes.js
+│   ├── newsRoutes.js
 │   ├── reportRoutes.js
 │   ├── adminRoutes.js
 │   ├── healthRoutes.js
@@ -177,7 +203,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   └── libraryRoutes.js
 ├── utils/
 │   ├── helpers.js               # BMI calc, blood sugar eval, vital sign eval, risk scoring, trend analysis
-│   └── history-utils.js         # Date formatting for history records
+│   ├── history-utils.js         # Date formatting for history records
+│   └── newsFetcher.js           # RSS feed fetcher for Indonesian news (Kompas, Detik, CNN Indonesia)
 ├── __tests__/
 │   ├── estate.test.js           # Estate API tests (SQLite in-memory)
 │   ├── helpers.test.js
@@ -206,7 +233,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │       │   ├── pt.json          # Portugues translations
 │       │   └── index.js         # i18n configuration and locale loading
 │       ├── components/
-│       │   └── LanguageSwitcher.vue  # Language selection component
+│       │   ├── LanguageSwitcher.vue  # Language selection dropdown component
+│       │   └── Sidebar.vue          # Sidebar navigation component (menu, admin, extra, language, logout)
 │       └── views/
 │           ├── LoginView.vue
 │           ├── RegisterView.vue
@@ -360,15 +388,16 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | POST | `/expense` | Create expense (amount, category, description, date) | Yes |
-| GET | `/expense` | List expenses | Yes |
+| GET | `/expense` | List expenses (paginated) | Yes |
 | PUT | `/expense/:id` | Update expense | Yes |
 | DELETE | `/expense/:id` | Delete expense | Yes |
 | POST | `/saving` | Create saving (amount, category, description, date) | Yes |
-| GET | `/saving` | List savings | Yes |
+| GET | `/saving` | List savings (paginated) | Yes |
 | PUT | `/saving/:id` | Update saving | Yes |
 | DELETE | `/saving/:id` | Delete saving | Yes |
 | GET | `/chart?period=monthly&year=2026` | Chart data (weekly/monthly/yearly) | Yes |
 | GET | `/summary` | Total expense, saving, balance | Yes |
+| GET | `/export/pdf?period=monthly&year=2026&month=7` | Export PDF report (daily/weekly/monthly) | Yes |
 | GET | `/expense/categories` | Expense totals grouped by category | Yes |
 | GET | `/saving/categories` | Saving totals grouped by category | Yes |
 
@@ -450,6 +479,16 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/stats?period=24h` | API traffic stats (1h, 24h, 7d, 30d) | Yes (admin) |
+
+### News (`/api/news`)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/` | List news (category filter, pagination) | Yes |
+| GET | `/latest` | Get latest news (past 3 days) | Yes |
+| GET | `/stats` | News statistics (total, per category, recent count) | Yes |
+| GET | `/:id` | Get single news article | Yes |
+| POST | `/refresh` | Manually refresh news from RSS feeds | Yes (admin) |
 
 ### Patient Health (`/api/patient-health`)
 
@@ -580,8 +619,9 @@ Risk score is calculated from combined BMI, blood sugar, vital signs, and age fa
 | `/login` | LoginView | Public | Login with username/email + password |
 | `/register` | RegisterView | Public | Registration with patient identity |
 | `/verify-2fa` | Verify2FAView | Public | 2FA verification (email or WhatsApp) |
-| `/` | DashboardView | Auth | Main hub: navigation to Health, Money, Estate, Chat, Library |
-| `/health` | HealthMonitorView | Admin Only | Record vitals + weight, view BMI/metrics, history table, API traffic dashboard |
+| `/` | DashboardView | Auth | Main hub with sidebar navigation: patient identity, BMI, blood sugar, vital signs data entry |
+| `/profile` | ProfileView | Auth | User profile with identity info and personal health monitoring (BMI, blood sugar, vital signs history) |
+| `/health` | HealthMonitorView | Auth | Record vitals + weight, view BMI/metrics, history table, API traffic dashboard (admin-only traffic section) |
 | `/money` | MoneyDashboardView | Auth | Expense/saving CRUD, category breakdowns, trend charts |
 | `/estate` | EstateView | Auth | Estate CRUD, tree planting, canvas visualization, drone plans |
 | `/chat` | ChatView | Auth | Real-time chat rooms, messaging, online users |

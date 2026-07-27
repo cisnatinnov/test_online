@@ -1,13 +1,21 @@
 const { Identity, User } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { getMailTransporter } = require('../middlewares/mailTransporter');
+const { parsePagination, paginateResponse } = require('../utils/pagination');
 
 const getUserIdFilter = (req) => req.user.role === 'admin' ? {} : { id_user: req.user.id };
 
 exports.getIdentities = async (req, res) => {
   try {
-    const identities = await Identity.findAll({ where: getUserIdFilter(req), order: [['id', 'ASC']] });
-    return apiResponse(res, { data: identities });
+    const { page, limit, offset } = parsePagination(req.query);
+    const where = getUserIdFilter(req);
+    const { count, rows } = await Identity.findAndCountAll({
+      where,
+      order: [['id', 'ASC']],
+      limit,
+      offset,
+    });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: rows, itemName: 'identities' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
@@ -45,9 +53,9 @@ exports.createIdentity = async (req, res) => {
     if (mt && targetUser.email && targetUser.email.includes('@')) {
       try {
         await mt.sendMail({
-          from: process.env.EMAIL_FROM || 'noreply@bmi-app.com',
+          from: process.env.EMAIL_FROM || 'noreply@vitasuite.com',
           to: targetUser.email,
-          subject: 'Pasien Baru Terdaftar - BMI App',
+          subject: 'Pasien Baru Terdaftar - VitaSuite',
           html: `
             <h2>Pasien Baru Terdaftar</h2>
             <p>Halo <b>${targetUser.username}</b>,</p>

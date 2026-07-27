@@ -2,6 +2,7 @@ const { Identity, BMI, BloodSugar } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { calculateAge, hitungKesimpulan, buildSugarCriteria, formatPatientResponse } = require('../utils/helpers');
 const sequelize = require('../config/database');
+const { parsePagination, paginateResponse } = require('../utils/pagination');
 
 const getUserIdFilter = (req) => req.user.role === 'admin' ? {} : { id_user: req.user.id };
 
@@ -90,7 +91,13 @@ exports.updateBMI = async (req, res) => {
 
 exports.getBMIList = async (req, res) => {
   try {
-    const identities = await Identity.findAll({ where: getUserIdFilter(req), order: [['id', 'ASC']] });
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows: identities } = await Identity.findAndCountAll({
+      where: getUserIdFilter(req),
+      order: [['id', 'ASC']],
+      limit,
+      offset,
+    });
 
     const formattedData = [];
     for (const identity of identities) {
@@ -107,7 +114,7 @@ exports.getBMIList = async (req, res) => {
       }
     }
 
-    return apiResponse(res, { data: formattedData });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: formattedData, itemName: 'patients' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
@@ -153,15 +160,21 @@ exports.getHistoryBMI = async (req, res) => {
     const { identityId } = req.params;
     const identity = await Identity.findOne({ where: { id: identityId, ...getUserIdFilter(req) } });
     if (!identity) return apiResponse(res, { error: 'Data tidak ditemukan', status: 404 });
-    const results = await BMI.findAll({ where: { id_identity: identityId }, order: [['id', 'DESC']] });
-    const enriched = results.map(r => {
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows } = await BMI.findAndCountAll({
+      where: { id_identity: identityId },
+      order: [['id', 'DESC']],
+      limit,
+      offset,
+    });
+    const enriched = rows.map(r => {
       const plain = r.get({ plain: true });
       plain.age = calculateAge(identity?.birthdate) ?? plain.age ?? null;
       plain.bmi_value = plain.result != null ? Number(plain.result) : null;
       plain.result = plain.bmi_status || null;
       return plain;
     });
-    return apiResponse(res, { data: enriched });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: enriched, itemName: 'history' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

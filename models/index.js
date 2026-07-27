@@ -16,6 +16,8 @@ const Book = require('./Book');
 const Borrowing = require('./Borrowing');
 const HealthTraffic = require('./HealthTraffic');
 const LibrarySetting = require('./LibrarySetting');
+const Category = require('./Category');
+const News = require('./News');
 
 User.hasMany(TwoFactorCode, { foreignKey: 'user_id' });
 TwoFactorCode.belongsTo(User, { foreignKey: 'user_id' });
@@ -62,4 +64,4 @@ Borrowing.belongsTo(Book, { foreignKey: 'book_id' });
 User.hasMany(Borrowing, { foreignKey: 'user_id' });
 Borrowing.belongsTo(User, { foreignKey: 'user_id' });
 
-module.exports = { sequelize, User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Estate, Tree, ChatRoom, ChatMessage, ChatParticipant, Book, Borrowing, HealthTraffic, LibrarySetting };
+module.exports = { sequelize, User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Estate, Tree, ChatRoom, ChatMessage, ChatParticipant, Book, Borrowing, HealthTraffic, LibrarySetting, Category, News };

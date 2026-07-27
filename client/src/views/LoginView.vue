@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { validateEmail, validatePassword, passwordStrength } from '../utils/helpers'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import api from '../api'
 
 const { t } = useI18n()
@@ -76,6 +77,7 @@ async function login() {
 <template>
   <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
     <div class="card" style="width:100%;max-width:400px">
+      <div style="display:flex;justify-content:center;margin-bottom:12px"><LanguageSwitcher /></div>
       <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">{{ t('auth.loginTitle') }}</h2>
       <div v-if="error" class="flash flash-error">{{ error }}</div>
       <form @submit.prevent="login">

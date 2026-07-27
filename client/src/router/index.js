@@ -5,6 +5,7 @@ import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import Verify2FAView from '../views/Verify2FAView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import ProfileView from '../views/ProfileView.vue'
 import ListView from '../views/ListView.vue'
 import HistoryView from '../views/HistoryView.vue'
 import SummaryView from '../views/SummaryView.vue'
@@ -14,21 +15,24 @@ import HealthMonitorView from '../views/HealthMonitorView.vue'
 import MoneyDashboardView from '../views/MoneyDashboardView.vue'
 import ChatView from '../views/ChatView.vue'
 import LibraryView from '../views/LibraryView.vue'
+import CategoriesView from '../views/CategoriesView.vue'
 
 const routes = [
   { path: '/login', name: 'login', component: LoginView, meta: { guest: true } },
   { path: '/register', name: 'register', component: RegisterView, meta: { guest: true } },
   { path: '/verify-2fa', name: 'verify-2fa', component: Verify2FAView, meta: { guest: true } },
   { path: '/', name: 'dashboard', component: DashboardView, meta: { auth: true } },
+  { path: '/profile', name: 'profile', component: ProfileView, meta: { auth: true } },
   { path: '/list', name: 'list', component: ListView, meta: { auth: true, admin: true } },
   { path: '/history/:id', name: 'history', component: HistoryView, meta: { auth: true } },
   { path: '/summary', name: 'summary', component: SummaryView, meta: { auth: true } },
   { path: '/tools', name: 'tools', component: ToolsView, meta: { auth: true } },
   { path: '/estate', name: 'estate', component: EstateView, meta: { auth: true } },
-  { path: '/health', name: 'health', component: HealthMonitorView, meta: { auth: true, admin: true } },
+  { path: '/health', name: 'health', component: HealthMonitorView, meta: { auth: true } },
   { path: '/money', name: 'money', component: MoneyDashboardView, meta: { auth: true } },
   { path: '/chat', name: 'chat', component: ChatView, meta: { auth: true } },
   { path: '/library', name: 'library', component: LibraryView, meta: { auth: true } },
+  { path: '/categories', name: 'categories', component: CategoriesView, meta: { auth: true } },
 
   { path: '/tools/hangman', name: 'tool-hangman', component: () => import('../views/tools/Hangman.vue'), meta: { auth: true } },
   { path: '/tools/coin-catcher', name: 'tool-coin-catcher', component: () => import('../views/tools/CoinCatcher.vue'), meta: { auth: true } },

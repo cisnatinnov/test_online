@@ -1,6 +1,7 @@
 const { Identity, BMI, BloodSugar } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { calculateAge, hitungKesimpulan, buildSugarCriteria, hitungRisikoKesehatan, analisisTren } = require('../utils/helpers');
+const { parsePagination, paginateResponse } = require('../utils/pagination');
 
 const getUserIdFilter = (req) => req.user.role === 'admin' ? {} : { id_user: req.user.id };
 
@@ -61,7 +62,13 @@ exports.getHealthTrend = async (req, res) => {
 
 exports.getAlerts = async (req, res) => {
   try {
-    const identities = await Identity.findAll({ where: getUserIdFilter(req), order: [['id', 'ASC']] });
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows: identities } = await Identity.findAndCountAll({
+      where: getUserIdFilter(req),
+      order: [['id', 'ASC']],
+      limit,
+      offset,
+    });
     const alerts = [];
 
     for (const identity of identities) {
@@ -83,7 +90,7 @@ exports.getAlerts = async (req, res) => {
       }
     }
 
-    return apiResponse(res, { data: { count: alerts.length, alerts } });
+    return apiResponse(res, { data: { count: alerts.length, ...paginateResponse({ total: count, page, limit, items: alerts, itemName: 'alerts' }) } });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

@@ -1,15 +1,23 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
+import Sidebar from '../components/Sidebar.vue'
 import api from '../api'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
+const sidebarOpen = ref(false)
+const sidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
+function onCollapsedChange(v) { sidebarCollapsed.value = v }
 
 const summary = ref({ totalExpense: 0, totalSaving: 0, balance: 0, expenseCount: 0, savingCount: 0 })
 const expenseCategories = ref([])
 const savingCategories = ref([])
+const spendingCategoryOptions = ref([])
+const savingCategoryOptions = ref([])
 const chartData = ref([])
 const chartPeriod = ref('monthly')
 const activeTab = ref('overview')
@@ -32,7 +40,7 @@ function flash(m, t) { msg.value = m; msgType.value = t; setTimeout(() => msg.va
 onMounted(loadAll)
 
 async function loadAll() {
-  await Promise.all([loadSummary(), loadExpenseCategories(), loadSavingCategories(), loadChart()])
+  await Promise.all([loadSummary(), loadExpenseCategories(), loadSavingCategories(), loadChart(), loadCategoryOptions()])
 }
 
 async function loadSummary() {
@@ -65,42 +73,53 @@ async function loadChart() {
 
 function changePeriod(p) { chartPeriod.value = p; loadChart() }
 
+async function loadCategoryOptions() {
+  try {
+    const [spRes, svRes] = await Promise.all([
+      api.get('/categories?type=spending'),
+      api.get('/categories?type=saving')
+    ])
+    spendingCategoryOptions.value = spRes.data.data || []
+    savingCategoryOptions.value = svRes.data.data || []
+  } catch (e) { console.error(e) }
+}
+
 async function addExpense() {
-  if (!newExpense.value.amount || !newExpense.value.category) { flash('Amount and category are required', 'error'); return }
+  if (!newExpense.value.amount || !newExpense.value.category) { flash(t('flash.amountCategoryRequired'), 'error'); return }
   try {
     await api.post('/money/expense', newExpense.value)
     newExpense.value = { amount: '', category: '', description: '', date: '' }
     showAddExpense.value = false
-    flash('Expense added', 'success')
+    flash(t('flash.expenseAdded'), 'success')
     await loadAll()
-  } catch (e) { flash(e.response?.data?.error || 'Failed to add expense', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.expenseAddFailed'), 'error') }
 }
 
 async function addSaving() {
-  if (!newSaving.value.amount || !newSaving.value.category) { flash('Amount and category are required', 'error'); return }
+  if (!newSaving.value.amount || !newSaving.value.category) { flash(t('flash.amountCategoryRequired'), 'error'); return }
   try {
     await api.post('/money/saving', newSaving.value)
     newSaving.value = { amount: '', category: '', description: '', date: '' }
     showAddSaving.value = false
-    flash('Saving added', 'success')
+    flash(t('flash.savingAdded'), 'success')
     await loadAll()
-  } catch (e) { flash(e.response?.data?.error || 'Failed to add saving', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.savingAddFailed'), 'error') }
 }
 
 async function deleteExpense(id) {
   try {
     await api.delete(`/money/expense/${id}`)
-    flash('Expense deleted', 'success')
+    flash(t('flash.expenseDeleted'), 'success')
     await loadAll()
-  } catch (e) { flash('Failed to delete', 'error') }
+  } catch (e) { flash(t('flash.deleteFailed'), 'error') }
 }
 
 async function deleteSaving(id) {
   try {
     await api.delete(`/money/saving/${id}`)
-    flash('Saving deleted', 'success')
+    flash(t('flash.savingDeleted'), 'success')
     await loadAll()
-  } catch (e) { flash('Failed to delete', 'error') }
+  } catch (e) { flash(t('flash.deleteFailed'), 'error') }
 }
 
 function fmt(n) { return Number(n || 0).toLocaleString('id-ID') }
@@ -108,14 +127,14 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
 </script>
 
 <template>
-  <div class="money-page">
+  <div class="money-page" :style="{ marginLeft: sidebarCollapsed ? '60px' : '240px' }">
+    <Sidebar :open="sidebarOpen" @close="sidebarOpen = false" @collapsed-change="onCollapsedChange" />
     <nav class="top-nav">
-      <h1 class="logo" @click="router.push('/')" style="cursor:pointer">Money Manager</h1>
-      <div class="nav-links">
-        <button @click="router.push('/')" class="nav-btn">Dashboard</button>
-        <button @click="router.push('/health')" class="nav-btn">Health</button>
-        <span class="user-badge">{{ auth.user?.username }}</span>
-      </div>
+      <button class="hamburger" @click="sidebarOpen = true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <h1 class="logo" @click="router.push('/')" style="cursor:pointer">{{ t('money.title') }}</h1>
+      <span class="user-badge">{{ auth.user?.username }}</span>
     </nav>
 
     <div v-if="msg" :class="['toast', msgType]">{{ msg }}</div>
@@ -126,40 +145,40 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
           <div class="summary-icon">-</div>
           <div class="summary-body">
             <div class="summary-amount">Rp {{ fmt(summary.totalExpense) }}</div>
-            <div class="summary-label">Total Spending</div>
-            <div class="summary-sub">{{ summary.expenseCount }} transactions</div>
+            <div class="summary-label">{{ t('money.totalSpending') }}</div>
+            <div class="summary-sub">{{ summary.expenseCount }} {{ t('money.transactions') }}</div>
           </div>
         </div>
         <div class="summary-card saving-card">
           <div class="summary-icon">+</div>
           <div class="summary-body">
             <div class="summary-amount">Rp {{ fmt(summary.totalSaving) }}</div>
-            <div class="summary-label">Total Savings</div>
-            <div class="summary-sub">{{ summary.savingCount }} transactions</div>
+            <div class="summary-label">{{ t('money.totalSavings') }}</div>
+            <div class="summary-sub">{{ summary.savingCount }} {{ t('money.transactions') }}</div>
           </div>
         </div>
         <div class="summary-card balance-card" :class="summary.balance >= 0 ? 'positive' : 'negative'">
           <div class="summary-icon">=</div>
           <div class="summary-body">
             <div class="summary-amount">Rp {{ fmt(summary.balance) }}</div>
-            <div class="summary-label">Balance</div>
-            <div class="summary-sub">{{ summary.balance >= 0 ? 'Surplus' : 'Deficit' }}</div>
+            <div class="summary-label">{{ t('money.balance') }}</div>
+            <div class="summary-sub">{{ summary.balance >= 0 ? t('money.surplus') : t('money.deficit') }}</div>
           </div>
         </div>
       </div>
 
       <div class="tab-bar">
-        <button :class="['tab', activeTab === 'overview' && 'active']" @click="activeTab = 'overview'">Overview</button>
-        <button :class="['tab', activeTab === 'spending' && 'active']" @click="activeTab = 'spending'">Spending</button>
-        <button :class="['tab', activeTab === 'savings' && 'active']" @click="activeTab = 'savings'">Savings</button>
+        <button :class="['tab', activeTab === 'overview' && 'active']" @click="activeTab = 'overview'">{{ t('money.overview') }}</button>
+        <button :class="['tab', activeTab === 'spending' && 'active']" @click="activeTab = 'spending'">{{ t('money.spending') }}</button>
+        <button :class="['tab', activeTab === 'savings' && 'active']" @click="activeTab = 'savings'">{{ t('money.savings') }}</button>
       </div>
 
       <template v-if="activeTab === 'overview'">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Monthly Trend</h3>
+            <h3 class="card-title">{{ t('money.monthlyTrend') }}</h3>
             <div class="period-btns">
-              <button v-for="p in ['weekly','monthly','yearly']" :key="p" :class="['period-btn', chartPeriod === p && 'active']" @click="changePeriod(p)">{{ p }}</button>
+              <button v-for="p in ['weekly','monthly','yearly']" :key="p" :class="['period-btn', chartPeriod === p && 'active']" @click="changePeriod(p)">{{ t(`money.${p}`) }}</button>
             </div>
           </div>
           <div class="chart-area">
@@ -172,18 +191,18 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
             </div>
           </div>
           <div class="chart-legend">
-            <span class="legend-item"><span class="legend-dot expense-dot"></span> Spending</span>
-            <span class="legend-item"><span class="legend-dot saving-dot"></span> Savings</span>
+            <span class="legend-item"><span class="legend-dot expense-dot"></span> {{ t('money.spending') }}</span>
+            <span class="legend-item"><span class="legend-dot saving-dot"></span> {{ t('money.savings') }}</span>
           </div>
         </div>
 
         <div class="two-col">
           <div class="card">
             <div class="card-header">
-              <h3 class="card-title">Spending by Category</h3>
-              <button class="btn-sm btn-add" @click="showAddExpense = !showAddExpense">+ Add</button>
+              <h3 class="card-title">{{ t('money.spendingByCategory') }}</h3>
+              <button class="btn-sm btn-add" @click="showAddExpense = !showAddExpense">{{ t('money.add') }}</button>
             </div>
-            <div v-if="expenseCategories.length === 0" class="empty-state">No spending records yet</div>
+            <div v-if="expenseCategories.length === 0" class="empty-state">{{ t('money.noSpending') }}</div>
             <div v-for="(cat, i) in expenseCategories" :key="cat.name" class="cat-row">
               <div class="cat-info">
                 <span class="cat-dot" :style="{ background: expenseColors[i % expenseColors.length] }"></span>
@@ -196,20 +215,23 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
               <div class="cat-amount">Rp {{ fmt(cat.total) }}</div>
             </div>
             <div v-if="showAddExpense" class="add-form">
-              <input v-model="newExpense.amount" type="number" placeholder="Amount" class="form-input" />
-              <input v-model="newExpense.category" placeholder="Category (e.g. Food)" class="form-input" />
-              <input v-model="newExpense.description" placeholder="Description" class="form-input" />
+              <input v-model="newExpense.amount" type="number" :placeholder="t('money.amount')" class="form-input" />
+              <select v-model="newExpense.category" class="form-input">
+                <option value="" disabled>{{ t('money.selectCategory') }}</option>
+                <option v-for="cat in spendingCategoryOptions" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
+              </select>
+              <input v-model="newExpense.description" :placeholder="t('money.description')" class="form-input" />
               <input v-model="newExpense.date" type="date" class="form-input" />
-              <button class="btn-sm btn-save" @click="addExpense">Save</button>
+              <button class="btn-sm btn-save" @click="addExpense">{{ t('money.save') }}</button>
             </div>
           </div>
 
           <div class="card">
             <div class="card-header">
-              <h3 class="card-title">Savings by Source</h3>
-              <button class="btn-sm btn-add" @click="showAddSaving = !showAddSaving">+ Add</button>
+              <h3 class="card-title">{{ t('money.savingsBySource') }}</h3>
+              <button class="btn-sm btn-add" @click="showAddSaving = !showAddSaving">{{ t('money.add') }}</button>
             </div>
-            <div v-if="savingCategories.length === 0" class="empty-state">No savings records yet</div>
+            <div v-if="savingCategories.length === 0" class="empty-state">{{ t('money.noSavings') }}</div>
             <div v-for="(cat, i) in savingCategories" :key="cat.name" class="cat-row">
               <div class="cat-info">
                 <span class="cat-dot" :style="{ background: savingColors[i % savingColors.length] }"></span>
@@ -222,11 +244,14 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
               <div class="cat-amount">Rp {{ fmt(cat.total) }}</div>
             </div>
             <div v-if="showAddSaving" class="add-form">
-              <input v-model="newSaving.amount" type="number" placeholder="Amount" class="form-input" />
-              <input v-model="newSaving.category" placeholder="Source (e.g. Salary)" class="form-input" />
-              <input v-model="newSaving.description" placeholder="Description" class="form-input" />
+              <input v-model="newSaving.amount" type="number" :placeholder="t('money.amount')" class="form-input" />
+              <select v-model="newSaving.category" class="form-input">
+                <option value="" disabled>{{ t('money.selectCategory') }}</option>
+                <option v-for="cat in savingCategoryOptions" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
+              </select>
+              <input v-model="newSaving.description" :placeholder="t('money.description')" class="form-input" />
               <input v-model="newSaving.date" type="date" class="form-input" />
-              <button class="btn-sm btn-save" @click="addSaving">Save</button>
+              <button class="btn-sm btn-save" @click="addSaving">{{ t('money.save') }}</button>
             </div>
           </div>
         </div>
@@ -235,10 +260,10 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
       <template v-if="activeTab === 'spending'">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">All Spending Categories</h3>
-            <button class="btn-sm btn-add" @click="showAddExpense = !showAddExpense">+ Add Expense</button>
+            <h3 class="card-title">{{ t('money.allSpendingCategories') }}</h3>
+            <button class="btn-sm btn-add" @click="showAddExpense = !showAddExpense">{{ t('money.addExpense') }}</button>
           </div>
-          <div v-if="expenseCategories.length === 0" class="empty-state">No spending records yet</div>
+          <div v-if="expenseCategories.length === 0" class="empty-state">{{ t('money.noSpending') }}</div>
           <div v-for="(cat, i) in expenseCategories" :key="cat.name" class="detail-card" :style="{ borderLeftColor: expenseColors[i % expenseColors.length] }">
             <div class="detail-header">
               <div class="detail-cat">
@@ -249,7 +274,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
             </div>
             <div class="detail-items">
               <div v-for="item in cat.items" :key="item.id" class="detail-item">
-                <span class="item-desc">{{ item.description || 'No description' }}</span>
+                <span class="item-desc">{{ item.description || t('money.noDescription') }}</span>
                 <span class="item-date">{{ fmtDate(item.date) }}</span>
                 <span class="item-amount">Rp {{ fmt(item.amount) }}</span>
                 <button class="btn-del" @click="deleteExpense(item.id)">x</button>
@@ -257,11 +282,14 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
             </div>
           </div>
           <div v-if="showAddExpense" class="add-form full">
-            <input v-model="newExpense.amount" type="number" placeholder="Amount" class="form-input" />
-            <input v-model="newExpense.category" placeholder="Category (e.g. Food, Transport, Bills)" class="form-input" />
-            <input v-model="newExpense.description" placeholder="Description" class="form-input" />
+            <input v-model="newExpense.amount" type="number" :placeholder="t('money.amount')" class="form-input" />
+            <select v-model="newExpense.category" class="form-input">
+              <option value="" disabled>{{ t('money.selectCategory') }}</option>
+              <option v-for="cat in spendingCategoryOptions" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
+            </select>
+            <input v-model="newExpense.description" :placeholder="t('money.description')" class="form-input" />
             <input v-model="newExpense.date" type="date" class="form-input" />
-            <button class="btn-sm btn-save" @click="addExpense">Save Expense</button>
+            <button class="btn-sm btn-save" @click="addExpense">{{ t('money.saveExpense') }}</button>
           </div>
         </div>
       </template>
@@ -269,10 +297,10 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
       <template v-if="activeTab === 'savings'">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">All Savings Sources</h3>
-            <button class="btn-sm btn-add" @click="showAddSaving = !showAddSaving">+ Add Saving</button>
+            <h3 class="card-title">{{ t('money.allSavingsSources') }}</h3>
+            <button class="btn-sm btn-add" @click="showAddSaving = !showAddSaving">{{ t('money.addSaving') }}</button>
           </div>
-          <div v-if="savingCategories.length === 0" class="empty-state">No savings records yet</div>
+          <div v-if="savingCategories.length === 0" class="empty-state">{{ t('money.noSavings') }}</div>
           <div v-for="(cat, i) in savingCategories" :key="cat.name" class="detail-card" :style="{ borderLeftColor: savingColors[i % savingColors.length] }">
             <div class="detail-header">
               <div class="detail-cat">
@@ -283,7 +311,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
             </div>
             <div class="detail-items">
               <div v-for="item in cat.items" :key="item.id" class="detail-item">
-                <span class="item-desc">{{ item.description || 'No description' }}</span>
+                <span class="item-desc">{{ item.description || t('money.noDescription') }}</span>
                 <span class="item-date">{{ fmtDate(item.date) }}</span>
                 <span class="item-amount">Rp {{ fmt(item.amount) }}</span>
                 <button class="btn-del" @click="deleteSaving(item.id)">x</button>
@@ -291,11 +319,14 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
             </div>
           </div>
           <div v-if="showAddSaving" class="add-form full">
-            <input v-model="newSaving.amount" type="number" placeholder="Amount" class="form-input" />
-            <input v-model="newSaving.category" placeholder="Source (e.g. Salary, Bonus, Investment)" class="form-input" />
-            <input v-model="newSaving.description" placeholder="Description" class="form-input" />
+            <input v-model="newSaving.amount" type="number" :placeholder="t('money.amount')" class="form-input" />
+            <select v-model="newSaving.category" class="form-input">
+              <option value="" disabled>{{ t('money.selectCategory') }}</option>
+              <option v-for="cat in savingCategoryOptions" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
+            </select>
+            <input v-model="newSaving.description" :placeholder="t('money.description')" class="form-input" />
             <input v-model="newSaving.date" type="date" class="form-input" />
-            <button class="btn-sm btn-save" @click="addSaving">Save Saving</button>
+            <button class="btn-sm btn-save" @click="addSaving">{{ t('money.saveSaving') }}</button>
           </div>
         </div>
       </template>
@@ -306,15 +337,28 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
 <style scoped>
 .money-page {
   min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
   color: #e0e0e0;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #ccc);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.hamburger:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
 .top-nav {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 14px 24px;
   background: rgba(0,0,0,0.35);
   backdrop-filter: blur(10px);
@@ -329,19 +373,6 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
   -webkit-text-fill-color: transparent;
 }
 
-.nav-links { display: flex; align-items: center; gap: 10px; }
-.nav-btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-weight: 600;
-  background: rgba(255,255,255,0.1);
-  color: #ccc;
-  transition: all 0.2s;
-}
-.nav-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
 .user-badge {
   padding: 4px 10px;
   background: rgba(255,193,7,0.2);
@@ -349,6 +380,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
   border-radius: 20px;
   font-size: 0.78rem;
   color: #ffc107;
+  margin-left: auto;
 }
 
 .toast {
@@ -503,6 +535,8 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
 .btn-save:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,152,0,0.3); }
 
 @media (max-width: 768px) {
+  .money-page { margin-left: 0 !important; }
+  .hamburger { display: flex; }
   .summary-row { grid-template-columns: 1fr; }
   .two-col { grid-template-columns: 1fr; }
   .chart-bar { width: 10px; }

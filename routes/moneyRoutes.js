@@ -15,6 +15,7 @@ router.delete('/saving/:id', authenticateToken, moneyController.deleteSaving);
 
 router.get('/chart', authenticateToken, moneyController.getChart);
 router.get('/summary', authenticateToken, moneyController.getSummary);
+router.get('/export/pdf', authenticateToken, moneyController.exportMoneyPDF);
 router.get('/expense/categories', authenticateToken, moneyController.getExpenseCategories);
 router.get('/saving/categories', authenticateToken, moneyController.getSavingCategories);
 

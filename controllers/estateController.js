@@ -1,10 +1,16 @@
 const { Estate, Tree } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
+const { parsePagination, paginateResponse } = require('../utils/pagination');
 
 exports.listEstates = async (req, res) => {
   try {
-    const estates = await Estate.findAll({ order: [['id', 'ASC']] });
-    return apiResponse(res, { data: estates });
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows } = await Estate.findAndCountAll({
+      order: [['id', 'ASC']],
+      limit,
+      offset,
+    });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: rows, itemName: 'estates' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
@@ -17,8 +23,14 @@ exports.getTrees = async (req, res) => {
     if (!estate) {
       return apiResponse(res, { error: 'estate not found', status: 404 });
     }
-    const trees = await Tree.findAll({ where: { estate_id: id }, order: [['id', 'ASC']] });
-    return apiResponse(res, { data: trees });
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows } = await Tree.findAndCountAll({
+      where: { estate_id: id },
+      order: [['id', 'ASC']],
+      limit,
+      offset,
+    });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: rows, itemName: 'trees' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

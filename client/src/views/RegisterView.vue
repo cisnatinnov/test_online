@@ -1,10 +1,13 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { validateEmail, validatePassword, passwordStrength } from '../utils/helpers'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import api from '../api'
 
+const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 
@@ -21,18 +24,18 @@ const pwProgress = computed(() => (pwStrength.value.score / 5) * 100)
 const pwRules = computed(() => {
   const pw = form.value.password
   return [
-    { label: 'Minimal 8 karakter', met: pw.length >= 8 },
-    { label: 'Minimal 1 huruf kapital', met: /[A-Z]/.test(pw) },
-    { label: 'Minimal 1 huruf kecil', met: /[a-z]/.test(pw) },
-    { label: 'Minimal 1 angka', met: /[0-9]/.test(pw) },
-    { label: 'Minimal 1 simbol', met: /[!@#$%^&*(),.?":{}|<>]/.test(pw) },
+    { label: t('validation.minChars'), met: pw.length >= 8 },
+    { label: t('validation.uppercase'), met: /[A-Z]/.test(pw) },
+    { label: t('validation.lowercase'), met: /[a-z]/.test(pw) },
+    { label: t('validation.digit'), met: /[0-9]/.test(pw) },
+    { label: t('validation.symbol'), met: /[!@#$%^&*(),.?":{}|<>]/.test(pw) },
   ]
 })
 
 function validateField(field) {
   touched.value[field] = true
   if (field === 'username') {
-    fieldErrors.value.username = form.value.username ? '' : 'Username harus diisi'
+    fieldErrors.value.username = form.value.username ? '' : t('validation.usernameRequired')
   }
   if (field === 'email') {
     fieldErrors.value.email = validateEmail(form.value.email)
@@ -62,10 +65,10 @@ async function register() {
   try {
     const { data: res } = await api.post('/auth/register', form.value)
     auth.setAuth(res.data.token, res.data.user)
-    success.value = 'Registrasi berhasil!'
+    success.value = t('flash.registrationSuccess')
     setTimeout(() => router.push('/'), 1000)
   } catch (e) {
-    error.value = e.response?.data?.error || 'Registrasi gagal'
+    error.value = e.response?.data?.error || t('flash.registrationFailed')
   } finally {
     loading.value = false
   }
@@ -75,21 +78,22 @@ async function register() {
 <template>
   <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
     <div class="card" style="width:100%;max-width:520px">
-      <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">Daftar</h2>
+      <div style="display:flex;justify-content:center;margin-bottom:12px"><LanguageSwitcher /></div>
+      <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">{{ t('auth.registerTitle') }}</h2>
       <div v-if="error" class="flash flash-error">{{ error }}</div>
       <div v-if="success" class="flash flash-success">{{ success }}</div>
       <form @submit.prevent="register">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
           <div>
-            <input v-model="form.username" placeholder="Username *" required :class="inputClass('username')" @focus="touched.username = true" @input="validateField('username')" @blur="validateField('username')" />
+            <input v-model="form.username" :placeholder="t('auth.username') + ' *'" required :class="inputClass('username')" @focus="touched.username = true" @input="validateField('username')" @blur="validateField('username')" />
             <div v-if="touched.username && fieldErrors.username" style="color:var(--accent-red);font-size:11px;margin-top:2px">{{ fieldErrors.username }}</div>
           </div>
           <div>
-            <input v-model="form.email" type="email" placeholder="Email *" required :class="inputClass('email')" @focus="touched.email = true" @input="validateField('email')" @blur="validateField('email')" />
+            <input v-model="form.email" type="email" :placeholder="t('auth.email') + ' *'" required :class="inputClass('email')" @focus="touched.email = true" @input="validateField('email')" @blur="validateField('email')" />
             <div v-if="touched.email && fieldErrors.email" style="color:var(--accent-red);font-size:11px;margin-top:2px">{{ fieldErrors.email }}</div>
           </div>
           <div style="grid-column:span 2">
-            <input v-model="form.password" type="password" placeholder="Password *" required :class="inputClass('password')" @focus="touched.password = true" @input="validateField('password')" @blur="validateField('password')" />
+            <input v-model="form.password" type="password" :placeholder="t('auth.password') + ' *'" required :class="inputClass('password')" @focus="touched.password = true" @input="validateField('password')" @blur="validateField('password')" />
             <div v-if="form.password" style="margin-top:6px">
               <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden">
                 <div :style="{height:'100%',width:pwProgress+'%',background:pwStrength.color,borderRadius:'3px',transition:'width .3s,background .3s'}"></div>
@@ -103,20 +107,20 @@ async function register() {
             </div>
             <div v-if="touched.password && fieldErrors.password.length" style="color:var(--accent-red);font-size:11px;margin-top:2px">{{ fieldErrors.password.join('. ') }}</div>
           </div>
-          <input v-model="form.phone" placeholder="Telepon" class="input" />
-          <input v-model="form.name" placeholder="Nama Lengkap" class="input" />
-          <input v-model="form.nik" placeholder="NIK" class="input" />
-          <input v-model="form.birthplace" placeholder="Tempat Lahir" class="input" />
+          <input v-model="form.phone" :placeholder="t('auth.phone')" class="input" />
+          <input v-model="form.name" :placeholder="t('auth.fullName')" class="input" />
+          <input v-model="form.nik" :placeholder="t('auth.nik')" class="input" />
+          <input v-model="form.birthplace" :placeholder="t('auth.birthplace')" class="input" />
           <input v-model="form.birthdate" type="date" class="input" />
-          <input v-model="form.height" type="number" placeholder="Tinggi (cm)" class="input" />
-          <input v-model="form.address" placeholder="Alamat" class="input" />
+          <input v-model="form.height" type="number" :placeholder="t('auth.height')" class="input" />
+          <input v-model="form.address" :placeholder="t('auth.address')" class="input" />
         </div>
         <button type="submit" :disabled="loading" class="btn btn-green btn-block">
-          {{ loading ? 'Mendaftar...' : 'Daftar' }}
+          {{ loading ? t('auth.registering') : t('auth.registerBtn') }}
         </button>
       </form>
       <p style="text-align:center;margin-top:16px;color:var(--text-secondary)">
-        Sudah punya akun? <router-link to="/login">Masuk</router-link>
+        {{ t('auth.hasAccount') }} <router-link to="/login">{{ t('auth.signin') }}</router-link>
       </p>
     </div>
   </div>

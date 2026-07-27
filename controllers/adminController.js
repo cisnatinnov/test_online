@@ -1,14 +1,18 @@
 const { User, Identity, BMI, BloodSugar } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { calculateAge, hitungKesimpulan, buildSugarCriteria, formatPatientResponse } = require('../utils/helpers');
+const { parsePagination, paginateResponse } = require('../utils/pagination');
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.findAll({
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows } = await User.findAndCountAll({
       attributes: ['id', 'username', 'email', 'phone', 'role', 'createdAt'],
       order: [['id', 'ASC']],
+      limit,
+      offset,
     });
-    return apiResponse(res, { data: users });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: rows, itemName: 'users' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
@@ -16,9 +20,12 @@ exports.getAllUsers = async (req, res) => {
 
 exports.getAllData = async (req, res) => {
   try {
-    const identities = await Identity.findAll({
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows: identities } = await Identity.findAndCountAll({
       include: [{ model: User, as: 'User', attributes: ['id', 'username', 'email', 'role'] }],
       order: [['id', 'ASC']],
+      limit,
+      offset,
     });
 
     const formattedData = [];
@@ -32,7 +39,7 @@ exports.getAllData = async (req, res) => {
       formattedData.push(formatPatientResponse(identity, bmiRow, sugarRow, kes, sugarCriteria));
     }
 
-    return apiResponse(res, { data: formattedData });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: formattedData, itemName: 'patients' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

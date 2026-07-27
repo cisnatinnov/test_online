@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-bmi-app-2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-vitasuite-2024';
 
 describe('authenticateToken middleware', () => {
   const authenticateToken = require('../middlewares/authenticate');

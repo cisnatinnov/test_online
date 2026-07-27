@@ -2,10 +2,16 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useI18n } from 'vue-i18n'
+import Sidebar from '../components/Sidebar.vue'
 import api from '../api'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
+const sidebarOpen = ref(false)
+const sidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
+function onCollapsedChange(v) { sidebarCollapsed.value = v }
 
 const activeTab = ref('books')
 const books = ref([])
@@ -37,7 +43,11 @@ function nav(path) { router.push(path) }
 
 const isAdmin = computed(() => auth.user?.role === 'admin')
 
-const statusLabels = { borrowed: 'Dipinjam', returned: 'Dikembalikan', overdue: 'Terlambat' }
+const statusLabels = computed(() => ({
+  borrowed: t('library.statusBorrowed'),
+  returned: t('library.statusReturned'),
+  overdue: t('library.statusOverdue'),
+}))
 const statusColors = { borrowed: '#ff9800', returned: '#4caf50', overdue: '#f44336' }
 
 async function loadBooks() {
@@ -85,9 +95,9 @@ async function loadSettings() {
 async function saveSettings() {
   try {
     await api.put('/library/settings', settingsForm.value)
-    flash('Pengaturan berhasil disimpan', 'success')
+    flash(t('flash.settingsSaved'), 'success')
     await loadSettings()
-  } catch (e) { flash(e.response?.data?.error || 'Gagal menyimpan pengaturan', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.settingsSaveFailed'), 'error') }
 }
 
 async function loadCategories() {
@@ -131,25 +141,25 @@ async function saveBook() {
     if (payload.quantity) payload.quantity = parseInt(payload.quantity)
     if (showEditBook.value) {
       await api.put(`/library/${editingBook.value.id}`, payload)
-      flash('Buku berhasil diperbarui', 'success')
+      flash(t('flash.bookUpdated'), 'success')
     } else {
       await api.post('/library', payload)
-      flash('Buku berhasil ditambahkan', 'success')
+      flash(t('flash.bookCreated'), 'success')
     }
     showAddBook.value = false
     showEditBook.value = false
     await loadBooks()
     await loadCategories()
-  } catch (e) { flash(e.response?.data?.error || 'Gagal menyimpan buku', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.bookSaveFailed'), 'error') }
 }
 
 async function deleteBook(book) {
-  if (!confirm(`Hapus buku "${book.title}"?`)) return
+  if (!confirm(t('library.confirmDelete', { title: book.title }))) return
   try {
     await api.delete(`/library/${book.id}`)
-    flash('Buku berhasil dihapus', 'success')
+    flash(t('flash.bookDeleted'), 'success')
     await loadBooks()
-  } catch (e) { flash(e.response?.data?.error || 'Gagal menghapus buku', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.bookDeleteFailed'), 'error') }
 }
 
 function openBorrow(book) {
@@ -163,19 +173,19 @@ function openBorrow(book) {
 async function submitBorrow() {
   try {
     await api.post(`/library/${borrowTarget.value.id}/borrow`, borrowForm.value)
-    flash('Peminjaman berhasil', 'success')
+    flash(t('flash.borrowSuccess'), 'success')
     showBorrowModal.value = false
     await loadBooks()
-  } catch (e) { flash(e.response?.data?.error || 'Gagal meminjam buku', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.borrowFailed'), 'error') }
 }
 
 async function returnBook(borrowing) {
-  if (!confirm('Kembalikan buku ini?')) return
+  if (!confirm(t('library.confirmReturn'))) return
   try {
     await api.post(`/library/${borrowing.book_id}/return/${borrowing.id}`)
-    flash('Pengembalian berhasil', 'success')
+    flash(t('flash.returnSuccess'), 'success')
     await loadBorrowings()
-  } catch (e) { flash(e.response?.data?.error || 'Gagal mengembalikan buku', 'error') }
+  } catch (e) { flash(e.response?.data?.error || t('flash.returnFailed'), 'error') }
 }
 
 function onSearch() {
@@ -198,98 +208,99 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
 </script>
 
 <template>
-  <div class="lib-page">
+  <div class="lib-page" :style="{ marginLeft: sidebarCollapsed ? '60px' : '240px' }">
+    <Sidebar :open="sidebarOpen" @close="sidebarOpen = false" @collapsed-change="onCollapsedChange" />
     <nav class="top-nav">
-      <h1 class="logo">Perpustakaan</h1>
-      <div class="nav-links">
-        <button @click="nav('/')" class="nav-btn back">Dashboard</button>
-        <span class="user-badge">{{ auth.user?.username }}</span>
-      </div>
+      <button class="hamburger" @click="sidebarOpen = true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <h1 class="logo">{{ t('library.title') }}</h1>
+      <span class="user-badge">{{ auth.user?.username }}</span>
     </nav>
 
     <div v-if="msg" :class="['toast', msgType]">{{ msg }}</div>
 
     <div class="tabs">
-      <button :class="['tab', { active: activeTab === 'books' }]" @click="switchTab('books')">Buku</button>
-      <button :class="['tab', { active: activeTab === 'borrowings' }]" @click="switchTab('borrowings')">Peminjaman</button>
-      <button :class="['tab', { active: activeTab === 'stats' }]" @click="switchTab('stats')">Statistik</button>
-      <button v-if="isAdmin" :class="['tab', { active: activeTab === 'settings' }]" @click="switchTab('settings')">Pengaturan</button>
+      <button :class="['tab', { active: activeTab === 'books' }]" @click="switchTab('books')">{{ t('library.books') }}</button>
+      <button :class="['tab', { active: activeTab === 'borrowings' }]" @click="switchTab('borrowings')">{{ t('library.borrowings') }}</button>
+      <button :class="['tab', { active: activeTab === 'stats' }]" @click="switchTab('stats')">{{ t('library.statistics') }}</button>
+      <button v-if="isAdmin" :class="['tab', { active: activeTab === 'settings' }]" @click="switchTab('settings')">{{ t('library.settings') }}</button>
     </div>
 
     <div class="content">
       <template v-if="activeTab === 'books'">
         <div class="toolbar">
           <div class="search-bar">
-            <input v-model="search" @keyup.enter="onSearch" placeholder="Cari judul, penulis, ISBN..." class="search-input" />
+            <input v-model="search" @keyup.enter="onSearch" :placeholder="t('library.searchPlaceholder')" class="search-input" />
             <select v-model="filterCategory" @change="onSearch" class="filter-select">
-              <option value="">Semua Kategori</option>
+              <option value="">{{ t('library.allCategories') }}</option>
               <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
             </select>
-            <button class="btn btn-blue" @click="onSearch">Cari</button>
+            <button class="btn btn-blue" @click="onSearch">{{ t('library.search') }}</button>
           </div>
-          <button class="btn btn-green" @click="openAddBook">+ Tambah Buku</button>
+          <button class="btn btn-green" @click="openAddBook">{{ t('library.addBook') }}</button>
         </div>
 
-        <div v-if="loading" class="loading">Memuat...</div>
+        <div v-if="loading" class="loading">{{ t('library.loading') }}</div>
 
         <div v-else-if="books.length === 0" class="empty-state">
-          <div class="empty-icon">Buku</div>
-          <p>Belum ada buku di perpustakaan</p>
+          <div class="empty-icon">{{ t('library.books') }}</div>
+          <p>{{ t('library.noBooks') }}</p>
         </div>
 
         <div v-else class="book-grid">
           <div v-for="book in books" :key="book.id" class="book-card">
             <div class="book-header">
-              <div class="book-category">{{ book.category || 'Umum' }}</div>
-              <div class="book-shelf" v-if="book.shelf">Rak: {{ book.shelf }}</div>
+              <div class="book-category">{{ book.category || t('library.general') }}</div>
+              <div class="book-shelf" v-if="book.shelf">{{ t('library.shelf') }} {{ book.shelf }}</div>
             </div>
             <h3 class="book-title">{{ book.title }}</h3>
             <p class="book-author">{{ book.author }}</p>
             <div class="book-meta">
-              <span v-if="book.isbn">ISBN: {{ book.isbn }}</span>
+              <span v-if="book.isbn">{{ t('library.isbn') }} {{ book.isbn }}</span>
               <span v-if="book.publisher">{{ book.publisher }}</span>
               <span v-if="book.year">{{ book.year }}</span>
             </div>
             <p v-if="book.description" class="book-desc">{{ book.description }}</p>
             <div class="book-availability">
               <span :class="['avail-badge', book.available > 0 ? 'available' : 'unavailable']">
-                {{ book.available }}/{{ book.quantity }} tersedia
+                {{ book.available }}/{{ book.quantity }} {{ t('library.available') }}
               </span>
             </div>
             <div class="book-actions">
-              <button class="btn btn-sm btn-green" :disabled="book.available <= 0" @click="openBorrow(book)">Pinjam</button>
-              <button class="btn btn-sm btn-blue" @click="openEditBook(book)">Edit</button>
-              <button v-if="isAdmin" class="btn btn-sm btn-red" @click="deleteBook(book)">Hapus</button>
+              <button class="btn btn-sm btn-green" :disabled="book.available <= 0" @click="openBorrow(book)">{{ t('library.borrow') }}</button>
+              <button class="btn btn-sm btn-blue" @click="openEditBook(book)">{{ t('library.edit') }}</button>
+              <button v-if="isAdmin" class="btn btn-sm btn-red" @click="deleteBook(book)">{{ t('library.delete') }}</button>
             </div>
           </div>
         </div>
 
         <div class="pagination" v-if="totalPages > 1">
-          <button class="btn btn-sm" @click="prevPage" :disabled="page <= 1">Sebelumnya</button>
+          <button class="btn btn-sm" @click="prevPage" :disabled="page <= 1">{{ t('library.previous') }}</button>
           <span class="page-info">{{ page }} / {{ totalPages }}</span>
-          <button class="btn btn-sm" @click="nextPage" :disabled="page >= totalPages">Berikutnya</button>
+          <button class="btn btn-sm" @click="nextPage" :disabled="page >= totalPages">{{ t('library.next') }}</button>
         </div>
       </template>
 
       <template v-if="activeTab === 'borrowings'">
-        <div v-if="loading" class="loading">Memuat...</div>
+        <div v-if="loading" class="loading">{{ t('library.loading') }}</div>
 
         <div v-else-if="borrowings.length === 0" class="empty-state">
-          <div class="empty-icon">Peminjaman</div>
-          <p>Belum ada data peminjaman</p>
+          <div class="empty-icon">{{ t('library.borrowings') }}</div>
+          <p>{{ t('library.noBorrowings') }}</p>
         </div>
 
         <div v-else class="borrow-table-wrap">
           <table class="borrow-table">
             <thead>
               <tr>
-                <th>Buku</th>
-                <th>Peminjam</th>
-                <th>Tgl Pinjam</th>
-                <th>Tgl Kembali</th>
-                <th>Denda</th>
-                <th>Status</th>
-                <th>Aksi</th>
+                <th>{{ t('library.bookHeader') }}</th>
+                <th>{{ t('library.borrower') }}</th>
+                <th>{{ t('library.borrowDate') }}</th>
+                <th>{{ t('library.returnDate') }}</th>
+                <th>{{ t('library.fine') }}</th>
+                <th>{{ t('library.status') }}</th>
+                <th>{{ t('library.actions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -309,7 +320,7 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
                   <span class="status-badge" :style="{ background: statusColors[b.status] }">{{ statusLabels[b.status] }}</span>
                 </td>
                 <td>
-                  <button v-if="b.status === 'borrowed' || b.status === 'overdue'" class="btn btn-sm btn-green" @click="returnBook(b)">Kembalikan</button>
+                  <button v-if="b.status === 'borrowed' || b.status === 'overdue'" class="btn btn-sm btn-green" @click="returnBook(b)">{{ t('library.returnBook') }}</button>
                   <span v-else class="returned-date">{{ b.return_date }}</span>
                 </td>
               </tr>
@@ -318,63 +329,63 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
         </div>
 
         <div class="pagination" v-if="totalPages > 1">
-          <button class="btn btn-sm" @click="prevPage" :disabled="page <= 1">Sebelumnya</button>
+          <button class="btn btn-sm" @click="prevPage" :disabled="page <= 1">{{ t('library.previous') }}</button>
           <span class="page-info">{{ page }} / {{ totalPages }}</span>
-          <button class="btn btn-sm" @click="nextPage" :disabled="page >= totalPages">Berikutnya</button>
+          <button class="btn btn-sm" @click="nextPage" :disabled="page >= totalPages">{{ t('library.next') }}</button>
         </div>
       </template>
 
       <template v-if="activeTab === 'stats'">
-        <div v-if="!stats" class="loading">Memuat statistik...</div>
+        <div v-if="!stats" class="loading">{{ t('library.loadingStats') }}</div>
         <template v-else>
           <div class="stats-grid">
             <div class="stat-card stat-blue">
               <div class="stat-value">{{ stats.totalTitles }}</div>
-              <div class="stat-label">Judul Buku</div>
+              <div class="stat-label">{{ t('library.bookTitles') }}</div>
             </div>
             <div class="stat-card stat-green">
               <div class="stat-value">{{ stats.totalBooks }}</div>
-              <div class="stat-label">Total Eksemplar</div>
+              <div class="stat-label">{{ t('library.totalCopies') }}</div>
             </div>
             <div class="stat-card stat-teal">
               <div class="stat-value">{{ stats.totalAvailable }}</div>
-              <div class="stat-label">Tersedia</div>
+              <div class="stat-label">{{ t('library.availableCount') }}</div>
             </div>
             <div class="stat-card stat-orange">
               <div class="stat-value">{{ stats.totalBorrowed }}</div>
-              <div class="stat-label">Dipinjam</div>
+              <div class="stat-label">{{ t('library.borrowedCount') }}</div>
             </div>
             <div class="stat-card stat-purple">
               <div class="stat-value">{{ stats.activeBorrowings }}</div>
-              <div class="stat-label">Peminjaman Aktif</div>
+              <div class="stat-label">{{ t('library.activeBorrowings') }}</div>
             </div>
             <div class="stat-card stat-red">
               <div class="stat-value">{{ stats.overdueBorrowings }}</div>
-              <div class="stat-label">Terlambat</div>
+              <div class="stat-label">{{ t('library.overdue') }}</div>
             </div>
             <div class="stat-card stat-yellow">
               <div class="stat-value">Rp {{ stats.totalFines?.toLocaleString('id-ID') || 0 }}</div>
-              <div class="stat-label">Total Denda</div>
+              <div class="stat-label">{{ t('library.totalFines') }}</div>
             </div>
             <div class="stat-card stat-orange">
               <div class="stat-value">Rp {{ stats.finePerDay?.toLocaleString('id-ID') || 500 }}</div>
-              <div class="stat-label">Denda/Hari</div>
+              <div class="stat-label">{{ t('library.finePerDay') }}</div>
             </div>
             <div class="stat-card stat-teal">
-              <div class="stat-value">{{ stats.borrowDurationDays || 7 }} hari</div>
-              <div class="stat-label">Durasi Pinjam</div>
+              <div class="stat-value">{{ stats.borrowDurationDays || 7 }} {{ t('library.days') }}</div>
+              <div class="stat-label">{{ t('library.borrowDuration') }}</div>
             </div>
             <div class="stat-card stat-purple">
-              <div class="stat-value">{{ stats.overdueToleranceDays || 1 }} hari</div>
-              <div class="stat-label">Toleransi</div>
+              <div class="stat-value">{{ stats.overdueToleranceDays || 1 }} {{ t('library.days') }}</div>
+              <div class="stat-label">{{ t('library.tolerance') }}</div>
             </div>
           </div>
 
           <div class="card" v-if="stats.categoryStats?.length">
-            <h3 class="card-title">Buku per Kategori</h3>
+            <h3 class="card-title">{{ t('library.booksByCategory') }}</h3>
             <div class="cat-chart">
               <div v-for="cs in stats.categoryStats" :key="cs.category" class="cat-bar-row">
-                <span class="cat-label">{{ cs.category || 'Umum' }}</span>
+                <span class="cat-label">{{ cs.category || t('library.general') }}</span>
                 <div class="cat-bar-wrap">
                   <div class="cat-bar" :style="{ width: Math.max(10, (cs.total / stats.totalBooks) * 100) + '%' }">{{ cs.total }}</div>
                 </div>
@@ -386,44 +397,44 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
 
       <template v-if="activeTab === 'settings' && isAdmin">
         <div class="card" style="max-width:600px">
-          <h3 class="card-title">Pengaturan Perpustakaan</h3>
+          <h3 class="card-title">{{ t('library.librarySettings') }}</h3>
           <div class="form-stack">
             <div class="input-group">
-              <label>Durasi Peminjaman (hari)</label>
+              <label>{{ t('library.borrowDurationLabel') }}</label>
               <input v-model.number="settingsForm.borrow_duration_days" type="number" min="1" max="90" />
-              <small class="input-hint">Berapa lama buku boleh dipinjam (default: 7 hari)</small>
+              <small class="input-hint">{{ t('library.borrowDurationHint') }}</small>
             </div>
             <div class="input-group">
-              <label>Denda Per Hari (Rp)</label>
+              <label>{{ t('library.finePerDayLabel') }}</label>
               <input v-model.number="settingsForm.fine_per_day" type="number" min="0" step="100" />
-              <small class="input-hint">Denda keterlambatan per hari setelah masa toleransi (default: Rp 500)</small>
+              <small class="input-hint">{{ t('library.finePerDayHint') }}</small>
             </div>
             <div class="input-group">
-              <label>Hari Toleransi</label>
+              <label>{{ t('library.toleranceLabel') }}</label>
               <input v-model.number="settingsForm.overdue_tolerance_days" type="number" min="0" max="30" />
-              <small class="input-hint">Hari pertama keterlambatan yang tidak dikenakan denda (default: 1 hari)</small>
+              <small class="input-hint">{{ t('library.toleranceHint') }}</small>
             </div>
             <div class="settings-preview">
-              <h4>Contoh Perhitungan Denda</h4>
+              <h4>{{ t('library.fineCalcExample') }}</h4>
               <div class="preview-table">
                 <div class="preview-row">
-                  <span>Jatuh tempo</span><span>Kembali</span><span>Terlambat</span><span>Denda</span>
+                  <span>{{ t('library.dueDate') }}</span><span>{{ t('library.returned') }}</span><span>{{ t('library.daysOverdue') }}</span><span>{{ t('library.fineHeader') }}</span>
                 </div>
                 <div class="preview-row">
-                  <span>15 Jul</span><span>15 Jul</span><span>0 hari</span><span>Rp 0</span>
+                  <span>15 Jul</span><span>15 Jul</span><span>0 {{ t('library.days') }}</span><span>Rp 0</span>
                 </div>
                 <div class="preview-row">
-                  <span>15 Jul</span><span>16 Jul</span><span>1 hari</span><span>Rp 0 (toleransi)</span>
+                  <span>15 Jul</span><span>16 Jul</span><span>1 {{ t('library.days') }}</span><span>Rp 0 ({{ t('library.withinTolerance') }})</span>
                 </div>
                 <div class="preview-row">
-                  <span>15 Jul</span><span>17 Jul</span><span>2 hari</span><span>Rp {{ settingsForm.fine_per_day?.toLocaleString('id-ID') }}</span>
+                  <span>15 Jul</span><span>17 Jul</span><span>2 {{ t('library.days') }}</span><span>Rp {{ settingsForm.fine_per_day?.toLocaleString('id-ID') }}</span>
                 </div>
                 <div class="preview-row">
-                  <span>15 Jul</span><span>25 Jul</span><span>10 hari</span><span>Rp {{ ((10 - settingsForm.overdue_tolerance_days) * (settingsForm.fine_per_day || 500)).toLocaleString('id-ID') }}</span>
+                  <span>15 Jul</span><span>25 Jul</span><span>10 {{ t('library.days') }}</span><span>Rp {{ ((10 - settingsForm.overdue_tolerance_days) * (settingsForm.fine_per_day || 500)).toLocaleString('id-ID') }}</span>
                 </div>
               </div>
             </div>
-            <button class="btn btn-green" @click="saveSettings">Simpan Pengaturan</button>
+            <button class="btn btn-green" @click="saveSettings">{{ t('library.saveSettings') }}</button>
           </div>
         </div>
       </template>
@@ -431,80 +442,80 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
 
     <div v-if="showAddBook || showEditBook" class="modal-overlay" @click.self="showAddBook = false; showEditBook = false">
       <div class="modal">
-        <h2 class="modal-title">{{ showEditBook ? 'Edit Buku' : 'Tambah Buku Baru' }}</h2>
+        <h2 class="modal-title">{{ showEditBook ? t('library.editBook') : t('library.newBook') }}</h2>
         <div class="modal-body">
           <div class="form-row">
             <div class="input-group">
-              <label>Judul *</label>
-              <input v-model="bookForm.title" placeholder="Judul buku" />
+              <label>{{ t('library.titleRequired') }}</label>
+              <input v-model="bookForm.title" :placeholder="t('library.titlePlaceholder')" />
             </div>
             <div class="input-group">
-              <label>Penulis *</label>
-              <input v-model="bookForm.author" placeholder="Nama penulis" />
+              <label>{{ t('library.authorRequired') }}</label>
+              <input v-model="bookForm.author" :placeholder="t('library.authorPlaceholder')" />
             </div>
           </div>
           <div class="form-row">
             <div class="input-group">
               <label>ISBN</label>
-              <input v-model="bookForm.isbn" placeholder="978-..." />
+              <input v-model="bookForm.isbn" :placeholder="t('library.isbnPlaceholder')" />
             </div>
             <div class="input-group">
-              <label>Penerbit</label>
-              <input v-model="bookForm.publisher" placeholder="Nama penerbit" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="input-group">
-              <label>Tahun</label>
-              <input v-model="bookForm.year" type="number" min="1000" max="9999" placeholder="2024" />
-            </div>
-            <div class="input-group">
-              <label>Kategori</label>
-              <input v-model="bookForm.category" placeholder="Fiksi, Sains, dll" />
+              <label>{{ t('library.publisher') }}</label>
+              <input v-model="bookForm.publisher" :placeholder="t('library.publisherPlaceholder')" />
             </div>
           </div>
           <div class="form-row">
             <div class="input-group">
-              <label>Jumlah</label>
+              <label>{{ t('library.year') }}</label>
+              <input v-model="bookForm.year" type="number" min="1000" max="9999" :placeholder="t('library.yearPlaceholder')" />
+            </div>
+            <div class="input-group">
+              <label>{{ t('library.category') }}</label>
+              <input v-model="bookForm.category" :placeholder="t('library.categoryPlaceholder')" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="input-group">
+              <label>{{ t('library.quantity') }}</label>
               <input v-model="bookForm.quantity" type="number" min="1" />
             </div>
             <div class="input-group">
-              <label>Rak</label>
-              <input v-model="bookForm.shelf" placeholder="A1, B2, dll" />
+              <label>{{ t('library.shelfLabel') }}</label>
+              <input v-model="bookForm.shelf" :placeholder="t('library.shelfPlaceholder')" />
             </div>
           </div>
           <div class="input-group">
-            <label>Deskripsi</label>
-            <textarea v-model="bookForm.description" rows="3" placeholder="Deskripsi singkat buku..."></textarea>
+            <label>{{ t('library.descriptionLabel') }}</label>
+            <textarea v-model="bookForm.description" rows="3" :placeholder="t('library.descPlaceholder')"></textarea>
           </div>
         </div>
         <div class="modal-actions">
-          <button class="btn" @click="showAddBook = false; showEditBook = false">Batal</button>
-          <button class="btn btn-green" @click="saveBook">{{ showEditBook ? 'Simpan' : 'Tambah' }}</button>
+          <button class="btn" @click="showAddBook = false; showEditBook = false">{{ t('library.cancel') }}</button>
+          <button class="btn btn-green" @click="saveBook">{{ showEditBook ? t('library.save') : t('library.addBtn') }}</button>
         </div>
       </div>
     </div>
 
     <div v-if="showBorrowModal" class="modal-overlay" @click.self="showBorrowModal = false">
       <div class="modal">
-        <h2 class="modal-title">Pinjam Buku</h2>
+        <h2 class="modal-title">{{ t('library.borrowBookTitle') }}</h2>
         <div class="modal-body">
           <div class="borrow-info">
             <strong>{{ borrowTarget?.title }}</strong>
             <span>{{ borrowTarget?.author }}</span>
           </div>
           <div class="input-group">
-            <label>Tanggal Pengembalian *</label>
+            <label>{{ t('library.returnDateRequired') }}</label>
             <input v-model="borrowForm.due_date" type="date" />
           </div>
           <div class="input-group" style="margin-top:10px">
-            <label>Catatan</label>
-            <textarea v-model="borrowForm.notes" rows="2" placeholder="Catatan opsional..."></textarea>
+            <label>{{ t('library.notes') }}</label>
+            <textarea v-model="borrowForm.notes" rows="2" :placeholder="t('library.notesPlaceholder')"></textarea>
           </div>
         </div>
         <div class="modal-actions">
-          <button class="btn" @click="showBorrowModal = false">Batal</button>
-          <button class="btn btn-green" @click="submitBorrow">Pinjam</button>
+          <button class="btn" @click="showBorrowModal = false">{{ t('library.cancel') }}</button>
+          <button class="btn btn-green" @click="submitBorrow">{{ t('library.borrow') }}</button>
         </div>
       </div>
     </div>
@@ -514,15 +525,28 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
 <style scoped>
 .lib-page {
   min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
   color: #e0e0e0;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #ccc);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.hamburger:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
 .top-nav {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 16px 24px;
   background: rgba(0,0,0,0.3);
   backdrop-filter: blur(10px);
@@ -537,11 +561,7 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
   -webkit-text-fill-color: transparent;
 }
 
-.nav-links { display: flex; align-items: center; gap: 12px; }
-.nav-btn { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
-.nav-btn.back { background: rgba(255,255,255,0.12); color: #ccc; }
-.nav-btn.back:hover { background: rgba(255,255,255,0.2); color: #fff; }
-.user-badge { padding: 4px 10px; background: rgba(121,85,72,0.2); border: 1px solid rgba(121,85,72,0.4); border-radius: 20px; font-size: 0.8rem; color: #a1887f; }
+.user-badge { padding: 4px 10px; background: rgba(121,85,72,0.2); border: 1px solid rgba(121,85,72,0.4); border-radius: 20px; font-size: 0.8rem; color: #a1887f; margin-left: auto; }
 
 .toast { position: fixed; top: 16px; right: 16px; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; z-index: 1000; animation: slideIn 0.3s ease; }
 .toast.success { background: #2e7d32; color: #c8e6c9; }
@@ -732,6 +752,8 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
 .preview-row span { color: #ccc; }
 
 @media (max-width: 768px) {
+  .lib-page { margin-left: 0 !important; }
+  .hamburger { display: flex; }
   .toolbar { flex-direction: column; }
   .search-bar { flex-direction: column; width: 100%; }
   .book-grid { grid-template-columns: 1fr; }

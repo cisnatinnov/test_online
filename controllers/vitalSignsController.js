@@ -2,6 +2,7 @@ const { Identity, VitalSigns } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { calculateAge, evalBloodPressure, evalHeartRate, evalTemperature, evalSpO2, evalRespiratoryRate } = require('../utils/helpers');
 const sequelize = require('../config/database');
+const { parsePagination, paginateResponse } = require('../utils/pagination');
 
 const getUserIdFilter = (req) => req.user.role === 'admin' ? {} : { id_user: req.user.id };
 
@@ -126,8 +127,14 @@ exports.getHistoryVitalSigns = async (req, res) => {
     const { identityId } = req.params;
     const identity = await Identity.findOne({ where: { id: identityId, ...getUserIdFilter(req) } });
     if (!identity) return apiResponse(res, { error: 'Data tidak ditemukan', status: 404 });
-    const results = await VitalSigns.findAll({ where: { id_identity: identityId }, order: [['id', 'DESC']] });
-    return apiResponse(res, { data: results.map(formatVitalSigns) });
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows } = await VitalSigns.findAndCountAll({
+      where: { id_identity: identityId },
+      order: [['id', 'DESC']],
+      limit,
+      offset,
+    });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: rows.map(formatVitalSigns), itemName: 'history' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
@@ -135,7 +142,13 @@ exports.getHistoryVitalSigns = async (req, res) => {
 
 exports.getVitalSignsList = async (req, res) => {
   try {
-    const identities = await Identity.findAll({ where: getUserIdFilter(req), order: [['id', 'ASC']] });
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows: identities } = await Identity.findAndCountAll({
+      where: getUserIdFilter(req),
+      order: [['id', 'ASC']],
+      limit,
+      offset,
+    });
 
     const formattedData = [];
     for (const identity of identities) {
@@ -157,7 +170,7 @@ exports.getVitalSignsList = async (req, res) => {
       });
     }
 
-    return apiResponse(res, { data: formattedData });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: formattedData, itemName: 'patients' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

@@ -1,12 +1,18 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { useChatStore } from '../stores/chat'
+import Sidebar from '../components/Sidebar.vue'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const chat = useChatStore()
 const router = useRouter()
+const sidebarOpen = ref(false)
+const sidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
+function onCollapsedChange(v) { sidebarCollapsed.value = v }
 
 const inputMsg = ref('')
 const showNewRoom = ref(false)
@@ -31,7 +37,7 @@ const typingInRoom = computed(() => {
     return key.startsWith(`${chat.currentRoom.id}:`) && Number(uid) !== auth.user?.id
   })
   if (!entries.length) return ''
-  return entries.map(([, v]) => v.username).join(', ') + ' typing...'
+  return entries.map(([, v]) => v.username).join(', ') + ' ' + t('chat.typing')
 })
 
 onMounted(async () => {
@@ -120,7 +126,7 @@ function formatMsgTime(d) {
 function getRoomTitle(room) {
   if (!room) return ''
   if (room.type === 'direct') return room.name
-  return room.name || 'Group'
+  return room.name || t('chat.group')
 }
 
 function getOtherUser(room) {
@@ -130,26 +136,25 @@ function getOtherUser(room) {
 </script>
 
 <template>
-  <div class="chat-page">
+  <div class="chat-page" :style="{ marginLeft: sidebarCollapsed ? '60px' : '240px' }">
+    <Sidebar :open="sidebarOpen" @close="sidebarOpen = false" @collapsed-change="onCollapsedChange" />
     <nav class="top-nav">
-      <h1 class="logo" @click="router.push('/')" style="cursor:pointer">Chat</h1>
-      <div class="nav-links">
-        <button @click="router.push('/')" class="nav-btn">Dashboard</button>
-        <button @click="router.push('/health')" class="nav-btn">Health</button>
-        <button @click="router.push('/money')" class="nav-btn">Money</button>
-        <span class="user-badge">{{ auth.user?.username }}</span>
-      </div>
+      <button class="hamburger" @click="sidebarOpen = true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <h1 class="logo" @click="router.push('/')" style="cursor:pointer">{{ t('chat.title') }}</h1>
+      <span class="user-badge">{{ auth.user?.username }}</span>
     </nav>
 
     <div class="chat-layout">
       <aside class="sidebar">
         <div class="sidebar-header">
-          <h3>Conversations</h3>
+          <h3>{{ t('chat.conversations') }}</h3>
           <div class="new-room-btns">
-            <button class="icon-btn" @click="openNewRoom('direct')" title="New Direct Message">
+            <button class="icon-btn" @click="openNewRoom('direct')" :title="t('chat.newDirectMessage')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </button>
-            <button class="icon-btn" @click="openNewRoom('group')" title="New Group">
+            <button class="icon-btn" @click="openNewRoom('group')" :title="t('chat.newGroup')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </button>
           </div>
@@ -166,11 +171,11 @@ function getOtherUser(room) {
               <div class="room-last" v-if="room.lastMessage">
                 <strong>{{ room.lastMessage.username }}:</strong> {{ room.lastMessage.content }}
               </div>
-              <div class="room-last" v-else style="opacity:0.4">No messages yet</div>
+              <div class="room-last" v-else style="opacity:0.4">{{ t('chat.noMessages') }}</div>
             </div>
           </div>
           <div v-if="!chat.rooms.length" class="empty-sidebar">
-            No conversations yet. Click + to start one.
+            {{ t('chat.noConversations') }}
           </div>
         </div>
       </aside>
@@ -181,10 +186,10 @@ function getOtherUser(room) {
             <div class="chat-header-info">
               <h3>{{ getRoomTitle(chat.currentRoom) }}</h3>
               <span class="participant-count" v-if="chat.currentRoom.type === 'group'">
-                {{ chat.currentRoom.participants.length }} members
+                {{ chat.currentRoom.participants.length }} {{ t('chat.members') }}
               </span>
               <span class="online-dot" v-if="chat.currentRoom.type === 'direct' && chat.currentRoom.isOnline"></span>
-              <span class="online-label" v-if="chat.currentRoom.type === 'direct' && chat.currentRoom.isOnline">Online</span>
+              <span class="online-label" v-if="chat.currentRoom.type === 'direct' && chat.currentRoom.isOnline">{{ t('chat.online') }}</span>
             </div>
           </div>
 
@@ -200,7 +205,7 @@ function getOtherUser(room) {
               </div>
             </div>
             <div v-if="chat.messages.length === 0" class="empty-chat">
-              Send a message to start the conversation.
+              {{ t('chat.sendMessagePrompt') }}
             </div>
           </div>
 
@@ -208,7 +213,7 @@ function getOtherUser(room) {
 
           <div class="chat-input">
             <input v-model="inputMsg" @keydown.enter="send" @keydown="onKeydown"
-              placeholder="Type a message..." class="msg-input" />
+              :placeholder="t('chat.typeMessage')" class="msg-input" />
             <button class="send-btn" @click="send">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
@@ -219,22 +224,22 @@ function getOtherUser(room) {
           <div class="empty-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
-          <h2>Welcome to Chat</h2>
-          <p>Select a conversation or start a new one.</p>
+          <h2>{{ t('chat.welcomeTitle') }}</h2>
+          <p>{{ t('chat.welcomeDesc') }}</p>
         </div>
       </main>
     </div>
 
     <div v-if="showNewRoom" class="modal-overlay" @click.self="showNewRoom = false">
       <div class="modal">
-        <h3>{{ newRoomType === 'group' ? 'New Group' : 'New Direct Message' }}</h3>
+        <h3>{{ newRoomType === 'group' ? t('chat.newGroup') : t('chat.newDirectMessage') }}</h3>
         <div v-if="newRoomType === 'group'" class="form-group">
-          <label>Group Name</label>
-          <input v-model="newRoomName" placeholder="e.g. Health Discussion" class="modal-input" />
+          <label>{{ t('chat.groupName') }}</label>
+          <input v-model="newRoomName" :placeholder="t('chat.groupNamePlaceholder')" class="modal-input" />
         </div>
         <div class="form-group">
-          <label>{{ newRoomType === 'group' ? 'Add Members' : 'Select User' }}</label>
-          <input v-model="searchQuery" placeholder="Search users..." class="modal-input" />
+          <label>{{ newRoomType === 'group' ? t('chat.addMembers') : t('chat.selectUser') }}</label>
+          <input v-model="searchQuery" :placeholder="t('chat.searchUsers')" class="modal-input" />
           <div class="user-list">
             <div v-for="user in filteredUsers" :key="user.id"
               :class="['user-item', { selected: selectedUsers.includes(user.id) }]"
@@ -245,14 +250,14 @@ function getOtherUser(room) {
                 <div class="user-email">{{ user.email }}</div>
               </div>
             </div>
-            <div v-if="!filteredUsers.length" style="padding:12px;text-align:center;color:#666">No users found</div>
+            <div v-if="!filteredUsers.length" style="padding:12px;text-align:center;color:#666">{{ t('chat.noUsersFound') }}</div>
           </div>
         </div>
         <div class="modal-actions">
-          <button class="btn-cancel" @click="showNewRoom = false">Cancel</button>
+          <button class="btn-cancel" @click="showNewRoom = false">{{ t('chat.cancel') }}</button>
           <button class="btn-create" @click="createRoom"
             :disabled="newRoomType === 'group' ? !newRoomName.trim() || !selectedUsers.length : !selectedUsers.length">
-            {{ newRoomType === 'group' ? 'Create Group' : 'Start Chat' }}
+            {{ newRoomType === 'group' ? t('chat.createGroup') : t('chat.startChat') }}
           </button>
         </div>
       </div>
@@ -263,6 +268,7 @@ function getOtherUser(room) {
 <style scoped>
 .chat-page {
   min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg, #0d1b2a, #1b2838, #172a3a);
   color: #e0e0e0;
   font-family: 'Segoe UI', system-ui, sans-serif;
@@ -270,10 +276,22 @@ function getOtherUser(room) {
   flex-direction: column;
 }
 
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #ccc);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.hamburger:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
 .top-nav {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 14px 24px;
   background: rgba(0,0,0,0.35);
   backdrop-filter: blur(10px);
@@ -286,19 +304,6 @@ function getOtherUser(room) {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.nav-links { display: flex; align-items: center; gap: 10px; }
-.nav-btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-weight: 600;
-  background: rgba(255,255,255,0.1);
-  color: #ccc;
-  transition: all 0.2s;
-}
-.nav-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
 .user-badge {
   padding: 4px 10px;
   background: rgba(76,175,80,0.2);
@@ -306,6 +311,7 @@ function getOtherUser(room) {
   border-radius: 20px;
   font-size: 0.78rem;
   color: #81c784;
+  margin-left: auto;
 }
 
 .chat-layout {
@@ -590,6 +596,8 @@ function getOtherUser(room) {
 .btn-create:disabled { opacity: 0.4; cursor: not-allowed; }
 
 @media (max-width: 768px) {
+  .chat-page { margin-left: 0 !important; }
+  .hamburger { display: flex; }
   .chat-layout { grid-template-columns: 1fr; }
   .sidebar { display: none; }
   .sidebar.show { display: flex; position: fixed; inset: 0; z-index: 50; }

@@ -1,4 +1,4 @@
-# BMI App - User Guide
+# VitaSuite - User Guide
 
 Step-by-step guide for using the BMI health monitoring application with Vue 3 frontend.
 
@@ -8,7 +8,8 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
 2. [Registration](#registration)
 3. [Login & 2FA](#login--2fa)
 4. [Dashboard](#dashboard)
-5. [Health Monitor (Admin Only)](#health-monitor-admin-only)
+5. [Profile](#profile)
+6. [Health Monitor](#health-monitor)
    - [Recording Vitals & BMI](#recording-vitals--bmi)
    - [Viewing Health Metrics](#viewing-health-metrics)
    - [Health History](#health-history)
@@ -18,7 +19,8 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
    - [Expenses & Savings](#expenses--savings)
    - [Category Breakdown](#category-breakdown)
    - [Charts & Summary](#charts--summary)
-8. [Palm Oil Estate Management](#palm-oil-estate-management)
+8. [Category Management](#category-management)
+9. [Palm Oil Estate Management](#palm-oil-estate-management)
    - [Creating Estates](#creating-estates)
    - [Planting Trees](#planting-trees)
    - [Estate Statistics](#estate-statistics)
@@ -34,7 +36,11 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
     - [Returning Books & Fine](#returning-books--fine)
     - [Library Statistics](#library-statistics)
     - [Fine & Duration Settings (Admin)](#fine--duration-settings-admin)
-11. [Health Risk Assessment](#health-risk-assessment)
+11. [Indonesian News](#indonesian-news)
+    - [Viewing News](#viewing-news)
+    - [News Categories](#news-categories)
+    - [Auto-refresh & Cleanup](#auto-refresh--cleanup)
+12. [Health Risk Assessment](#health-risk-assessment)
 12. [Health Trends](#health-trends)
 13. [Health Alerts](#health-alerts)
 14. [Population Statistics](#population-statistics)
@@ -42,9 +48,11 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
 16. [History & Summary](#history--summary)
 17. [Admin Features](#admin-features)
 18. [System Health Monitoring](#system-health-monitoring)
-19. [Progressive Web App (PWA)](#progressive-web-app-pwa)
-20. [Internationalization](#internationalization)
-21. [Troubleshooting](#troubleshooting)
+19. [Pagination](#pagination)
+20. [Money Management PDF Export](#money-management-pdf-export)
+21. [Progressive Web App (PWA)](#progressive-web-app-pwa)
+22. [Internationalization](#internationalization)
+23. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -80,7 +88,8 @@ npm run dev:all
 **Page:** `/register`
 
 1. Click **"Daftar"** on the login page.
-2. Fill in the **required fields**:
+2. **Change language** (optional) - use the language switcher above the form title to select your preferred language.
+3. Fill in the **required fields**:
    - **Username** - your login username
    - **Email** - used for 2FA verification
    - **Password** - must meet the rules below
@@ -141,25 +150,46 @@ The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you typ
 
 The dashboard is the main screen after login. It shows:
 
+- **User Menu** (click your username in the top-left) - a dropdown with:
+  - **Language** - switch between 5 languages (English UK, English US, Bahasa Indonesia, Espanol, Portugues)
+  - **Profile** - link to your profile page with identity info and personal health monitoring
+  - **Health** - link to the Health Monitor page
+  - **Logout** - sign out of the application
 - **Navigation buttons** for quick access:
-  - **Health** - go to the Health Monitor page (admin only)
-  - **Money** - go to the Money Management page
+  - **Health** - go to the Health Monitor page
   - **Estate** - go to the Estate Management page
   - **Chat** - go to the Real-time Chat page
   - **Perpustakaan** - go to the Library Management page
-- **Language switcher** in the navbar - switch between 5 languages: English (UK), English (US), Bahasa Indonesia, Espanol, Portugues. Your language preference is saved in localStorage.
-- **Welcome message** with your username
 - Links to other features (Patient List, Summary, Tools, etc.)
-
-> **Note:** The Health button is only visible to admin users. Non-admin users cannot access the Health Monitor page.
 
 ---
 
-## Health Monitor (Admin Only)
+## Profile
 
-**Page:** `/health` (admin only - non-admin users are redirected to dashboard)
+**Page:** `/profile`
 
-The Health Monitor is the primary health recording interface. It combines vital signs recording with BMI tracking in a single view, plus system health checks and API traffic monitoring.
+View your identity information and personal health monitoring data.
+
+1. **Select an identity** from the dropdown (if you have multiple patients)
+2. **Identity Info** shows:
+   - Name, NIK, Height, Place of Birth, Date of Birth, Address
+3. **Health Dashboard** shows color-coded metric cards:
+   - **BMI** - latest BMI value and category
+   - **Blood Sugar** - latest blood sugar reading and conclusion
+   - **Blood Pressure** - latest systolic/diastolic reading
+4. **BMI History** table - last 10 BMI records with date, weight, BMI value, and result
+5. **Blood Sugar History** table - last 10 blood sugar records with date, value, and conclusion
+6. **Vital Signs History** table - last 10 readings with BP, heart rate, temperature, SpO2, and respiratory rate
+
+---
+
+## Health Monitor
+
+**Page:** `/health`
+
+The Health Monitor is the primary health recording interface. It combines vital signs recording with BMI tracking in a single view, plus system health checks and API traffic monitoring (admin only).
+
+Non-admin users see only their own patients' data. Admin users can see all patients.
 
 ### Recording Vitals & BMI
 
@@ -251,13 +281,13 @@ Track your personal finances with expense and saving management.
 
 #### Adding an Expense
 1. Enter the **amount** (e.g., 50000)
-2. Select a **category** (e.g., Makanan, Transport, Kesehatan, etc.)
+2. Select a **category** from the dropdown (categories are managed in Category Management)
 3. Optionally add a **description**
 4. Click **"Add Expense"**
 
 #### Adding a Saving
 1. Enter the **amount**
-2. Select a **category** (e.g., Gaji, Bonus, Investasi, etc.)
+2. Select a **category** from the dropdown (categories are managed in Category Management)
 3. Optionally add a **description**
 4. Click **"Add Saving"**
 
@@ -287,6 +317,24 @@ Two tables below the forms show totals grouped by category:
 
 - **Trend Chart**: Visual chart showing expense vs saving over time (weekly/monthly/yearly)
 - **Financial Summary**: Total expense, total saving, and current balance
+
+---
+
+## Category Management
+
+**Page:** `/categories`
+
+Manage spending and saving categories used in the Money Management page.
+
+### Features
+
+- **Two tabs**: Spending Categories and Saving Categories
+- **Add Category**: Click "+ Add Category", type a name, press Enter or click Save
+- **Edit Category**: Click the edit icon next to a category to rename it
+- **Delete Category**: Click the delete icon and confirm to remove a category
+- **Duplicate Prevention**: Creating a category with an existing name in the same type shows an error
+
+> **Note:** Categories created here appear as dropdown options in the Money Management add forms.
 
 ---
 
@@ -479,6 +527,45 @@ A **preview table** shows example fine calculations based on the current setting
 
 ---
 
+## Indonesian News
+
+View Indonesian news about sports, politics, and criminals, updated daily from RSS feeds.
+
+### Viewing News
+
+**Endpoint:** `GET /api/news` (requires login)
+
+1. The news list shows articles sorted by publication date (newest first)
+2. Each article displays:
+   - **Title** - news headline
+   - **Content** - brief description/excerpt
+   - **Category** - sports, politics, or criminal
+   - **Source** - news source (Kompas, Detik, CNN Indonesia)
+   - **Published Date** - when the article was published
+3. Use **category filter** to show only sports, politics, or criminal news
+4. Results are paginated (20 per page by default)
+5. Use `?page=1&limit=50` query parameters to change pagination (allowed: 5, 10, 20, 50, 100)
+
+### News Categories
+
+| Category | Description |
+|----------|-------------|
+| Sports | Indonesian sports news (football, badminton, basketball, etc.) |
+| Politics | Indonesian political news (government, parliament, elections, etc.) |
+| Criminal | Indonesian crime news (police, arrests, court cases, etc.) |
+
+### Auto-refresh & Cleanup
+
+- **Auto-refresh**: News is automatically fetched from RSS feeds daily at 6:00 AM
+- **Auto-cleanup**: News older than 3 days is automatically deleted
+- **Manual refresh**: Admin can trigger a manual refresh via `POST /api/news/refresh`
+- **RSS Sources**: Kompas, Detik, CNN Indonesia (sports, politics, crime sections)
+
+**Endpoint:** `GET /api/news/latest` (requires login) - Get latest news from the past 3 days
+**Endpoint:** `GET /api/news/stats` (requires login) - View news statistics (total, per category, recent count)
+
+---
+
 ## Health Risk Assessment
 
 Assess a patient's combined health risk from BMI, blood sugar, vital signs, and age.
@@ -590,7 +677,7 @@ An admin account is automatically created on first run using values from `.env`:
 
 ```
 ADMIN_USERNAME=admin
-ADMIN_EMAIL=admin@bmi-app.com
+ADMIN_EMAIL=admin@vitasuite.com
 ADMIN_PASSWORD=Admin@123
 ```
 
@@ -606,10 +693,10 @@ ADMIN_PASSWORD=Admin@123
 
 ### Admin Health Monitor Features
 
-- Admin can **access the Health Monitor page** (`/health`) - hidden from non-admin dashboard
 - Admin can **view API traffic dashboard** with request logs, hourly charts, and status breakdowns
 - Admin can **filter traffic by period** (1h, 24h, 7d, 30d)
 - Admin can **create identities for any user** via `POST /api/identities` with `id_user` body param (email notification sent to the assigned user)
+- Admin can **view all patients** in the Health Monitor; non-admin users see only their own patients
 
 ---
 
@@ -664,6 +751,75 @@ Returns:
 
 ---
 
+## Pagination
+
+All list endpoints support pagination with consistent query parameters.
+
+### Query Parameters
+
+| Parameter | Default | Allowed Values | Description |
+|-----------|---------|----------------|-------------|
+| `page` | 1 | Any positive integer | Page number |
+| `limit` | 20 | 5, 10, 20, 50, 100 | Items per page |
+
+### Response Format
+
+```json
+{
+  "success": true,
+  "data": {
+    "total": 150,
+    "page": 1,
+    "limit": 20,
+    "pages": 8,
+    "items": [...]
+  }
+}
+```
+
+### Examples
+
+```
+GET /api/money/expense?page=1&limit=50
+GET /api/bmi/list?page=2&limit=10
+GET /api/identities?page=1&limit=5
+```
+
+---
+
+## Money Management PDF Export
+
+Export money management reports as PDF files with daily, weekly, or monthly periods.
+
+**Endpoint:** `GET /api/money/export/pdf` (requires login)
+
+### Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `period` | monthly | `daily`, `weekly`, or `monthly` |
+| `date` | today | Specific date (YYYY-MM-DD) for daily/weekly |
+| `year` | current year | Year for monthly report |
+| `month` | current month | Month (1-12) for monthly report |
+
+### Examples
+
+```
+GET /api/money/export/pdf?period=daily&date=2026-07-27
+GET /api/money/export/pdf?period=weekly&date=2026-07-27
+GET /api/money/export/pdf?period=monthly&year=2026&month=7
+```
+
+### PDF Contents
+
+- **Title**: "Laporan Keuangan" with period label
+- **Summary**: Total expense, total saving, balance
+- **Expense Table**: Date, category, description, amount for each expense
+- **Saving Table**: Date, category, description, amount for each saving
+- **Totals**: Subtotal for expenses and savings
+
+---
+
 ## Progressive Web App (PWA)
 
 The application is a Progressive Web App and can be installed on mobile and desktop devices.
@@ -699,9 +855,11 @@ The app supports 5 languages:
 | pt | Portugues |
 
 ### Changing Language
-1. Click a language code button in the dashboard navbar
-2. The language changes immediately
-3. Your preference is saved in localStorage and persists across sessions
+1. The **language switcher** is available on every page (dashboard, login, register, health monitor, etc.)
+2. Click a language code button to switch languages
+3. The language changes immediately
+4. Your preference is saved in localStorage and persists across sessions
+5. Default language is English (UK) (en-GB)
 
 ---
 

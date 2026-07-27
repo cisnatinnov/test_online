@@ -65,7 +65,8 @@ exports.updateSettings = async (req, res) => {
 
 exports.listBooks = async (req, res) => {
   try {
-    const { search, category, page = 1, limit = 20 } = req.query;
+    const { search, category } = req.query;
+    const { page, limit, offset } = require('../utils/pagination').parsePagination(req.query);
     const where = {};
     if (search) {
       where[Op.or] = [
@@ -77,14 +78,13 @@ exports.listBooks = async (req, res) => {
     if (category) {
       where.category = category;
     }
-    const offset = (parseInt(page) - 1) * parseInt(limit);
     const { count, rows } = await Book.findAndCountAll({
       where,
       order: [['id', 'ASC']],
-      limit: parseInt(limit),
+      limit,
       offset,
     });
-    return apiResponse(res, { data: { total: count, page: parseInt(page), limit: parseInt(limit), books: rows } });
+    return apiResponse(res, { data: require('../utils/pagination').paginateResponse({ total: count, page, limit, items: rows, itemName: 'books' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
@@ -223,7 +223,8 @@ exports.returnBook = async (req, res) => {
 
 exports.listBorrowings = async (req, res) => {
   try {
-    const { status, user_id, page = 1, limit = 20 } = req.query;
+    const { status, user_id } = req.query;
+    const { page, limit, offset } = require('../utils/pagination').parsePagination(req.query);
     const where = {};
     if (status) where.status = status;
     if (req.user.role !== 'admin') {
@@ -232,7 +233,6 @@ exports.listBorrowings = async (req, res) => {
       where.user_id = user_id;
     }
     const settings = await getSettings();
-    const offset = (parseInt(page) - 1) * parseInt(limit);
     const { count, rows } = await Borrowing.findAndCountAll({
       where,
       include: [
@@ -240,7 +240,7 @@ exports.listBorrowings = async (req, res) => {
         { model: User, attributes: ['id', 'username', 'email'] },
       ],
       order: [['id', 'DESC']],
-      limit: parseInt(limit),
+      limit,
       offset,
     });
     const today = new Date().toISOString().split('T')[0];
@@ -251,7 +251,7 @@ exports.listBorrowings = async (req, res) => {
       }
       return obj;
     });
-    return apiResponse(res, { data: { total: count, page: parseInt(page), limit: parseInt(limit), borrowings: enriched } });
+    return apiResponse(res, { data: require('../utils/pagination').paginateResponse({ total: count, page, limit, items: enriched, itemName: 'borrowings' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

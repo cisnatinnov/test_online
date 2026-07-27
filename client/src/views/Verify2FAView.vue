@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import api from '../api'
 
 const router = useRouter()
@@ -51,6 +52,7 @@ async function verify() {
 <template>
   <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
     <div class="card" style="width:100%;max-width:400px">
+      <div style="display:flex;justify-content:center;margin-bottom:12px"><LanguageSwitcher /></div>
       <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">Verifikasi 2FA</h2>
       <p style="text-align:center;margin-bottom:16px;color:var(--text-secondary)" v-if="sentChannel">Kode dikirim ke {{ sentChannel }}</p>
       <div v-if="fallbackCode" style="background:rgba(255,193,7,0.15);border:1px solid rgba(255,193,7,0.4);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;text-align:center">

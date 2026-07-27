@@ -148,9 +148,9 @@ exports.send2FA = async (req, res) => {
     if (mt && decoded.email && decoded.email.includes('@')) {
       try {
         await mt.sendMail({
-          from: process.env.EMAIL_FROM || 'noreply@bmi-app.com',
+          from: process.env.EMAIL_FROM || 'noreply@vitasuite.com',
           to: decoded.email,
-          subject: 'Kode Verifikasi 2FA - BMI App',
+          subject: 'Kode Verifikasi 2FA - VitaSuite',
           html: `<h2>Kode Verifikasi 2FA</h2><p>Gunakan kode berikut untuk masuk:</p><h1 style="letter-spacing:5px;font-size:32px;">${code}</h1><p>Kode berlaku 5 menit.</p>`,
         });
         console.log(`[2FA] Email sent to ${decoded.email}`);

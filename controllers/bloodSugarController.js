@@ -2,6 +2,7 @@ const { Identity, BMI, BloodSugar } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { calculateAge, hitungKriteriaGula, hitungKesimpulan, formatPatientResponse } = require('../utils/helpers');
 const sequelize = require('../config/database');
+const { parsePagination, paginateResponse } = require('../utils/pagination');
 
 const getUserIdFilter = (req) => req.user.role === 'admin' ? {} : { id_user: req.user.id };
 
@@ -85,8 +86,14 @@ exports.getHistoryBloodSugar = async (req, res) => {
     const { identityId } = req.params;
     const identity = await Identity.findOne({ where: { id: identityId, ...getUserIdFilter(req) } });
     if (!identity) return apiResponse(res, { error: 'Data tidak ditemukan', status: 404 });
-    const results = await BloodSugar.findAll({ where: { id_identity: identityId }, order: [['id', 'DESC']] });
-    return apiResponse(res, { data: results });
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows } = await BloodSugar.findAndCountAll({
+      where: { id_identity: identityId },
+      order: [['id', 'DESC']],
+      limit,
+      offset,
+    });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: rows, itemName: 'history' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const { User, ChatRoom, ChatMessage, ChatParticipant } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
+const { parsePagination, paginateResponse } = require('../utils/pagination');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -109,7 +110,8 @@ exports.getOnlineUsers = (req, res) => {
 exports.getRooms = async (req, res) => {
   try {
     const userId = req.user.id;
-    const participants = await ChatParticipant.findAll({
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows: participants } = await ChatParticipant.findAndCountAll({
       where: { user_id: userId },
       include: [
         {
@@ -119,6 +121,8 @@ exports.getRooms = async (req, res) => {
           ],
         },
       ],
+      limit,
+      offset,
     });
 
     const rooms = await Promise.all(participants.map(async (p) => {
@@ -150,7 +154,7 @@ exports.getRooms = async (req, res) => {
       };
     }));
 
-    return apiResponse(res, { data: rooms });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: rooms, itemName: 'rooms' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
@@ -242,11 +246,14 @@ exports.getMessages = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.findAll({
+    const { page, limit, offset } = parsePagination(req.query);
+    const { count, rows } = await User.findAndCountAll({
       attributes: ['id', 'username', 'email'],
       where: { id: { [Op.ne]: req.user.id } },
+      limit,
+      offset,
     });
-    return apiResponse(res, { data: users });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: rows, itemName: 'users' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

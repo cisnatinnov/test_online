@@ -1,8 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import api from '../api'
 
+const { t } = useI18n()
 const router = useRouter()
 const data = ref([])
 const search = ref('')
@@ -34,19 +37,22 @@ function resultColor(r) {
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h2>Data Pasien</h2>
+      <h2>{{ t('list.title') }}</h2>
+      <div class="nav-bar">
+        <LanguageSwitcher />
+      </div>
     </div>
 
     <div class="tab-bar">
-      <button @click="activeTab='bmi'" :class="['tab-btn', activeTab==='bmi' && 'active']">BMI</button>
-      <button @click="activeTab='vitals'" :class="['tab-btn', activeTab==='vitals' && 'active']">Tanda Vital</button>
+      <button @click="activeTab='bmi'" :class="['tab-btn', activeTab==='bmi' && 'active']">{{ t('list.bmiTab') }}</button>
+      <button @click="activeTab='vitals'" :class="['tab-btn', activeTab==='vitals' && 'active']">{{ t('list.vitalsTab') }}</button>
     </div>
 
-    <input v-model="search" placeholder="Cari nama atau NIK..." class="input" style="margin-bottom:16px" />
+    <input v-model="search" :placeholder="t('list.searchPlaceholder')" class="input" style="margin-bottom:16px" />
 
     <div v-if="activeTab==='bmi'" class="table-wrap">
       <table>
-        <thead><tr style="background:var(--accent-green)"><th>Nama</th><th>NIK</th><th>Umur</th><th>BMI</th><th>Hasil</th><th>Gula</th><th>Aksi</th></tr></thead>
+        <thead><tr style="background:var(--accent-green)"><th>{{ t('list.name') }}</th><th>{{ t('list.nik') }}</th><th>{{ t('list.age') }}</th><th>{{ t('list.bmi') }}</th><th>{{ t('list.result') }}</th><th>{{ t('list.sugar') }}</th><th>{{ t('list.actions') }}</th></tr></thead>
         <tbody>
           <tr v-for="p in filtered" :key="p.id">
             <td>{{ p.name }}</td>
@@ -55,17 +61,17 @@ function resultColor(r) {
             <td>{{ p.bmi ?? '-' }}</td>
             <td :style="{ color: resultColor(p.result), fontWeight:'bold' }">{{ p.result || '-' }}</td>
             <td :style="{ color: resultColor(p.sugarCriteria?.label), fontWeight:'bold' }">{{ p.sugarCriteria?.label || '-' }}</td>
-            <td><button @click="viewHistory(p.id)" class="btn btn-blue btn-sm">Riwayat</button></td>
+            <td><button @click="viewHistory(p.id)" class="btn btn-blue btn-sm">{{ t('list.history') }}</button></td>
           </tr>
         </tbody>
       </table>
-      <p v-if="!filtered.length" class="empty-state">Tidak ada data</p>
+      <p v-if="!filtered.length" class="empty-state">{{ t('list.noData') }}</p>
     </div>
 
     <div v-if="activeTab==='vitals'" class="card">
-      <p style="color:var(--text-secondary)">Tab tanda vital memerlukan endpoint terpisah. Silakan gunakan Dashboard untuk input tanda vital.</p>
+      <p style="color:var(--text-secondary)">{{ t('list.vitalsNote') }}</p>
     </div>
 
-    <button @click="router.push('/')" class="btn btn-gray" style="margin-top:16px">Kembali</button>
+    <button @click="router.push('/')" class="btn btn-gray" style="margin-top:16px">{{ t('list.back') }}</button>
   </div>
 </template>
