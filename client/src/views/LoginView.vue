@@ -16,9 +16,10 @@ const error = ref('')
 const fieldErrors = ref({ username: '', password: [] })
 const loading = ref(false)
 const touched = ref({ username: false, password: false })
+const showPassword = ref(false)
 
 const isEmail = computed(() => form.value.username.includes('@'))
-const pwStrength = computed(() => passwordStrength(form.value.password))
+const pwStrength = computed(() => passwordStrength(form.value.password, t))
 const pwProgress = computed(() => (pwStrength.value.score / 5) * 100)
 
 const pwRules = computed(() => {
@@ -38,7 +39,7 @@ function validateField(field) {
     if (!form.value.username) {
       fieldErrors.value.username = t('validation.usernameRequired')
     } else if (isEmail.value) {
-      fieldErrors.value.username = validateEmail(form.value.username)
+      fieldErrors.value.username = validateEmail(form.value.username, t)
     } else {
       fieldErrors.value.username = ''
     }
@@ -47,7 +48,7 @@ function validateField(field) {
     if (!form.value.password) {
       fieldErrors.value.password = [t('validation.passwordRequired')]
     } else {
-      fieldErrors.value.password = validatePassword(form.value.password)
+      fieldErrors.value.password = validatePassword(form.value.password, t)
     }
   }
 }
@@ -65,6 +66,9 @@ async function login() {
     if (d.require2fa) {
       auth.setTemp2FA(d.tempToken, d.channels)
       router.push('/verify-2fa')
+    } else if (d.token) {
+      auth.setAuth(d.token, d.user)
+      router.push('/')
     }
   } catch (e) {
     error.value = e.response?.data?.error || t('flash.loginFailed')
@@ -94,16 +98,35 @@ async function login() {
           <div v-if="touched.username && fieldErrors.username" style="color:var(--accent-red);font-size:12px;margin-top:4px">{{ fieldErrors.username }}</div>
         </div>
         <div style="margin-bottom:16px">
-          <input
-            v-model="form.password"
-            type="password"
-            :placeholder="t('auth.password')"
-            required
-            :class="['input', touched.password && fieldErrors.password.length ? 'input-error' : '']"
-            @focus="touched.password = true"
-            @input="validateField('password')"
-            @blur="validateField('password')"
-          />
+          <div style="position:relative">
+            <input
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              :placeholder="t('auth.password')"
+              required
+              class="input password-input"
+              :class="touched.password && fieldErrors.password.length ? 'input-error' : ''"
+              @focus="touched.password = true"
+              @input="validateField('password')"
+              @blur="validateField('password')"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              @click="showPassword = !showPassword"
+              :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
+            >
+              <svg v-if="showPassword" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7" />
+                <path d="M3 3l18 18" />
+                <path d="M9.5 14.5A3 3 0 0 0 14.5 9.5" />
+              </svg>
+            </button>
+          </div>
           <div v-if="form.password" style="margin-top:8px">
             <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden">
               <div :style="{height:'100%',width:pwProgress+'%',background:pwStrength.color,borderRadius:'3px',transition:'width .3s,background .3s'}"></div>

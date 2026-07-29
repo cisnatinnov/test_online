@@ -88,7 +88,7 @@ function formatDate(d) {
 function mapStatus(label) {
   const l = (label || '').toLowerCase()
   if (l.includes('normal')) return { color: '#4caf50', bg: 'rgba(76,175,80,0.12)' }
-  if (l.includes('rendah') || l.includes('kritis') || l.includes('rendah') || l.includes('bradikardia') || l.includes('bradipnea') || l.includes('hipotermia')) return { color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
+  if (l.includes('rendah') || l.includes('kritis') || l.includes('bradikardia') || l.includes('bradipnea') || l.includes('hipotermia')) return { color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
   return { color: '#f44336', bg: 'rgba(244,67,54,0.12)' }
 }
 

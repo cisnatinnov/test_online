@@ -20,6 +20,13 @@
     "collapseSidebar": "Contraer barra lateral",
     "user": "Usuario"
   },
+  "languages": {
+    "enGB": "Inglés (Reino Unido)",
+    "enUS": "Inglés (EE. UU.)",
+    "id": "Indonesio",
+    "es": "Español",
+    "pt": "Portugués"
+  },
   "auth": {
     "login": "Iniciar sesion",
     "register": "Registrarse",
@@ -63,7 +70,13 @@
     "symbol": "Al menos 1 simbolo",
     "usernameRequired": "El usuario es obligatorio",
     "passwordRequired": "La contrasena es obligatoria",
-    "emailRequired": "El correo electronico es obligatorio"
+    "emailRequired": "El correo electronico es obligatorio",
+    "invalidEmail": "El formato del correo electronico no es valido"
+  },
+  "passwordStrength": {
+    "weak": "Debil",
+    "medium": "Medio",
+    "strong": "Fuerte"
   },
   "flash": {
     "loginFailed": "Error al iniciar sesion",

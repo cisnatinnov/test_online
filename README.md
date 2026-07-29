@@ -30,14 +30,17 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 ### Security Hardening
 - **HTTP Security Headers**: Helmet.js for setting secure HTTP headers
 - **Body Size Limit**: JSON body size limited to 1MB
-- **Startup Validation**: Required environment variables validated on startup
-- **No Hardcoded Fallbacks**: No default credential fallbacks -- all credentials must be provided
+- **Startup Validation**: Required environment variables validated on startup (JWT_SECRET, JWT_TEMP_SECRET, DB credentials, admin credentials)
+- **No Hardcoded Fallbacks**: No default credential fallbacks -- `JWT_SECRET` must be set; server crashes on startup if missing
+- **No Query-param Tokens**: Tokens accepted only via `Authorization` header, never via URL query parameters
+- **2FA Code Protection**: Verification codes are never returned in API responses or logged to console -- only sent via email/WhatsApp
 - **Rate Limiting**: Rate limiting on health endpoints
 - **Error Handlers**: Global unhandled rejection and exception handlers
 
 ### Transaction Safety
 - **Race Condition Prevention**: Database transactions for BMI, blood sugar, and vital signs status updates
 - **Library Operations**: Borrow/return operations wrapped in transactions for data integrity
+- **Partial Update Safety**: Identity updates only modify fields provided in the request, preventing accidental `NaN` or `null` overwrites
 
 ### Input Validation
 - **Field Length Limits**: Username (50), email (255), password (128) max length validation
@@ -91,12 +94,6 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **Library Statistics**: Total books, available, borrowed, overdue counts, category breakdown, fine/duration settings
 - **Role-based Access**: Admin can manage all books, view all borrowings, and configure library settings; users manage their own borrowings
 
-### Indonesian News
-- **Daily Auto-refresh**: News fetched from Indonesian RSS feeds (Kompas, Detik, CNN Indonesia) daily at 6:00 AM
-- **Categories**: Sports, Politics, Criminal news
-- **Auto-cleanup**: News older than 3 days is automatically deleted
-- **Manual Refresh**: Admin can trigger manual news refresh via API
-- **News Statistics**: Total articles, per-category counts, recent articles count
 
 ### Pagination
 - All list endpoints support pagination with `page` (default 1) and `limit` (default 20) query parameters
@@ -158,7 +155,6 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── Borrowing.js             # Book borrowings (user_id, book_id, borrow_date, due_date, return_date, status, fine, notes)
 │   ├── LibrarySetting.js        # Library config (borrow_duration_days, fine_per_day, overdue_tolerance_days)
 │   ├── HealthTraffic.js         # API traffic logs (method, path, status_code, response_time_ms, user_id, ip, user_agent)
-│   ├── News.js                  # Indonesian news articles (title, content, category [sports/politics/criminal], source, url, published_at)
 │   └── Category.js              # Spending/saving categories (name, type [spending/saving], unique name+type)
 ├── controllers/
 │   ├── authController.js        # Register, Login, 2FA
@@ -171,7 +167,6 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── reportController.js      # PDF export
 │   ├── healthController.js      # System health checks (DB, memory, CPU, uptime)
 │   ├── healthTrafficController.js # API traffic stats (total requests, avg response, status/method breakdown, hourly, recent)
-│   ├── newsController.js          # Indonesian news CRUD, RSS fetch, auto-cleanup, scheduler
 │   ├── patientHealthController.js # Patient risk scoring, trends, alerts, population stats
 │   ├── estateController.js      # Estate CRUD, tree CRUD, stats, drone plan
 │   ├── chatController.js        # Real-time chat (Socket.IO + REST)
@@ -192,7 +187,6 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── identityRoutes.js
 │   ├── moneyRoutes.js
 │   ├── categoryRoutes.js
-│   ├── newsRoutes.js
 │   ├── reportRoutes.js
 │   ├── adminRoutes.js
 │   ├── healthRoutes.js
@@ -204,7 +198,6 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 ├── utils/
 │   ├── helpers.js               # BMI calc, blood sugar eval, vital sign eval, risk scoring, trend analysis
 │   ├── history-utils.js         # Date formatting for history records
-│   └── newsFetcher.js           # RSS feed fetcher for Indonesian news (Kompas, Detik, CNN Indonesia)
 ├── __tests__/
 │   ├── estate.test.js           # Estate API tests (SQLite in-memory)
 │   ├── helpers.test.js
@@ -418,7 +411,7 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/rooms` | List chat rooms for current user | Yes |
-| POST | `/rooms` | Create chat room (name, type, participants) | Yes |
+| POST | `/rooms` | Create chat room (name, type, participants) — direct rooms verified by both participants | Yes |
 | POST | `/rooms/:id/participants` | Add participant to room | Yes |
 | DELETE | `/rooms/:id/participants/:userId` | Remove participant from room (admin only) | Yes |
 | GET | `/rooms/:id/messages` | List messages in a room (paginated) | Yes |
@@ -480,15 +473,7 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 |--------|----------|-------------|------|
 | GET | `/stats?period=24h` | API traffic stats (1h, 24h, 7d, 30d) | Yes (admin) |
 
-### News (`/api/news`)
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/` | List news (category filter, pagination) | Yes |
-| GET | `/latest` | Get latest news (past 3 days) | Yes |
-| GET | `/stats` | News statistics (total, per category, recent count) | Yes |
-| GET | `/:id` | Get single news article | Yes |
-| POST | `/refresh` | Manually refresh news from RSS feeds | Yes (admin) |
 
 ### Patient Health (`/api/patient-health`)
 
@@ -512,7 +497,7 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 |-----------|----------|
 | < 17 | Sangat kurus (Severely underweight) |
 | 17 - 18.5 | Kurus (Underweight) |
-| 18.5 - 25 | Normal |
+| 18.5 - < 25 | Normal |
 | 25 - 27 | Gemuk (Overweight) |
 | > 27 | Obesitas (Obese) |
 
@@ -649,7 +634,7 @@ Runs 62 unit tests covering:
 cd client && npx vitest run
 ```
 
-Runs 6 frontend tests covering frontend helper functions.
+Runs 8 frontend tests covering frontend helper functions.
 
 ## License
 

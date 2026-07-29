@@ -20,6 +20,13 @@
     "collapseSidebar": "Ciutkan panel samping",
     "user": "Pengguna"
   },
+  "languages": {
+    "enGB": "Inggris (UK)",
+    "enUS": "Inggris (AS)",
+    "id": "Bahasa Indonesia",
+    "es": "Spanyol",
+    "pt": "Portugis"
+  },
   "auth": {
     "login": "Masuk",
     "register": "Daftar",
@@ -63,7 +70,13 @@
     "symbol": "Setidaknya 1 simbol",
     "usernameRequired": "Nama Pengguna wajib diisi",
     "passwordRequired": "Kata Sandi wajib diisi",
-    "emailRequired": "Email wajib diisi"
+    "emailRequired": "Email wajib diisi",
+    "invalidEmail": "Format email tidak valid"
+  },
+  "passwordStrength": {
+    "weak": "Lemah",
+    "medium": "Sedang",
+    "strong": "Kuat"
   },
   "flash": {
     "loginFailed": "Gagal masuk",

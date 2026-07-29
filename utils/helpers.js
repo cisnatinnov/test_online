@@ -16,7 +16,7 @@ const hitungKesimpulan = (weight, heightCm) => {
   const bmi = weight / (heightM * heightM);
   if (bmi < 17) return { bmi: bmi.toFixed(2), status: 'Sangat kurus' };
   if (bmi >= 17 && bmi < 18.5) return { bmi: bmi.toFixed(2), status: 'Kurus' };
-  if (bmi >= 18.5 && bmi <= 25) return { bmi: bmi.toFixed(2), status: 'Normal' };
+  if (bmi >= 18.5 && bmi < 25) return { bmi: bmi.toFixed(2), status: 'Normal' };
   if (bmi > 25 && bmi <= 27) return { bmi: bmi.toFixed(2), status: 'Gemuk' };
   return { bmi: bmi.toFixed(2), status: 'Obesitas' };
 };
@@ -158,10 +158,10 @@ const evalBloodPressure = (systolic, diastolic) => {
   if (sys <= 129 && dia <= 80) {
     return { label: 'Elevated', colorClass: 'sugar-normal', description: 'Tekanan darah sedikit tinggi (elevated).' };
   }
-  if (sys <= 139 || dia <= 89) {
+  if ((sys >= 130 || dia >= 81) && sys <= 139 && dia <= 89) {
     return { label: 'Tinggi Stage 1', colorClass: 'sugar-high', description: 'Tekanan darah tinggi stage 1 (hipertensi).' };
   }
-  if (sys <= 180 || dia <= 120) {
+  if (sys <= 180 && dia <= 120) {
     return { label: 'Tinggi Stage 2', colorClass: 'sugar-high', description: 'Tekanan darah tinggi stage 2 (hipertensi berat).' };
   }
   return { label: 'Krisis', colorClass: 'sugar-high', description: 'Tekanan darah sangat tinggi! Segera cari pertolongan medis.' };

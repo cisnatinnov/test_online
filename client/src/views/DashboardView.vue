@@ -115,7 +115,7 @@ async function submitVitals() {
       <div class="grid-2" style="margin-bottom:20px">
         <div class="card">
           <h3 v-if="auth.user?.role==='admin'" style="margin-bottom:8px;color:#fff">{{ t('dashboard.selectOrCreate') }}</h3>
-          <select v-model="selectedIdentity" :disabled="auth.user?.role !== 'admin'" class="select">
+          <select v-model="selectedIdentity" class="select">
             <option :value="null" disabled>{{ t('dashboard.selectPatient') }}</option>
             <option v-for="i in identities" :key="i.id" :value="i.id">{{ i.name }} ({{ i.nik || '-' }})</option>
           </select>

@@ -36,9 +36,6 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
     - [Returning Books & Fine](#returning-books--fine)
     - [Library Statistics](#library-statistics)
     - [Fine & Duration Settings (Admin)](#fine--duration-settings-admin)
-11. [Indonesian News](#indonesian-news)
-    - [Viewing News](#viewing-news)
-    - [News Categories](#news-categories)
     - [Auto-refresh & Cleanup](#auto-refresh--cleanup)
 12. [Health Risk Assessment](#health-risk-assessment)
 12. [Health Trends](#health-trends)
@@ -131,10 +128,8 @@ The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you typ
 
 **Page:** `/verify-2fa`
 
-1. **Choose a channel** to receive your verification code:
-   - **Email** - a 6-digit code sent to your registered email
-   - **WhatsApp** - sent to your registered phone number (only available if you provided a phone number during registration)
-2. Click **"Kirim Kode"** to send the code.
+1. A 6-digit code is sent to your registered **email**.
+2. If email delivery fails, an error message is displayed. Check your email configuration or contact support.
 3. Enter the **6-digit code** you received.
 4. Click **"Verifikasi"**.
 
@@ -527,45 +522,6 @@ A **preview table** shows example fine calculations based on the current setting
 
 ---
 
-## Indonesian News
-
-View Indonesian news about sports, politics, and criminals, updated daily from RSS feeds.
-
-### Viewing News
-
-**Endpoint:** `GET /api/news` (requires login)
-
-1. The news list shows articles sorted by publication date (newest first)
-2. Each article displays:
-   - **Title** - news headline
-   - **Content** - brief description/excerpt
-   - **Category** - sports, politics, or criminal
-   - **Source** - news source (Kompas, Detik, CNN Indonesia)
-   - **Published Date** - when the article was published
-3. Use **category filter** to show only sports, politics, or criminal news
-4. Results are paginated (20 per page by default)
-5. Use `?page=1&limit=50` query parameters to change pagination (allowed: 5, 10, 20, 50, 100)
-
-### News Categories
-
-| Category | Description |
-|----------|-------------|
-| Sports | Indonesian sports news (football, badminton, basketball, etc.) |
-| Politics | Indonesian political news (government, parliament, elections, etc.) |
-| Criminal | Indonesian crime news (police, arrests, court cases, etc.) |
-
-### Auto-refresh & Cleanup
-
-- **Auto-refresh**: News is automatically fetched from RSS feeds daily at 6:00 AM
-- **Auto-cleanup**: News older than 3 days is automatically deleted
-- **Manual refresh**: Admin can trigger a manual refresh via `POST /api/news/refresh`
-- **RSS Sources**: Kompas, Detik, CNN Indonesia (sports, politics, crime sections)
-
-**Endpoint:** `GET /api/news/latest` (requires login) - Get latest news from the past 3 days
-**Endpoint:** `GET /api/news/stats` (requires login) - View news statistics (total, per category, recent count)
-
----
-
 ## Health Risk Assessment
 
 Assess a patient's combined health risk from BMI, blood sugar, vital signs, and age.
@@ -877,7 +833,7 @@ The app supports 5 languages:
 | Problem | Solution |
 |---------|----------|
 | "Terjadi kesalahan" on login | Check that the server is running (`npm run dev`) and database is accessible |
-| 2FA code not received | Check email spam folder; ensure SMTP credentials are correct in `.env`; try WhatsApp channel if phone number is registered |
+| 2FA code not received | Check email spam folder; ensure SMTP credentials are correct in `.env`; try WhatsApp channel if phone number is registered. If email delivery fails, an error is shown (2FA codes are never displayed in the browser) |
 | "Token tidak valid" error | Your token is invalid. Log in again |
 | "Token kedaluwarsa" error | Your session expired after 24 hours. You will be automatically redirected to the login page |
 | "Username atau email sudah terdaftar" | Choose a different username or email |

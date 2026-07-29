@@ -1,15 +1,16 @@
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 
-const languages = [
-  { code: 'en-GB', label: 'English (UK)' },
-  { code: 'en-US', label: 'English (US)' },
-  { code: 'id', label: 'Bahasa Indonesia' },
-  { code: 'es', label: 'Espa\u00f1ol' },
-  { code: 'pt', label: 'Portugu\u00eas' },
-]
+const languages = computed(() => [
+  { code: 'en-GB', label: t('languages.enGB') },
+  { code: 'en-US', label: t('languages.enUS') },
+  { code: 'id', label: t('languages.id') },
+  { code: 'es', label: t('languages.es') },
+  { code: 'pt', label: t('languages.pt') },
+])
 
 function switchLang(e) {
   locale.value = e.target.value

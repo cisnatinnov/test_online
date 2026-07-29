@@ -31,8 +31,6 @@ const chatRoutes = require('./routes/chatRoutes');
 const libraryRoutes = require('./routes/libraryRoutes');
 const healthTrafficRoutes = require('./routes/healthTrafficRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
-const newsRoutes = require('./routes/newsRoutes');
-const newsController = require('./controllers/newsController');
 const healthTrafficMiddleware = require('./middlewares/healthTraffic');
 
 const app = express();
@@ -46,14 +44,15 @@ const clientDist = path.join(__dirname, 'client', 'dist');
 const fs = require('fs');
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const REQUIRED_ENV = ['JWT_SECRET', 'DB_NAME', 'DB_USER', 'DB_PASS', 'ADMIN_USERNAME', 'ADMIN_EMAIL', 'ADMIN_PASSWORD'];
+const REQUIRED_ENV = ['JWT_SECRET', 'JWT_TEMP_SECRET', 'DB_NAME', 'DB_USER', 'DB_PASS', 'ADMIN_USERNAME', 'ADMIN_EMAIL', 'ADMIN_PASSWORD'];
 const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missing.length) {
   console.error(`FATAL: Missing required environment variables: ${missing.join(', ')}`);
   process.exit(1);
 }
 function secureTools(req, res, next) {
-  const token = req.query.token || (req.headers.authorization && req.headers.authorization.split(' ')[1]);
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).send('Unauthorized');
   jwt.verify(token, JWT_SECRET, (err) => {
     if (err) return res.status(403).send('Invalid token');
@@ -87,7 +86,6 @@ app.use('/api/estate', apiLimiter, estateRoutes);
 app.use('/api/chat', apiLimiter, chatRoutes);
 app.use('/api/library', apiLimiter, libraryRoutes);
 app.use('/api/categories', apiLimiter, categoryRoutes);
-app.use('/api/news', apiLimiter, newsRoutes);
 
 app.get('/api/dashboard/summary', authenticateToken, bmiController.getSummary);
 app.get('/api/history/:identityId/bmi', authenticateToken, bmiController.getHistoryBMI);
@@ -148,24 +146,6 @@ sequelize.sync({ alter: false, force: false }) // force: true and alter: true in
     server.listen(PORT, () => {
       console.log(`Server berjalan di http://localhost:${PORT}`);
 
-      const startNewsScheduler = () => {
-        const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(6, 0, 0, 0);
-        const msUntilTomorrow = tomorrow.getTime() - now.getTime();
-
-        setTimeout(async () => {
-          await newsController.autoRefreshAndCleanup();
-          setInterval(async () => {
-            await newsController.autoRefreshAndCleanup();
-          }, 24 * 60 * 60 * 1000);
-        }, msUntilTomorrow);
-
-        console.log(`[NewsScheduler] Next auto-refresh at ${tomorrow.toISOString()}`);
-      };
-
-      startNewsScheduler();
     });
   })
   .catch((err) => {

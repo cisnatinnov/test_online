@@ -20,6 +20,13 @@
     "collapseSidebar": "Recolher barra lateral",
     "user": "Usuario"
   },
+  "languages": {
+    "enGB": "Inglês (Reino Unido)",
+    "enUS": "Inglês (EUA)",
+    "id": "Indonésio",
+    "es": "Espanhol",
+    "pt": "Português"
+  },
   "auth": {
     "login": "Entrar",
     "register": "Cadastrar",
@@ -63,7 +70,13 @@
     "symbol": "Pelo menos 1 simbolo",
     "usernameRequired": "O usuario e obrigatorio",
     "passwordRequired": "A senha e obrigatoria",
-    "emailRequired": "O e-mail e obrigatorio"
+    "emailRequired": "O e-mail e obrigatorio",
+    "invalidEmail": "O formato do e-mail e invalido"
+  },
+  "passwordStrength": {
+    "weak": "Fraco",
+    "medium": "Medio",
+    "strong": "Forte"
   },
   "flash": {
     "loginFailed": "Falha ao entrar",

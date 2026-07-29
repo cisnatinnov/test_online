@@ -17,8 +17,9 @@ const success = ref('')
 const loading = ref(false)
 const touched = ref({ username: false, email: false, password: false })
 const fieldErrors = ref({ username: '', email: '', password: [] })
+const showPassword = ref(false)
 
-const pwStrength = computed(() => passwordStrength(form.value.password))
+const pwStrength = computed(() => passwordStrength(form.value.password, t))
 const pwProgress = computed(() => (pwStrength.value.score / 5) * 100)
 
 const pwRules = computed(() => {
@@ -38,10 +39,10 @@ function validateField(field) {
     fieldErrors.value.username = form.value.username ? '' : t('validation.usernameRequired')
   }
   if (field === 'email') {
-    fieldErrors.value.email = validateEmail(form.value.email)
+    fieldErrors.value.email = validateEmail(form.value.email, t)
   }
   if (field === 'password') {
-    fieldErrors.value.password = form.value.password ? validatePassword(form.value.password) : []
+    fieldErrors.value.password = form.value.password ? validatePassword(form.value.password, t) : []
   }
 }
 
@@ -93,7 +94,35 @@ async function register() {
             <div v-if="touched.email && fieldErrors.email" style="color:var(--accent-red);font-size:11px;margin-top:2px">{{ fieldErrors.email }}</div>
           </div>
           <div style="grid-column:span 2">
-            <input v-model="form.password" type="password" :placeholder="t('auth.password') + ' *'" required :class="inputClass('password')" @focus="touched.password = true" @input="validateField('password')" @blur="validateField('password')" />
+            <div style="position:relative">
+              <input
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                :placeholder="t('auth.password') + ' *'"
+                required
+                class="input password-input"
+                :class="inputClass('password')"
+                @focus="touched.password = true"
+                @input="validateField('password')"
+                @blur="validateField('password')"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                @click="showPassword = !showPassword"
+                :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
+              >
+                <svg v-if="showPassword" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7" />
+                  <path d="M3 3l18 18" />
+                  <path d="M9.5 14.5A3 3 0 0 0 14.5 9.5" />
+                </svg>
+              </button>
+            </div>
             <div v-if="form.password" style="margin-top:6px">
               <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden">
                 <div :style="{height:'100%',width:pwProgress+'%',background:pwStrength.color,borderRadius:'3px',transition:'width .3s,background .3s'}"></div>

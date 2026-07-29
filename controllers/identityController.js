@@ -91,14 +91,14 @@ exports.updateIdentity = async (req, res) => {
       return apiResponse(res, { error: 'Data tidak ditemukan', status: 404 });
     }
 
-    await identity.update({
-      nik: nik || null,
-      name,
-      height: Number(height),
-      birthplace: birthplace || null,
-      birthdate: birthdate || null,
-      address: address || null,
-    });
+    const updateData = {};
+    if (nik !== undefined) updateData.nik = nik || null;
+    if (name !== undefined) updateData.name = name;
+    if (height !== undefined) updateData.height = height ? Number(height) : null;
+    if (birthplace !== undefined) updateData.birthplace = birthplace || null;
+    if (birthdate !== undefined) updateData.birthdate = birthdate || null;
+    if (address !== undefined) updateData.address = address || null;
+    await identity.update(updateData);
     return apiResponse(res, { data: identity });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });

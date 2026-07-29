@@ -28,16 +28,22 @@ exports.getAllData = async (req, res) => {
       offset,
     });
 
-    const formattedData = [];
-    for (const identity of identities) {
-      const bmiRow = await BMI.findOne({ where: { id_identity: identity.id, status: 'current' }, order: [['id', 'DESC']] });
-      const sugarRow = await BloodSugar.findOne({ where: { id_identity: identity.id, status: 'current' }, order: [['id', 'DESC']] });
+    const identityIds = identities.map(i => i.id);
+    const [bmiRows, sugarRows] = await Promise.all([
+      BMI.findAll({ where: { id_identity: identityIds, status: 'current' }, order: [['id', 'DESC']] }),
+      BloodSugar.findAll({ where: { id_identity: identityIds, status: 'current' }, order: [['id', 'DESC']] }),
+    ]);
+    const bmiMap = Object.fromEntries(bmiRows.map(r => [r.id_identity, r]));
+    const sugarMap = Object.fromEntries(sugarRows.map(r => [r.id_identity, r]));
 
+    const formattedData = identities.map(identity => {
+      const bmiRow = bmiMap[identity.id];
+      const sugarRow = sugarMap[identity.id];
       const age = calculateAge(identity.birthdate) ?? bmiRow?.age ?? sugarRow?.age ?? null;
       const kes = hitungKesimpulan(Number(bmiRow?.weight), Number(identity.height));
       const sugarCriteria = buildSugarCriteria(sugarRow?.conclusion, sugarRow?.description);
-      formattedData.push(formatPatientResponse(identity, bmiRow, sugarRow, kes, sugarCriteria));
-    }
+      return formatPatientResponse(identity, bmiRow, sugarRow, kes, sugarCriteria);
+    });
 
     return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: formattedData, itemName: 'patients' }) });
   } catch (err) {

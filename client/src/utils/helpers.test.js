@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, calculateAge, validatePassword } from './helpers'
+import { formatDate, calculateAge, validatePassword, passwordStrength } from './helpers'
+
+const t = (key) => ({
+  'validation.minChars': 'Minimum 8 characters',
+  'validation.uppercase': 'At least 1 uppercase letter',
+  'validation.lowercase': 'At least 1 lowercase letter',
+  'validation.digit': 'At least 1 digit',
+  'validation.symbol': 'At least 1 symbol',
+  'passwordStrength.weak': 'Weak',
+  'passwordStrength.medium': 'Medium',
+  'passwordStrength.strong': 'Strong',
+}[key] || key)
 
 describe('formatDate', () => {
   it('returns - for null/undefined', () => {
@@ -27,11 +38,25 @@ describe('calculateAge', () => {
 
 describe('validatePassword', () => {
   it('returns errors for weak password', () => {
-    const errors = validatePassword('weak')
+    const errors = validatePassword('weak', t)
+    expect(errors).toContain('Minimum 8 characters')
     expect(errors.length).toBeGreaterThan(0)
   })
   it('returns no errors for strong password', () => {
-    const errors = validatePassword('Strong@123')
+    const errors = validatePassword('Strong@123', t)
     expect(errors.length).toBe(0)
+  })
+})
+
+describe('passwordStrength', () => {
+  it('returns a weak label for weak passwords', () => {
+    const result = passwordStrength('weak', t)
+    expect(result.label).toBe('Weak')
+    expect(result.color).toBe('#e74c3c')
+  })
+  it('returns a strong label for strong passwords', () => {
+    const result = passwordStrength('Strong@123', t)
+    expect(result.label).toBe('Strong')
+    expect(result.color).toBe('#2ecc71')
   })
 })

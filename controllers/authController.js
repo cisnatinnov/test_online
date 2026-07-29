@@ -140,8 +140,7 @@ exports.send2FA = async (req, res) => {
       if (sent) {
         return apiResponse(res, { data: { sentTo: phone, channel: 'whatsapp' } });
       }
-      console.log(`[2FA] WhatsApp code for ${phone}: ${code}`);
-      return apiResponse(res, { data: { sentTo: phone, channel: 'whatsapp', fallback: true } });
+      return apiResponse(res, { error: 'Gagal mengirim kode WhatsApp', status: 500 });
     }
 
     const mt = await getMailTransporter();
@@ -153,15 +152,13 @@ exports.send2FA = async (req, res) => {
           subject: 'Kode Verifikasi 2FA - VitaSuite',
           html: `<h2>Kode Verifikasi 2FA</h2><p>Gunakan kode berikut untuk masuk:</p><h1 style="letter-spacing:5px;font-size:32px;">${code}</h1><p>Kode berlaku 5 menit.</p>`,
         });
-        console.log(`[2FA] Email sent to ${decoded.email}`);
-        return apiResponse(res, { data: { sentTo: decoded.email, channel: 'email' } });
+    return apiResponse(res, { data: { sentTo: decoded.email, channel: 'email' } });
       } catch (mailErr) {
         console.error('[2FA] sendMail failed:', mailErr.message);
       }
     }
 
-    console.log(`[2FA] Code for ${decoded.email}: ${code}`);
-    return apiResponse(res, { data: { sentTo: decoded.email, channel: 'email', fallback: true } });
+    return apiResponse(res, { error: 'Gagal mengirim kode email', status: 500 });
   } catch (err) {
     console.error('[2FA send-2fa] Error:', err.message);
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
@@ -195,6 +192,9 @@ exports.verify2FA = async (req, res) => {
     const user = await User.findByPk(decoded.id, {
       attributes: userSafeFields,
     });
+    if (!user) {
+      return apiResponse(res, { error: 'User tidak ditemukan', status: 401 });
+    }
     const token = jwt.sign({ id: user.id, username: user.username, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
     const userData = {};
     userSafeFields.forEach((f) => { userData[f] = user[f]; });

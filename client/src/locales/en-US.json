@@ -20,6 +20,13 @@
     "collapseSidebar": "Collapse sidebar",
     "user": "User"
   },
+  "languages": {
+    "enGB": "English (UK)",
+    "enUS": "English (US)",
+    "id": "Indonesian",
+    "es": "Spanish",
+    "pt": "Portuguese"
+  },
   "auth": {
     "login": "Login",
     "register": "Register",
@@ -63,7 +70,13 @@
     "symbol": "At least 1 symbol",
     "usernameRequired": "Username is required",
     "passwordRequired": "Password is required",
-    "emailRequired": "Email is required"
+    "emailRequired": "Email is required",
+    "invalidEmail": "Email format is invalid"
+  },
+  "passwordStrength": {
+    "weak": "Weak",
+    "medium": "Medium",
+    "strong": "Strong"
   },
   "flash": {
     "loginFailed": "Login failed",

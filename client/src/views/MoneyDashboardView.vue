@@ -20,6 +20,7 @@ const spendingCategoryOptions = ref([])
 const savingCategoryOptions = ref([])
 const chartData = ref([])
 const chartPeriod = ref('monthly')
+const chartMax = computed(() => Math.max(...chartData.value.map(x => Math.max(x.expense, x.saving)), 1))
 const activeTab = ref('overview')
 const msg = ref('')
 const msgType = ref('')
@@ -184,8 +185,8 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
           <div class="chart-area">
             <div class="chart-bar-group" v-for="(d, i) in chartData" :key="i">
               <div class="chart-bars">
-                <div class="chart-bar expense-bar" :style="{ height: (d.expense / Math.max(...chartData.map(x => Math.max(x.expense, x.saving)), 1)) * 160 + 'px' }"></div>
-                <div class="chart-bar saving-bar" :style="{ height: (d.saving / Math.max(...chartData.map(x => Math.max(x.expense, x.saving)), 1)) * 160 + 'px' }"></div>
+                <div class="chart-bar expense-bar" :style="{ height: (d.expense / chartMax) * 160 + 'px' }"></div>
+                <div class="chart-bar saving-bar" :style="{ height: (d.saving / chartMax) * 160 + 'px' }"></div>
               </div>
               <div class="chart-label">{{ d.label?.substring(0, 3) }}</div>
             </div>

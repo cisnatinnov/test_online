@@ -12,17 +12,12 @@ const code = ref('')
 const error = ref('')
 const loading = ref(false)
 const sentChannel = ref('')
-const fallbackCode = ref('')
 
 async function sendCode() {
   error.value = ''
-  fallbackCode.value = ''
   try {
     const { data: res } = await api.post('/auth/send-2fa', { tempToken: auth.tempToken, channel: 'email' })
     sentChannel.value = res.data.channel
-    if (res.data.channel === 'console' && res.data.code) {
-      fallbackCode.value = res.data.code
-    }
   } catch (e) {
     error.value = e.response?.data?.error || 'Gagal mengirim kode'
   }
@@ -55,10 +50,6 @@ async function verify() {
       <div style="display:flex;justify-content:center;margin-bottom:12px"><LanguageSwitcher /></div>
       <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">Verifikasi 2FA</h2>
       <p style="text-align:center;margin-bottom:16px;color:var(--text-secondary)" v-if="sentChannel">Kode dikirim ke {{ sentChannel }}</p>
-      <div v-if="fallbackCode" style="background:rgba(255,193,7,0.15);border:1px solid rgba(255,193,7,0.4);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;text-align:center">
-        <p style="margin:0 0 4px;color:var(--accent-yellow);font-weight:bold">Email gagal dikirim. Gunakan kode berikut:</p>
-        <p style="margin:0;font-size:24px;letter-spacing:5px;font-weight:bold;color:var(--accent-yellow)">{{ fallbackCode }}</p>
-      </div>
       <div v-if="error" class="flash flash-error">{{ error }}</div>
       <form @submit.prevent="verify">
         <div style="margin-bottom:16px">

@@ -34,7 +34,7 @@ const typingInRoom = computed(() => {
   if (!chat.currentRoom) return ''
   const entries = Object.entries(chat.typingUsers).filter(([key]) => {
     const [, uid] = key.split(':')
-    return key.startsWith(`${chat.currentRoom.id}:`) && Number(uid) !== auth.user?.id
+    return key.startsWith(`${chat.currentRoom.id}:`) && String(uid) !== String(auth.user?.id)
   })
   if (!entries.length) return ''
   return entries.map(([, v]) => v.username).join(', ') + ' ' + t('chat.typing')

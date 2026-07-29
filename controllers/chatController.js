@@ -189,19 +189,18 @@ exports.createRoom = async (req, res) => {
         return apiResponse(res, { error: 'participantIds[0] is required for direct', status: 400 });
       }
 
-      const existingRoom = await ChatRoom.findOne({
+      const existingRooms = await ChatRoom.findAll({
         where: { type: 'direct' },
-        include: [{
-          model: ChatParticipant,
-          where: { user_id: { [Op.in]: [userId, otherUserId] } },
-        }],
+        include: [{ model: ChatParticipant }],
+      });
+
+      const existingRoom = existingRooms.find(room => {
+        const participantIds = room.ChatParticipants.map(p => p.user_id);
+        return participantIds.includes(userId) && participantIds.includes(otherUserId) && participantIds.length === 2;
       });
 
       if (existingRoom) {
-        const participantCount = await ChatParticipant.count({ where: { room_id: existingRoom.id } });
-        if (participantCount === 2) {
-          return apiResponse(res, { data: { id: existingRoom.id, name: null, type: 'direct' } });
-        }
+        return apiResponse(res, { data: { id: existingRoom.id, name: null, type: 'direct' } });
       }
 
       const room = await ChatRoom.create({ type: 'direct', created_by: userId });

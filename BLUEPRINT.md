@@ -17,7 +17,6 @@
 15. **borrowings** (id, user_id, book_id, borrow_date, due_date, return_date, status [borrowed/returned/overdue], notes, fine, createdAt, updatedAt)
 16. **library_settings** (id, borrow_duration_days, fine_per_day, overdue_tolerance_days, createdAt, updatedAt)
 17. **health_traffic** (id, method, path, status_code, response_time_ms, user_id, ip, user_agent, createdAt, updatedAt)
-18. **news** (id, title, content, category [sports/politics/criminal], source, url, image_url, published_at, createdAt, updatedAt)
 
 ### Pagination
 - All list endpoints support `page` (default 1) and `limit` (default 20) query parameters
@@ -81,14 +80,12 @@
 12. **Patient Data List** (admin-only, all identities with current BMI, blood sugar, and vital signs status, PDF export)
 13. **History** (auth required; non-admin users see only their own patients' BMI, blood sugar, and vital signs records; admin sees all)
 14. **Summary** (auth required; non-admin users see aggregate stats for their own patients only; admin sees all)
-15. **News** (Indonesian news about sports, politics, and criminals; updated daily; keeps past 1-3 days of news; older articles are auto-deleted)
-16. **Tools & Games** (accessible from dashboard navigation):
+15. **Tools & Games** (accessible from dashboard navigation):
     - a. Games: Hangman, Coin Catcher, Roleplay Adventure, Turtle Racing, Aim Trainer, Rock Paper Scissors
     - b. Math: Shapes Calculator (2D/3D), Equation Grapher, Scientific Calculator, Statistics, Quadratic Function
     - c. NER: Text Summarizer, Sentiment Analysis
 16. **System Health Monitoring** (admin-only via FE, DB connectivity, memory usage, CPU usage, uptime, readiness/liveness probes)
 17. **API Traffic Tracking** (admin-only, logs all API requests with method, path, status, response time, user)
-18. **Indonesian News** (auth required; fetches news from RSS feeds daily; categories: sports, politics, criminal; keeps last 3 days of news; auto-cleanup of old articles; admin can trigger manual refresh)
 
 ## Password Rules
 
@@ -111,10 +108,10 @@
 ## Architecture
 
 - **ORM**: Sequelize (no raw queries)
-- **Controllers**: Separate controller per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, category, report, health, healthTraffic, patientHealth, estate, chat, library, admin, news)
+- **Controllers**: Separate controller per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, category, report, health, healthTraffic, patientHealth, estate, chat, library, admin)
 - **Middlewares**: authenticate (JWT, returns 401 for expired tokens, 403 for invalid), authorize (role-based), apiResponse (standardized response), mailTransporter (nodemailer), rateLimiter (express-rate-limit), healthTraffic (request logging)
-- **Models**: User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Category, Estate, Tree, ChatRoom, ChatMessage, ChatParticipant, Book, Borrowing, LibrarySetting, HealthTraffic, News
-- **Routes**: Separate route file per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, category, report, admin, health, healthTraffic, patientHealth, estate, chat, library, news)
+- **Models**: User, TwoFactorCode, Identity, BMI, BloodSugar, VitalSigns, Expense, Saving, Category, Estate, Tree, ChatRoom, ChatMessage, ChatParticipant, Book, Borrowing, LibrarySetting, HealthTraffic
+- **Routes**: Separate route file per feature (auth, bmi, bloodSugar, vitalSigns, identity, money, category, report, admin, health, healthTraffic, patientHealth, estate, chat, library)
 - **Frontend**: Vue 3 SPA with Vite, Pinia store (auth with JWT expiry check and storage sync), Vue Router (route guard validates token expiry), Axios API client (auto-logout on 401/403)
   - Runs on `:5173` during development (Vite dev server)
   - Vite proxies `/api` requests to `:3000` backend
@@ -125,12 +122,12 @@
 - **Real-time**: Socket.IO server for chat feature (path: `/socket.io`)
 - **Traffic Logging**: All API requests (`/api/*`) are logged to `health_traffic` table via global middleware
 - **Database Sync**: Sequelize syncs with `force: false` (safe for production)
-- **Security**: Helmet.js for HTTP headers, rate limiting, no hardcoded credential fallbacks, startup env validation
+- **Security**: Helmet.js for HTTP headers, rate limiting, no hardcoded credential fallbacks, startup env validation, tokens accepted only via Authorization header (no query-param tokens), 2FA codes never returned in API responses
 - **i18n**: vue-i18n with 5 locales (en-GB, en-US, id, es, pt), language persisted in localStorage. All views fully internationalized with reactive language switching
 - **Category Management**: Spending/saving categories with CRUD operations, duplicate name prevention (unique constraint on name+type)
 - **PWA**: vite-plugin-pwa with Workbox, auto-update service worker, offline caching for static assets
 - **Separation**: FE and BE can run independently via `npm run dev` (BE) and `npm run dev:fe` (FE), or together via `npm run dev:all`
-- **Tests**: Jest + Supertest (62 backend tests), Vitest (6 frontend tests)
+- **Tests**: Jest + Supertest (62 backend tests), Vitest (8 frontend tests)
   - Estate tests use SQLite in-memory (no PostgreSQL dependency)
   - Other backend tests use mocked/unit-tested functions
 
@@ -187,13 +184,6 @@
 
 ### Health Traffic (`/api/health-traffic` - admin only)
 - `GET /stats?period=24h` - API traffic stats with period filtering (1h, 24h, 7d, 30d): total requests, avg response time, status breakdown, method breakdown, hourly traffic, 50 most recent requests with user info
-
-### News (`/api/news` - auth required)
-- `GET /` - List news with pagination and optional category filter (sports, politics, criminal)
-- `GET /latest` - Get latest news from the past 3 days
-- `GET /stats` - News statistics: total, per category, recent count, retention days
-- `GET /:id` - Get single news article by ID
-- `POST /refresh` - Manually refresh news from RSS feeds (admin only)
 
 ### Vital Signs (`/api/vital-signs` - auth required, data isolation)
 - `POST /` - Create vital signs record (BP, heart rate, temp, SpO2, respiratory rate), marks previous as past
@@ -330,7 +320,7 @@
 ### BMI Categories
 - Sangat kurus: < 17
 - Kurus: 17 - 18.5
-- Normal: 18.5 - 25
+- Normal: 18.5 - < 25
 - Gemuk: 25 - 27
 - Obesitas: > 27
 
