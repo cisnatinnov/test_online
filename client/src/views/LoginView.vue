@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
@@ -7,7 +7,7 @@ import { validateEmail, validatePassword, passwordStrength } from '../utils/help
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import api from '../api'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 
@@ -52,6 +52,11 @@ function validateField(field) {
     }
   }
 }
+
+watch(locale, () => {
+  if (touched.value.username) validateField('username')
+  if (touched.value.password) validateField('password')
+})
 
 async function login() {
   error.value = ''
