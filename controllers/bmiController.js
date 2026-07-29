@@ -7,10 +7,21 @@ const { parsePagination, paginateResponse } = require('../utils/pagination');
 const getUserIdFilter = (req) => req.user.role === 'admin' ? {} : { id_user: req.user.id };
 
 exports.createBMI = async (req, res) => {
-  const { identity_id, weight } = req.body;
+  let { identity_id, weight } = req.body;
   try {
-    if (!identity_id || weight == null) {
-      return apiResponse(res, { error: 'identity_id dan weight wajib diisi', status: 400 });
+    if (weight == null) {
+      return apiResponse(res, { error: 'weight wajib diisi', status: 400 });
+    }
+
+    if (!identity_id) {
+      if (req.user.role === 'admin') {
+        return apiResponse(res, { error: 'identity_id wajib diisi', status: 400 });
+      }
+      const userIdentity = await Identity.findOne({ where: { id_user: req.user.id }, order: [['id', 'ASC']] });
+      if (!userIdentity) {
+        return apiResponse(res, { error: 'Data identitas tidak ditemukan', status: 404 });
+      }
+      identity_id = userIdentity.id;
     }
 
     const where = { id: identity_id, ...getUserIdFilter(req) };
@@ -115,41 +126,6 @@ exports.getBMIList = async (req, res) => {
     }
 
     return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: formattedData, itemName: 'patients' }) });
-  } catch (err) {
-    return apiResponse(res, { error: err.message, status: 500 });
-  }
-};
-
-exports.getSummary = async (req, res) => {
-  try {
-    const userFilter = getUserIdFilter(req);
-    const totalPatients = await Identity.count({ where: userFilter });
-
-    const bmiWhere = { status: 'current' };
-    const bmiData = await BMI.findAll({
-      attributes: ['bmi_status'],
-      include: [{ model: Identity, where: userFilter, attributes: [] }],
-      where: bmiWhere,
-    });
-
-    const sugarData = await BloodSugar.findAll({
-      attributes: ['conclusion'],
-      include: [{ model: Identity, where: userFilter, attributes: [] }],
-      where: { status: 'current' },
-    });
-
-    const bmiResults = bmiData.map((r) => r.bmi_status);
-    const sugarResults = sugarData.map((r) => r.conclusion);
-
-    return apiResponse(res, {
-      data: {
-        totalPatients,
-        totalBmi: bmiResults.length,
-        normalBmi: bmiResults.filter((r) => r === 'Normal').length,
-        totalSugar: sugarResults.length,
-        highSugar: sugarResults.filter((r) => r === 'Tinggi').length,
-      },
-    });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

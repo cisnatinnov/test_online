@@ -5,7 +5,6 @@
     "health": "Salud",
     "money": "Dinero",
     "list": "Lista",
-    "summary": "Resumen",
     "tools": "Herramientas",
     "estate": "Finca",
     "chat": "Chat",
@@ -16,6 +15,7 @@
     "profile": "Perfil",
     "admin": "Admin",
     "more": "Mas",
+    "categories": "Categorias",
     "expandSidebar": "Expandir barra lateral",
     "collapseSidebar": "Contraer barra lateral",
     "user": "Usuario"
@@ -213,10 +213,13 @@
     "high": "Alto",
     "allNormalStatus": "Todo Normal",
     "abnormalStatus": "Anomalia Detectada",
+    "lastResult": "Ultimo",
     "period1h": "1h",
     "period24h": "24h",
     "period7d": "7d",
-    "period30d": "30d"
+    "period30d": "30d",
+    "vitalHistory": "Historial de Signos Vitales",
+    "noVitalHistory": "Aún no hay historial de signos vitales"
   },
   "money": {
     "title": "Gestor de Dinero",
@@ -421,6 +424,18 @@
     "vitalsNote": "Los signos vitales requieren un endpoint separado. Usa el Panel para registrar signos vitales.",
     "back": "Volver"
   },
+  "landing": {
+    "title": "Suite Completa de Monitoreo de Salud",
+    "subtitle": "Realice un seguimiento de IMC, az\u00facar en sangre y signos vitales con facilidad. Administre sus datos de salud en un solo lugar.",
+    "healthMonitoring": "Monitoreo de Salud",
+    "healthMonitoringDesc": "Realice un seguimiento de IMC, az\u00facar en sangre y signos vitales con evaluaci\u00f3n cl\u00ednica",
+    "patientProfiles": "Perfiles de Pacientes",
+    "patientProfilesDesc": "Administre m\u00faltiples identidades de pacientes con registros de salud completos",
+    "moneyManagement": "Gesti\u00f3n de Dinero",
+    "moneyManagementDesc": "Realice un seguimiento de gastos y ahorros con desgloses por categor\u00eda y gr\u00e1ficos",
+    "estateManagement": "Gesti\u00f3n de Fincas",
+    "estateManagementDesc": "Administre fincas de palma aceitera con plantaci\u00f3n de \u00e1rboles y planificaci\u00f3n con drones"
+  },
   "history": {
     "title": "Historial del Paciente #",
     "bmiHistory": "Historial de IMC",
@@ -432,13 +447,6 @@
     "sugarHistory": "Historial de Glucosa",
     "conclusion": "Conclusion",
     "noSugarHistory": "Aun no hay historial de glucosa",
-    "back": "Volver"
-  },
-  "summary": {
-    "title": "Resumen",
-    "totalPatients": "Total de Pacientes",
-    "normalBmi": "IMC Normal",
-    "highSugar": "Glucosa Alta",
     "back": "Volver"
   },
   "tools": {

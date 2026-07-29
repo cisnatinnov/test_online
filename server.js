@@ -87,7 +87,6 @@ app.use('/api/chat', apiLimiter, chatRoutes);
 app.use('/api/library', apiLimiter, libraryRoutes);
 app.use('/api/categories', apiLimiter, categoryRoutes);
 
-app.get('/api/dashboard/summary', authenticateToken, bmiController.getSummary);
 app.get('/api/history/:identityId/bmi', authenticateToken, bmiController.getHistoryBMI);
 app.get('/api/history/:identityId/bloodsugar', authenticateToken, bloodSugarController.getHistoryBloodSugar);
 app.get('/api/history/:identityId/vitalsigns', authenticateToken, vitalSignsController.getHistoryVitalSigns);

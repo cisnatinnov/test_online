@@ -8,7 +8,6 @@ import DashboardView from '../views/DashboardView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import ListView from '../views/ListView.vue'
 import HistoryView from '../views/HistoryView.vue'
-import SummaryView from '../views/SummaryView.vue'
 import ToolsView from '../views/ToolsView.vue'
 import EstateView from '../views/EstateView.vue'
 import HealthMonitorView from '../views/HealthMonitorView.vue'
@@ -21,11 +20,10 @@ const routes = [
   { path: '/login', name: 'login', component: LoginView, meta: { guest: true } },
   { path: '/register', name: 'register', component: RegisterView, meta: { guest: true } },
   { path: '/verify-2fa', name: 'verify-2fa', component: Verify2FAView, meta: { guest: true } },
-  { path: '/', name: 'dashboard', component: DashboardView, meta: { auth: true } },
+  { path: '/', name: 'dashboard', component: DashboardView },
   { path: '/profile', name: 'profile', component: ProfileView, meta: { auth: true } },
   { path: '/list', name: 'list', component: ListView, meta: { auth: true, admin: true } },
   { path: '/history/:id', name: 'history', component: HistoryView, meta: { auth: true } },
-  { path: '/summary', name: 'summary', component: SummaryView, meta: { auth: true } },
   { path: '/tools', name: 'tools', component: ToolsView, meta: { auth: true } },
   { path: '/estate', name: 'estate', component: EstateView, meta: { auth: true } },
   { path: '/health', name: 'health', component: HealthMonitorView, meta: { auth: true } },

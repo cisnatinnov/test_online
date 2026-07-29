@@ -5,7 +5,6 @@
     "health": "Saude",
     "money": "Dinheiro",
     "list": "Lista",
-    "summary": "Resumo",
     "tools": "Ferramentas",
     "estate": "Fazenda",
     "chat": "Chat",
@@ -16,9 +15,10 @@
     "profile": "Perfil",
     "admin": "Admin",
     "more": "Mais",
+    "categories": "Categorias",
     "expandSidebar": "Expandir barra lateral",
     "collapseSidebar": "Recolher barra lateral",
-    "user": "Usuario"
+    "user": "Usuário"
   },
   "languages": {
     "enGB": "Inglês (Reino Unido)",
@@ -213,10 +213,13 @@
     "high": "Alto",
     "allNormalStatus": "Tudo Normal",
     "abnormalStatus": "Anormalidade Detectada",
+    "lastResult": "Ultimo",
     "period1h": "1h",
     "period24h": "24h",
     "period7d": "7d",
-    "period30d": "30d"
+    "period30d": "30d",
+    "vitalHistory": "Histórico de Sinais Vitais",
+    "noVitalHistory": "Nenhum histórico de sinais vitais ainda"
   },
   "money": {
     "title": "Gerenciador de Dinheiro",
@@ -421,6 +424,18 @@
     "vitalsNote": "Sinais vitais requerem um endpoint separado. Use o Painel para registrar sinais vitais.",
     "back": "Voltar"
   },
+  "landing": {
+    "title": "Suite Completa de Monitoramento de Sa\u00fade",
+    "subtitle": "Acompanhe IMC, a\u00e7\u00facar no sangue e sinais vitais com facilidade. Gerencie seus dados de sa\u00fade em um s\u00f3 lugar.",
+    "healthMonitoring": "Monitoramento de Sa\u00fade",
+    "healthMonitoringDesc": "Acompanhe IMC, a\u00e7\u00facar no sangue e sinais vitais com avalia\u00e7\u00e3o cl\u00ednica",
+    "patientProfiles": "Perfis de Pacientes",
+    "patientProfilesDesc": "Gerencie m\u00faltiplas identidades de pacientes com registros de sa\u00fade abrangentes",
+    "moneyManagement": "Gest\u00e3o Financeira",
+    "moneyManagementDesc": "Acompanhe despesas e economias com detalhamento por categoria e gr\u00e1ficos",
+    "estateManagement": "Gest\u00e3o de Planta\u00e7\u00e3o",
+    "estateManagementDesc": "Gerencie planta\u00e7\u00f5es de palma de \u00f3leo com plantio de \u00e1rvores e planejamento com drones"
+  },
   "history": {
     "title": "Historico do Paciente #",
     "bmiHistory": "Historico de IMC",
@@ -432,13 +447,6 @@
     "sugarHistory": "Historico de Glicemia",
     "conclusion": "Conclusao",
     "noSugarHistory": "Nenhum historico de glicemia ainda",
-    "back": "Voltar"
-  },
-  "summary": {
-    "title": "Resumo",
-    "totalPatients": "Total de Pacientes",
-    "normalBmi": "IMC Normal",
-    "highSugar": "Glicemia Alta",
     "back": "Voltar"
   },
   "tools": {

@@ -60,7 +60,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 
 ### Patient Management
 - **Identity CRUD**: Identity creation requires a valid user account; admin can assign identities to any user with email notification
-- **Data Isolation**: Non-admin users only see their own patients' data across all endpoints including BMI, blood sugar, vital signs, history, and summary
+- **Data Isolation**: Non-admin users only see their own patients' data across all endpoints including BMI, blood sugar, vital signs, and history
 
 ### Money Management
 - **Expense/Saving Tracking**: CRUD with category and description
@@ -107,13 +107,13 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - PDF includes: summary (total expense, saving, balance), itemized tables with date, category, description, and amount
 
 ### Frontend (Vue 3 SPA)
-- **Health Monitor Page**: Record vitals (BP, HR, temp, SpO2, resp rate, weight, BMI), color-coded metric cards, history table, API traffic dashboard with request logs, hourly charts, and status breakdowns (admin-only API traffic section)
+- **Health Monitor Page**: Record vitals (BP, HR, temp, SpO2, resp rate), BMI, and blood sugar via separate input cards; color-coded metric cards with previous data labels (low/yellow, normal/green, high/red); collapsible history tables for BMI, blood sugar, and vital signs (click card title to expand) with BP status flags and color-coded status badges on each vital sign data cell (HR, Temp, SpO2, Resp: Low/Normal/High); API traffic dashboard with request logs, hourly charts, and status breakdowns (admin-only API traffic section). Patient auto-selected for non-admin users; `identity_id` auto-resolved from user's identity for non-admin.
 - **Money Dashboard Page**: Expense/saving CRUD, category dropdowns (from Category API), category breakdowns, trend charts, financial summary
 - **Estate View Page**: Create estates, plant trees, view canvas visualization, stats, drone plans
 - **Chat Page**: Real-time messaging with chat rooms, online users, typing indicators
 - **Category Management Page**: Spending/saving category CRUD with duplicate prevention, integrated with Money Dashboard dropdowns
 - **Library Page**: Book catalog with search/filter, borrowing management, fine display, library statistics with category breakdown, admin-only fine/duration settings panel
-- **Dashboard Page**: Main hub with sidebar navigation to all features; patient identity selection, BMI/blood sugar/vital signs data entry cards
+- **Dashboard Page**: Public landing page showing login/register for unauthenticated users; sidebar navigation to all features, patient identity creation/selection, BMI/blood sugar/vital signs data entry cards with expandable history tables when authenticated
 
 ## Tech Stack
 
@@ -158,7 +158,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   └── Category.js              # Spending/saving categories (name, type [spending/saving], unique name+type)
 ├── controllers/
 │   ├── authController.js        # Register, Login, 2FA
-│   ├── bmiController.js         # BMI CRUD, list, summary, history
+│   ├── bmiController.js         # BMI CRUD, list, history
 │   ├── bloodSugarController.js  # Blood sugar CRUD, history
 │   ├── vitalSignsController.js  # Vital signs CRUD, history, list
 │   ├── identityController.js    # Identity CRUD with user validation and email notification
@@ -240,7 +240,6 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │           ├── LibraryView.vue
 │           ├── ListView.vue
 │           ├── HistoryView.vue
-│           ├── SummaryView.vue
 │           ├── ToolsView.vue
 │           └── tools/           # 13 tool Vue components
 ├── .env
@@ -352,17 +351,16 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/` | Create BMI record (identity_id + weight) | Yes |
+| POST | `/` | Create BMI record (identity_id optional for non-admin, auto-resolved; weight required) | Yes |
 | PUT | `/:identityId` | Update BMI record | Yes |
 | GET | `/list` | List all patient data with current BMI & sugar | Yes |
-| GET | `/summary` | Dashboard summary statistics | Yes |
 | GET | `/history/:identityId` | BMI history for an identity | Yes |
 
 ### Blood Sugar (`/api/bloodsugar`)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/` | Create blood sugar record (identity_id + sugar) | Yes |
+| POST | `/` | Create blood sugar record (identity_id optional for non-admin, auto-resolved; sugar required) | Yes |
 | PUT | `/:identityId` | Update blood sugar record | Yes |
 | GET | `/history/:identityId` | Blood sugar history for an identity | Yes |
 
@@ -370,7 +368,7 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/` | Create vital signs record (BP, HR, temp, SpO2, resp rate) | Yes |
+| POST | `/` | Create vital signs record (identity_id optional for non-admin, auto-resolved) | Yes |
 | PUT | `/:identityId` | Update vital signs record | Yes |
 | GET | `/latest/:identityId` | Get latest vital signs with clinical evaluation | Yes |
 | GET | `/list` | List all patients with latest vital signs | Yes |
@@ -453,7 +451,6 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/api/export/pdf/:identityId` | Download PDF report | Yes |
-| GET | `/api/dashboard/summary` | Dashboard statistics | Yes |
 | GET | `/api/history/:identityId/bmi` | BMI history | Yes |
 | GET | `/api/history/:identityId/bloodsugar` | Blood sugar history | Yes |
 | GET | `/api/history/:identityId/vitalsigns` | Vital signs history | Yes |
@@ -604,16 +601,15 @@ Risk score is calculated from combined BMI, blood sugar, vital signs, and age fa
 | `/login` | LoginView | Public | Login with username/email + password |
 | `/register` | RegisterView | Public | Registration with patient identity |
 | `/verify-2fa` | Verify2FAView | Public | 2FA verification (email or WhatsApp) |
-| `/` | DashboardView | Auth | Main hub with sidebar navigation: patient identity, BMI, blood sugar, vital signs data entry |
+| `/` | DashboardView | Public | Landing page / main hub. Public landing with login/register when unauthenticated; patient identity, BMI/blood sugar/vital signs data entry with expandable history tables when authenticated |
 | `/profile` | ProfileView | Auth | User profile with identity info and personal health monitoring (BMI, blood sugar, vital signs history) |
-| `/health` | HealthMonitorView | Auth | Record vitals + weight, view BMI/metrics, history table, API traffic dashboard (admin-only traffic section) |
+| `/health` | HealthMonitorView | Auth | Record vitals, BMI, and blood sugar via separate input cards with previous data labels (low/yellow, normal/green, high/red); patient auto-selected for non-admin; view metrics, history table, API traffic dashboard (admin-only) |
 | `/money` | MoneyDashboardView | Auth | Expense/saving CRUD, category breakdowns, trend charts |
 | `/estate` | EstateView | Auth | Estate CRUD, tree planting, canvas visualization, drone plans |
 | `/chat` | ChatView | Auth | Real-time chat rooms, messaging, online users |
 | `/library` | LibraryView | Auth | Book catalog, search/filter, borrowing, return, fine, statistics, admin settings |
 | `/list` | ListView | Admin Only | Patient data list with tabs |
 | `/history/:id` | HistoryView | Auth | Patient BMI, blood sugar, and vital signs history (non-admin sees own patients only; admin sees all) |
-| `/summary` | SummaryView | Auth | Dashboard statistics cards (non-admin sees own patients only; admin sees all) |
 | `/tools` | ToolsView | Auth | Navigation hub for games, math, and NER tools |
 
 ## Testing

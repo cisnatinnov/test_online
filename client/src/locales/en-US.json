@@ -5,7 +5,6 @@
     "health": "Health",
     "money": "Money",
     "list": "List",
-    "summary": "Summary",
     "tools": "Tools",
     "estate": "Estate",
     "chat": "Chat",
@@ -16,6 +15,7 @@
     "profile": "Profile",
     "admin": "Admin",
     "more": "More",
+    "categories": "Categories",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
     "user": "User"
@@ -213,10 +213,13 @@
     "high": "High",
     "allNormalStatus": "All Normal",
     "abnormalStatus": "Abnormal Detected",
+    "lastResult": "Last",
     "period1h": "1h",
     "period24h": "24h",
     "period7d": "7d",
-    "period30d": "30d"
+    "period30d": "30d",
+    "vitalHistory": "Vital Signs History",
+    "noVitalHistory": "No vital signs history yet"
   },
   "money": {
     "title": "Money Manager",
@@ -421,6 +424,18 @@
     "vitalsNote": "Vital signs require a separate endpoint. Use Dashboard to record vital signs.",
     "back": "Back"
   },
+  "landing": {
+    "title": "Your Complete Health Monitoring Suite",
+    "subtitle": "Track BMI, blood sugar, and vital signs with ease. Manage your health data in one place.",
+    "healthMonitoring": "Health Monitoring",
+    "healthMonitoringDesc": "Track BMI, blood sugar, and vital signs with clinical evaluation",
+    "patientProfiles": "Patient Profiles",
+    "patientProfilesDesc": "Manage multiple patient identities with comprehensive health records",
+    "moneyManagement": "Money Management",
+    "moneyManagementDesc": "Track expenses and savings with category breakdowns and charts",
+    "estateManagement": "Estate Management",
+    "estateManagementDesc": "Manage palm oil estates with tree planting and drone planning"
+  },
   "history": {
     "title": "Patient History #",
     "bmiHistory": "BMI History",
@@ -432,13 +447,6 @@
     "sugarHistory": "Blood Sugar History",
     "conclusion": "Conclusion",
     "noSugarHistory": "No blood sugar history yet",
-    "back": "Back"
-  },
-  "summary": {
-    "title": "Summary",
-    "totalPatients": "Total Patients",
-    "normalBmi": "Normal BMI",
-    "highSugar": "High Blood Sugar",
     "back": "Back"
   },
   "tools": {

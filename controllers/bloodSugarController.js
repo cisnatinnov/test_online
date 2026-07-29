@@ -7,10 +7,21 @@ const { parsePagination, paginateResponse } = require('../utils/pagination');
 const getUserIdFilter = (req) => req.user.role === 'admin' ? {} : { id_user: req.user.id };
 
 exports.createBloodSugar = async (req, res) => {
-  const { identity_id, sugar } = req.body;
+  let { identity_id, sugar } = req.body;
   try {
-    if (!identity_id || sugar == null) {
-      return apiResponse(res, { error: 'identity_id dan sugar wajib diisi', status: 400 });
+    if (sugar == null) {
+      return apiResponse(res, { error: 'sugar wajib diisi', status: 400 });
+    }
+
+    if (!identity_id) {
+      if (req.user.role === 'admin') {
+        return apiResponse(res, { error: 'identity_id wajib diisi', status: 400 });
+      }
+      const userIdentity = await Identity.findOne({ where: { id_user: req.user.id }, order: [['id', 'ASC']] });
+      if (!userIdentity) {
+        return apiResponse(res, { error: 'Data identitas tidak ditemukan', status: 404 });
+      }
+      identity_id = userIdentity.id;
     }
 
     const where = { id: identity_id, ...getUserIdFilter(req) };

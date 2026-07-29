@@ -118,8 +118,22 @@ exports.login = async (req, res) => {
   }
 };
 
+function get2FAMailContent(code, lang) {
+  const l = (lang || 'en-GB').startsWith('id') ? 'id' : 'en';
+  if (l === 'id') {
+    return {
+      subject: 'Kode Verifikasi 2FA - VitaSuite',
+      html: `<h2>Kode Verifikasi 2FA</h2><p>Gunakan kode berikut untuk masuk:</p><h1 style="letter-spacing:5px;font-size:32px;">${code}</h1><p>Kode berlaku 5 menit.</p>`,
+    };
+  }
+  return {
+    subject: '2FA Verification Code - VitaSuite',
+    html: `<h2>2FA Verification Code</h2><p>Use the following code to log in:</p><h1 style="letter-spacing:5px;font-size:32px;">${code}</h1><p>This code expires in 5 minutes.</p>`,
+  };
+}
+
 exports.send2FA = async (req, res) => {
-  const { tempToken, channel = 'email' } = req.body;
+  const { tempToken, channel = 'email', lang } = req.body;
   try {
     const decoded = jwt.verify(tempToken, JWT_TEMP_SECRET);
     const code = String(Math.floor(100000 + Math.random() * 900000));
@@ -146,11 +160,12 @@ exports.send2FA = async (req, res) => {
     const mt = await getMailTransporter();
     if (mt && decoded.email && decoded.email.includes('@')) {
       try {
+        const mailContent = get2FAMailContent(code, lang);
         await mt.sendMail({
           from: process.env.EMAIL_FROM || 'noreply@vitasuite.com',
           to: decoded.email,
-          subject: 'Kode Verifikasi 2FA - VitaSuite',
-          html: `<h2>Kode Verifikasi 2FA</h2><p>Gunakan kode berikut untuk masuk:</p><h1 style="letter-spacing:5px;font-size:32px;">${code}</h1><p>Kode berlaku 5 menit.</p>`,
+          subject: mailContent.subject,
+          html: mailContent.html,
         });
     return apiResponse(res, { data: { sentTo: decoded.email, channel: 'email' } });
       } catch (mailErr) {

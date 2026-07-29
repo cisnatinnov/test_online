@@ -86,19 +86,20 @@ npm run dev:all
 
 1. Click **"Daftar"** on the login page.
 2. **Change language** (optional) - use the language switcher above the form title to select your preferred language.
-3. Fill in the **required fields**:
+3. The **username** field is automatically focused on page load.
+4. Fill in the **required fields**:
    - **Username** - your login username
    - **Email** - used for 2FA verification
    - **Password** - must meet the rules below
    - **Nama Lengkap** - patient full name
    - **Tanggal Lahir** - birthdate (auto-calculates age)
    - **Tinggi Badan (cm)** - height in centimeters
-3. Fill in **optional fields** (if known):
+6. Fill in **optional fields** (if known):
    - **No. WhatsApp** - for WhatsApp 2FA channel (format: +628123456789)
    - **NIK** - national identity number (16 digits)
    - **Tempat Lahir** - place of birth
    - **Alamat** - address
-4. Click **"Daftar"** to register. You will be logged in and redirected to the dashboard.
+7. Click **"Daftar"** to register. You will be logged in and redirected to the dashboard.
 
 ### Password Rules
 
@@ -118,20 +119,22 @@ The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you typ
 
 **Page:** `/login`
 
-1. Enter your **username or email** and **password**.
-2. If the input contains `@`, email format is validated in real-time.
-3. Password must be at least 8 characters.
-4. Click **"Login"**.
-5. You will be redirected to the **2FA verification page**.
+1. The **username** field is automatically focused on page load.
+2. Enter your **username or email** and **password**.
+3. If the input contains `@`, email format is validated in real-time.
+4. Password must be at least 8 characters.
+5. Click **"Login"**.
+6. You will be redirected to the **2FA verification page**.
 
 ### 2FA Verification
 
 **Page:** `/verify-2fa`
 
 1. A 6-digit code is sent to your registered **email**.
-2. If email delivery fails, an error message is displayed. Check your email configuration or contact support.
-3. Enter the **6-digit code** you received.
-4. Click **"Verifikasi"**.
+2. The **code input** is automatically focused on page load.
+3. If email delivery fails, an error message is displayed. Check your email configuration or contact support.
+4. Enter the **6-digit code** you received.
+5. Click **"Verifikasi"**.
 
 > **Note:** The code expires after 5 minutes. If you do not receive it, click "Kirim Kode" again.
 
@@ -143,19 +146,15 @@ The progress bar turns red (Lemah) -> orange (Sedang) -> green (Kuat) as you typ
 
 **Page:** `/`
 
-The dashboard is the main screen after login. It shows:
+The dashboard is the landing page (`/`) and the main screen after login. For **unauthenticated users**, it shows a public landing page with app description and login/register buttons.
 
-- **User Menu** (click your username in the top-left) - a dropdown with:
-  - **Language** - switch between 5 languages (English UK, English US, Bahasa Indonesia, Espanol, Portugues)
-  - **Profile** - link to your profile page with identity info and personal health monitoring
-  - **Health** - link to the Health Monitor page
-  - **Logout** - sign out of the application
-- **Navigation buttons** for quick access:
-  - **Health** - go to the Health Monitor page
-  - **Estate** - go to the Estate Management page
-  - **Chat** - go to the Real-time Chat page
-  - **Perpustakaan** - go to the Library Management page
-- Links to other features (Patient List, Summary, Tools, etc.)
+For **authenticated users**, it shows:
+
+- **Sidebar navigation** to all features (Dashboard, Profile, Health, Money, Estate, Chat, Library, Categories, Tools, Language, Logout)
+- **Patient identity** selection dropdown (admin can create new identities)
+- **BMI Card** - enter weight and save BMI; click the card to expand BMI history table
+- **Blood Sugar Card** - enter blood sugar value and save; click the card to expand blood sugar history
+- **Vital Signs Card** - enter BP, HR, temp, SpO2, respiratory rate; click the card to expand vital signs history with abbreviation labels (HR, Temp, SpO2, Resp)
 
 ---
 
@@ -188,24 +187,13 @@ Non-admin users see only their own patients' data. Admin users can see all patie
 
 ### Recording Vitals & BMI
 
-**Sidebar form** on the left side:
+**Sidebar cards** on the left side. Each input type has its own card with a submit button and shows the most recent recorded value with a color-coded label:
 
-1. **Select a Patient** from the dropdown.
-2. Enter vital signs:
-   - **Systolic (mmHg)** - e.g., 120
-   - **Diastolic (mmHg)** - e.g., 80
-   - **Heart Rate (bpm)** - e.g., 72
-   - **Temperature (C)** - e.g., 36.5
-   - **SpO2 (%)** - e.g., 98
-   - **Respiratory Rate (/min)** - e.g., 16
-3. Enter **Weight (kg)** for BMI calculation - e.g., 65
-4. **Height (cm)** is displayed read-only from the patient's identity record
-5. Click **"Save Vitals"** to submit
+- **BMI Card**: Enter weight (kg) and click "Save BMI". Shows last recorded BMI value with status label.
+- **Blood Sugar Card**: Enter blood sugar (mg/dL) and click "Save Blood Sugar". Shows last recorded value with status label.
+- **Vital Signs Card**: Enter BP, heart rate, temperature, SpO2, and respiratory rate in a grid, then click "Save Vital Signs". Shows last recorded vitals with colored status dots.
 
-When you save:
-- Vital signs are saved via `POST /api/vital-signs`
-- If weight is provided, BMI is calculated and saved via `POST /api/bmi`
-- Previous readings are marked as "past", new ones as "current"
+**Patient selection**: Admin users see a patient dropdown to select which patient to record data for. Non-admin users have their patient auto-selected (no dropdown shown). Non-admin users do not need to provide `identity_id` — it is automatically resolved from their own identity record.
 
 ### Viewing Health Metrics
 
@@ -223,18 +211,13 @@ When you save:
 
 ### Health History
 
-Below the metric cards, a **history table** shows the last 10 vital sign readings with columns:
+Below the metric cards, three **history tables** show the last 10 readings for each category:
 
-| Column | Description |
-|--------|-------------|
-| Date | When the reading was taken |
-| BP | Blood pressure (systolic/diastolic) |
-| HR | Heart rate |
-| Temp | Body temperature |
-| SpO2 | Oxygen saturation |
-| Resp | Respiratory rate |
-| BMI | BMI category result |
-| Status | Green dot (all normal) or Red dot (abnormal) |
+**BMI History**: Shows date, weight (kg), BMI value, and category status (color-coded).
+
+**Blood Sugar History**: Shows date, blood sugar (mg/dL), and conclusion (color-coded).
+
+**Vital Signs History**: Shows date, BP with status flag, heart rate (HR), temperature (Temp), SpO2, and respiratory rate (Resp) with abbreviation labels and color-coded status badges (Low/Normal/High) on each data cell.
 
 ### API Traffic Dashboard
 
@@ -598,21 +581,15 @@ A PDF report will be downloaded containing:
 
 ---
 
-## History & Summary
+## History
 
-**Pages:** `/history/:id` and `/summary` (requires login)
+**Page:** `/history/:id` (requires login)
 
 Non-admin users can only view their own patients' data. Admin can view all patients.
 
-### History (`/history/:id`)
 - View historical BMI, blood sugar, and vital signs records for a specific patient
 - Age is computed from the patient's identity birthdate at query time
 - **Ownership verified**: non-admin users can only access history for identities they own; admin can access all
-
-### Summary (`/summary`)
-- Dashboard statistics cards showing aggregate counts
-- **Non-admin users see stats for their own patients only**
-- **Admin sees stats for all patients**
 
 ---
 
@@ -846,7 +823,7 @@ The app supports 5 languages:
 | Chat messages not appearing | Ensure Socket.IO connection is established; check that you've joined a room |
 | Library book shows 0 available | All copies are currently borrowed; wait for returns or add more copies |
 | Fine seems incorrect | Check the tolerance days setting (default: 1 day); first overdue day is free; fine starts from day 2 |
-| Cannot access Health page | Only admin users can access the Health Monitor; check your account role |
+| Cannot see patient in Health page | Non-admin users can only see their own patient data; admin can see all patients |
 | Settings tab not visible | Only admin users see the Pengaturan tab in Library Management |
 | App not installing as PWA | Ensure you're using a supported browser (Chrome/Edge on Android, Safari on iOS). The app must be served over HTTPS in production. |
 | Language not changing | Clear localStorage and refresh the page. |

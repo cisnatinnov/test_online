@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
@@ -17,6 +17,9 @@ const fieldErrors = ref({ username: '', password: [] })
 const loading = ref(false)
 const touched = ref({ username: false, password: false })
 const showPassword = ref(false)
+const usernameInput = ref(null)
+
+onMounted(() => { usernameInput.value?.focus() })
 
 const isEmail = computed(() => form.value.username.includes('@'))
 const pwStrength = computed(() => passwordStrength(form.value.password, t))
@@ -92,6 +95,7 @@ async function login() {
       <form @submit.prevent="login">
         <div style="margin-bottom:16px">
           <input
+            ref="usernameInput"
             v-model="form.username"
             :placeholder="t('auth.usernameOrEmail')"
             required

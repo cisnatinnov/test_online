@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
@@ -18,6 +18,9 @@ const loading = ref(false)
 const touched = ref({ username: false, email: false, password: false })
 const fieldErrors = ref({ username: '', email: '', password: [] })
 const showPassword = ref(false)
+const usernameInput = ref(null)
+
+onMounted(() => { usernameInput.value?.focus() })
 
 const pwStrength = computed(() => passwordStrength(form.value.password, t))
 const pwProgress = computed(() => (pwStrength.value.score / 5) * 100)
@@ -92,7 +95,7 @@ async function register() {
       <form @submit.prevent="register">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
           <div>
-            <input v-model="form.username" :placeholder="t('auth.username') + ' *'" required :class="inputClass('username')" @focus="touched.username = true" @input="validateField('username')" @blur="validateField('username')" />
+            <input ref="usernameInput" v-model="form.username" :placeholder="t('auth.username') + ' *'" required :class="inputClass('username')" @focus="touched.username = true" @input="validateField('username')" @blur="validateField('username')" />
             <div v-if="touched.username && fieldErrors.username" style="color:var(--accent-red);font-size:11px;margin-top:2px">{{ fieldErrors.username }}</div>
           </div>
           <div>

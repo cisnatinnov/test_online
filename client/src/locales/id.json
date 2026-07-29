@@ -5,7 +5,6 @@
     "health": "Kesehatan",
     "money": "Keuangan",
     "list": "Daftar",
-    "summary": "Ringkasan",
     "tools": "Alat",
     "estate": "Perkebunan",
     "chat": "Obrolan",
@@ -16,6 +15,7 @@
     "profile": "Profil",
     "admin": "Admin",
     "more": "Lainnya",
+    "categories": "Kategori",
     "expandSidebar": "Perluas panel samping",
     "collapseSidebar": "Ciutkan panel samping",
     "user": "Pengguna"
@@ -213,10 +213,13 @@
     "high": "Tinggi",
     "allNormalStatus": "Semua Normal",
     "abnormalStatus": "Ketidaknormalan Terdeteksi",
+    "lastResult": "Terakhir",
     "period1h": "1j",
     "period24h": "24j",
     "period7d": "7h",
-    "period30d": "30h"
+    "period30d": "30h",
+    "vitalHistory": "Riwayat Tanda Vital",
+    "noVitalHistory": "Belum ada riwayat tanda vital"
   },
   "money": {
     "title": "Manajer Keuangan",
@@ -421,6 +424,18 @@
     "vitalsNote": "Tanda vital memerlukan endpoint terpisah. Gunakan Dasbor untuk mencatat tanda vital.",
     "back": "Kembali"
   },
+  "landing": {
+    "title": "Suite Pemantauan Kesehatan Lengkap",
+    "subtitle": "Pantau BMI, gula darah, dan tanda vital dengan mudah. Kelola data kesehatan Anda dalam satu tempat.",
+    "healthMonitoring": "Pemantauan Kesehatan",
+    "healthMonitoringDesc": "Pantau BMI, gula darah, dan tanda vital dengan evaluasi klinis",
+    "patientProfiles": "Profil Pasien",
+    "patientProfilesDesc": "Kelola beberapa identitas pasien dengan rekam medis lengkap",
+    "moneyManagement": "Manajemen Keuangan",
+    "moneyManagementDesc": "Catat pengeluaran dan tabungan dengan rincian kategori dan grafik",
+    "estateManagement": "Manajemen Perkebunan",
+    "estateManagementDesc": "Kelola perkebunan kelapa sawit dengan penanaman pohon dan perencanaan drone"
+  },
   "history": {
     "title": "Riwayat Pasien #",
     "bmiHistory": "Riwayat BMI",
@@ -432,13 +447,6 @@
     "sugarHistory": "Riwayat Gula Darah",
     "conclusion": "Kesimpulan",
     "noSugarHistory": "Belum ada riwayat gula darah",
-    "back": "Kembali"
-  },
-  "summary": {
-    "title": "Ringkasan",
-    "totalPatients": "Total Pasien",
-    "normalBmi": "BMI Normal",
-    "highSugar": "Gula Darah Tinggi",
     "back": "Kembali"
   },
   "tools": {

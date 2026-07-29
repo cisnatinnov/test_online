@@ -16,7 +16,9 @@ function onCollapsedChange(v) { sidebarCollapsed.value = v }
 const identities = ref([])
 const selectedIdentity = ref(null)
 const selectedIdentityData = ref(null)
-const vitals = ref({ systolic: '', diastolic: '', heart_rate: '', temperature: '', spo2: '', respiratory_rate: '', weight: '', blood_sugar: '' })
+const bmiWeight = ref('')
+const sugarValue = ref('')
+const vitals = ref({ systolic: '', diastolic: '', heart_rate: '', temperature: '', spo2: '', respiratory_rate: '' })
 const msg = ref('')
 const msgType = ref('')
 const latestVitals = ref(null)
@@ -28,32 +30,38 @@ const vitalHistory = ref([])
 const systemHealth = ref(null)
 const loading = ref(false)
 const lastSaved = ref(null)
+const showBmiHistory = ref(false)
+const showSugarHistory = ref(false)
+const showVitalHistory = ref(false)
 const trafficStats = ref(null)
 const trafficPeriod = ref('24h')
 const trafficLoading = ref(false)
 
 const metrics = computed(() => {
-  if (!latestVitals.value) return []
-  const v = latestVitals.value.vitalSigns
-  const ev = latestVitals.value.evaluation
-  if (!v || !ev) return []
-
   const items = []
-  if (ev.bloodPressure) {
-    items.push({ label: t('healthMonitor.bloodPressure'), value: `${v.systolic}/${v.diastolic}`, unit: t('healthMonitor.mmHg'), ...mapStatus(ev.bloodPressure.label) })
+
+  if (latestVitals.value) {
+    const v = latestVitals.value.vitalSigns
+    const ev = latestVitals.value.evaluation
+    if (v && ev) {
+      if (ev.bloodPressure) {
+        items.push({ label: t('healthMonitor.bloodPressure'), value: `${v.systolic}/${v.diastolic}`, unit: t('healthMonitor.mmHg'), ...mapStatus(ev.bloodPressure.label) })
+      }
+      if (ev.heartRate) {
+        items.push({ label: t('healthMonitor.heartRate'), value: v.heart_rate, unit: t('healthMonitor.bpm'), ...mapStatus(ev.heartRate.label) })
+      }
+      if (ev.temperature) {
+        items.push({ label: t('healthMonitor.temperature'), value: v.temperature, unit: t('healthMonitor.celsius'), ...mapStatus(ev.temperature.label) })
+      }
+      if (ev.spo2) {
+        items.push({ label: t('healthMonitor.spo2Label'), value: v.spo2, unit: '%', ...mapStatus(ev.spo2.label) })
+      }
+      if (ev.respiratoryRate) {
+        items.push({ label: t('healthMonitor.respiratoryRate'), value: v.respiratory_rate, unit: t('healthMonitor.perMin'), ...mapStatus(ev.respiratoryRate.label) })
+      }
+    }
   }
-  if (ev.heartRate) {
-    items.push({ label: t('healthMonitor.heartRate'), value: v.heart_rate, unit: t('healthMonitor.bpm'), ...mapStatus(ev.heartRate.label) })
-  }
-  if (ev.temperature) {
-    items.push({ label: t('healthMonitor.temperature'), value: v.temperature, unit: t('healthMonitor.celsius'), ...mapStatus(ev.temperature.label) })
-  }
-  if (ev.spo2) {
-    items.push({ label: t('healthMonitor.spo2Label'), value: v.spo2, unit: '%', ...mapStatus(ev.spo2.label) })
-  }
-  if (ev.respiratoryRate) {
-    items.push({ label: t('healthMonitor.respiratoryRate'), value: v.respiratory_rate, unit: t('healthMonitor.perMin'), ...mapStatus(ev.respiratoryRate.label) })
-  }
+
   if (latestBmi.value) {
     items.push({ label: t('healthMonitor.bmiHeader'), value: latestBmi.value.bmi_value ?? latestBmi.value.bmi, unit: t('healthMonitor.kgM2'), ...mapBMIStatus(latestBmi.value.status) })
   }
@@ -111,9 +119,10 @@ onMounted(async () => {
 async function loadIdentities() {
   try {
     const { data: res } = await api.get('/identities')
-    identities.value = res.data
-    if (res.data.length > 0) {
-      selectedIdentity.value = res.data[0].id
+    const list = res?.data?.identities || []
+    identities.value = list
+    if (list.length > 0) {
+      selectedIdentity.value = list[0].id
       await loadPatientHealth()
     }
   } catch (e) { console.error(e) }
@@ -132,14 +141,14 @@ async function loadPatientHealth() {
     const { data: res } = await api.get(`/vital-signs/latest/${selectedIdentity.value}`)
     latestVitals.value = res.data
     const hist = await api.get(`/vital-signs/history/${selectedIdentity.value}`)
-    vitalHistory.value = (hist.data.data || []).slice(0, 10)
+    vitalHistory.value = (hist?.data?.data?.history || []).slice(0, 10)
 
     selectedIdentityData.value = identities.value.find(i => i.id === selectedIdentity.value) || null
 
     try {
       const { data: bmiRes } = await api.get(`/bmi/history/${selectedIdentity.value}`)
-      const bmiList = bmiRes.data || []
-      const current = bmiList.find(b => b.status === 'current') || bmiList[0] || null
+      const bmiList = (bmiRes?.data?.history) || []
+      const current = bmiList[0] || null
       if (current) {
         latestBmi.value = {
           weight: current.weight,
@@ -155,8 +164,8 @@ async function loadPatientHealth() {
 
     try {
       const { data: sugarRes } = await api.get(`/bloodsugar/history/${selectedIdentity.value}`)
-      const sugarList = sugarRes.data || []
-      const currentSugar = sugarList.find(b => b.status === 'current') || sugarList[0] || null
+      const sugarList = (sugarRes?.data?.history) || []
+      const currentSugar = sugarList[0] || null
       if (currentSugar) {
         latestBloodSugar.value = {
           result: currentSugar.result,
@@ -172,21 +181,29 @@ async function loadPatientHealth() {
   } catch (e) { console.error(e) }
 }
 
+async function submitBMI() {
+  try {
+    await api.post('/bmi', { identity_id: selectedIdentity.value, weight: bmiWeight.value })
+    bmiWeight.value = ''
+    flash(t('flash.bmiSaved'), 'success')
+    await loadPatientHealth()
+  } catch (e) { flash(e.response?.data?.error || t('flash.bmiSaveFailed'), 'error') }
+}
+
+async function submitSugar() {
+  try {
+    await api.post('/bloodsugar', { identity_id: selectedIdentity.value, sugar: sugarValue.value })
+    sugarValue.value = ''
+    flash(t('flash.sugarSaved'), 'success')
+    await loadPatientHealth()
+  } catch (e) { flash(e.response?.data?.error || t('flash.sugarSaveFailed'), 'error') }
+}
+
 async function submitVitals() {
-  if (!selectedIdentity.value) { flash(t('flash.selectPatientFirst'), 'error'); return }
   loading.value = true
   try {
     await api.post('/vital-signs', { identity_id: selectedIdentity.value, ...vitals.value })
-    const savedWeight = vitals.value.weight ? Number(vitals.value.weight) : null
-    const savedSugar = vitals.value.blood_sugar ? Number(vitals.value.blood_sugar) : null
-    if (savedWeight) {
-      await api.post('/bmi', { identity_id: selectedIdentity.value, weight: savedWeight })
-    }
-    if (savedSugar) {
-      await api.post('/bloodsugar', { identity_id: selectedIdentity.value, sugar: savedSugar })
-    }
-    lastSaved.value = { weight: savedWeight, sugar: savedSugar, time: new Date() }
-    vitals.value = { systolic: '', diastolic: '', heart_rate: '', temperature: '', spo2: '', respiratory_rate: '', weight: '', blood_sugar: '' }
+    vitals.value = { systolic: '', diastolic: '', heart_rate: '', temperature: '', spo2: '', respiratory_rate: '' }
     flash(t('flash.vitalsSaved'), 'success')
     await loadPatientHealth()
   } catch (e) { flash(e.response?.data?.error || t('flash.vitalsSaveFailed'), 'error') }
@@ -251,80 +268,44 @@ function evalRespLabel(r) {
 
     <div class="layout">
       <aside class="sidebar">
-        <div class="card">
-          <h3 class="card-title">{{ t('healthMonitor.selectPatient') }}</h3>
+        <div class="card" v-if="auth.user?.role==='admin'">
+          <h3 class="card-title">{{ t('dashboard.selectOrCreate') }}</h3>
           <select v-model="selectedIdentity" @change="loadPatientHealth" class="select-input">
-            <option :value="null" disabled>{{ t('healthMonitor.choosePatient') }}</option>
+            <option :value="null" disabled>{{ t('dashboard.selectPatient') }}</option>
             <option v-for="i in identities" :key="i.id" :value="i.id">{{ i.name }} ({{ i.nik || '-' }})</option>
           </select>
         </div>
 
         <div class="card">
-          <h3 class="card-title">{{ t('healthMonitor.recordVitals') }}</h3>
-          <div class="form-stack">
-            <div class="input-row">
-              <div class="input-group">
-                <label>{{ t('healthMonitor.systolicMmHg') }}</label>
-                <input v-model="vitals.systolic" type="number" placeholder="e.g. 120" />
-              </div>
-              <div class="input-group">
-                <label>{{ t('healthMonitor.diastolicMmHg') }}</label>
-                <input v-model="vitals.diastolic" type="number" placeholder="e.g. 80" />
-              </div>
-            </div>
-            <div class="input-group">
-              <label>{{ t('healthMonitor.heartRateBpm') }}</label>
-              <input v-model="vitals.heart_rate" type="number" placeholder="e.g. 72" />
-            </div>
-            <div class="input-group">
-              <label>{{ t('healthMonitor.tempC') }}</label>
-              <input v-model="vitals.temperature" type="number" step="0.1" placeholder="e.g. 36.5" />
-            </div>
-            <div class="input-group">
-              <label>{{ t('healthMonitor.spo2Percent') }}</label>
-              <input v-model="vitals.spo2" type="number" placeholder="e.g. 98" />
-            </div>
-            <div class="input-group">
-              <label>{{ t('healthMonitor.respRateMin') }}</label>
-              <input v-model="vitals.respiratory_rate" type="number" placeholder="e.g. 16" />
-            </div>
-            <div class="input-row">
-              <div class="input-group">
-                <label>{{ t('healthMonitor.weightKg') }}</label>
-                <input v-model="vitals.weight" type="number" step="0.1" placeholder="e.g. 65" />
-              </div>
-              <div class="input-group">
-                <label>{{ t('healthMonitor.heightCm') }}</label>
-                <input :value="selectedIdentityData?.height || '-'" type="text" disabled class="input-disabled" />
-              </div>
-            </div>
-            <div class="input-group">
-              <label>{{ t('healthMonitor.bloodSugarMgDl') }}</label>
-              <input v-model="vitals.blood_sugar" type="number" placeholder="e.g. 85" />
-            </div>
-            <button class="btn btn-primary" @click="submitVitals" :disabled="loading">
-              {{ loading ? t('healthMonitor.saving') : t('healthMonitor.saveVitals') }}
-            </button>
-            <div v-if="lastSaved" style="margin-top:8px;padding:8px 12px;background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.3);border-radius:8px;font-size:0.78rem;color:#81c784">
-              <template v-if="lastSaved.weight">{{ t('healthMonitor.weightSaved') }} <strong>{{ lastSaved.weight }} kg</strong></template>
-              <template v-if="lastSaved.weight && lastSaved.sugar"> &middot; </template>
-              <template v-if="lastSaved.sugar">{{ t('healthMonitor.sugarSaved') }} <strong>{{ lastSaved.sugar }} mg/dL</strong></template>
-            </div>
+          <h3 class="card-title">{{ t('dashboard.bmi') }}</h3>
+          <input v-model="bmiWeight" type="number" :placeholder="t('dashboard.weightKg')" class="input" style="margin-bottom:8px" />
+          <button class="btn btn-primary btn-block" @click="submitBMI">{{ t('dashboard.saveBMI') }}</button>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">{{ t('dashboard.bloodSugar') }}</h3>
+          <input v-model="sugarValue" type="number" :placeholder="t('dashboard.sugarMgDl')" class="input" style="margin-bottom:8px" />
+          <button class="btn btn-primary btn-block" @click="submitSugar">{{ t('dashboard.saveSugar') }}</button>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">{{ t('dashboard.vitalSigns') }}</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input v-model="vitals.systolic" type="number" :placeholder="t('dashboard.systolic')" class="input" />
+            <input v-model="vitals.diastolic" type="number" :placeholder="t('dashboard.diastolic')" class="input" />
+            <input v-model="vitals.heart_rate" type="number" :placeholder="t('dashboard.heartRate')" class="input" />
+            <input v-model="vitals.temperature" type="number" step="0.1" :placeholder="t('dashboard.temperature')" class="input" />
+            <input v-model="vitals.spo2" type="number" :placeholder="t('dashboard.spo2')" class="input" />
+            <input v-model="vitals.respiratory_rate" type="number" :placeholder="t('dashboard.respiratoryRate')" class="input" />
           </div>
+          <button class="btn btn-primary btn-block" style="margin-top:8px" @click="submitVitals" :disabled="loading">
+            {{ loading ? t('healthMonitor.saving') : t('dashboard.saveVitals') }}
+          </button>
         </div>
       </aside>
 
       <main class="content">
-        <template v-if="!selectedIdentity">
-          <div class="hero-empty">
-            <div class="hero-icon">+</div>
-            <h2>{{ t('healthMonitor.selectPatient') }}</h2>
-            <p>{{ t('healthMonitor.choosePatientDesc') }}</p>
-          </div>
-        </template>
-
-        <template v-else>
-          <div class="section-header">
+        <div class="section-header">
             <h2>{{ t('healthMonitor.healthDashboard') }}</h2>
             <span :class="['overall-badge', overallStatus]">
               {{ overallStatus === 'normal' ? t('healthMonitor.allNormal') : overallStatus === 'risk' ? t('healthMonitor.abnormalDetected') : t('healthMonitor.noData') }}
@@ -348,9 +329,59 @@ function evalRespLabel(r) {
             {{ t('healthMonitor.noVitalsYet') }}
           </div>
 
-          <div class="card" v-if="vitalHistory.length > 0">
-            <h3 class="card-title">{{ t('healthMonitor.recentHistory') }}</h3>
-            <div class="history-table-wrap">
+          <div class="card card-clickable" v-if="bmiHistory.length > 0" @click="showBmiHistory = !showBmiHistory">
+            <h3 class="card-title">{{ t('history.bmiHistory') }} <span style="font-size:0.7rem;color:#888;text-transform:none;letter-spacing:0">[{{ showBmiHistory ? '-' : '+' }}]</span></h3>
+            <div v-if="showBmiHistory" class="history-table-wrap">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th>{{ t('healthMonitor.date') }}</th>
+                    <th>{{ t('history.weight') }} (kg)</th>
+                    <th>BMI</th>
+                    <th>{{ t('history.result') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in bmiHistory" :key="row.id">
+                    <td>{{ formatDate(row.createdAt) }}</td>
+                    <td class="history-val">{{ row.weight }}</td>
+                    <td class="history-val">{{ row.bmi_value != null ? Number(row.bmi_value).toFixed(1) : '-' }}</td>
+                    <td>
+                      <span :style="{ color: mapBMIStatus(row.result).color }">{{ row.result || '-' }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card card-clickable" v-if="bloodSugarHistory.length > 0" @click="showSugarHistory = !showSugarHistory">
+            <h3 class="card-title">{{ t('history.sugarHistory') }} <span style="font-size:0.7rem;color:#888;text-transform:none;letter-spacing:0">[{{ showSugarHistory ? '-' : '+' }}]</span></h3>
+            <div v-if="showSugarHistory" class="history-table-wrap">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th>{{ t('healthMonitor.date') }}</th>
+                    <th>{{ t('healthMonitor.bloodSugarLabel') }} (mg/dL)</th>
+                    <th>{{ t('history.conclusion') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in bloodSugarHistory" :key="row.id">
+                    <td>{{ formatDate(row.createdAt) }}</td>
+                    <td class="history-val">{{ row.result }}</td>
+                    <td>
+                      <span :style="{ color: mapSugarStatus(row.conclusion).color }">{{ row.conclusion || '-' }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card card-clickable" v-if="vitalHistory.length > 0" @click="showVitalHistory = !showVitalHistory">
+            <h3 class="card-title">{{ t('healthMonitor.vitalHistory') }} <span style="font-size:0.7rem;color:#888;text-transform:none;letter-spacing:0">[{{ showVitalHistory ? '-' : '+' }}]</span></h3>
+            <div v-if="showVitalHistory" class="history-table-wrap">
               <table class="history-table">
                 <thead>
                   <tr>
@@ -360,45 +391,44 @@ function evalRespLabel(r) {
                     <th>{{ t('healthMonitor.temp') }}</th>
                     <th>{{ t('healthMonitor.spo2Header') }}</th>
                     <th>{{ t('healthMonitor.resp') }}</th>
-                    <th>{{ t('healthMonitor.bmiHeader') }}</th>
-                    <th>{{ t('healthMonitor.sugarHeader') }}</th>
-                    <th>{{ t('healthMonitor.status') }}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(vs, idx) in vitalHistory" :key="idx">
-                    <td>{{ formatDate(vs.date) }}</td>
-                    <template v-for="item in evalRow(vs)" :key="item.label">
-                      <td>
-                        <span class="history-val" :style="{ color: item.color }">{{ item.val }}</span>
-                      </td>
-                    </template>
-                    <template v-if="evalRow(vs).length < 5">
-                      <td v-for="n in (5 - evalRow(vs).length)" :key="'e'+n"></td>
-                    </template>
+                  <tr v-for="(row, idx) in vitalHistory" :key="row.id || idx">
+                    <td>{{ formatDate(row.date || row.createdAt) }}</td>
                     <td>
-                      <span v-if="bmiHistory[idx]" class="history-val" :style="{ color: mapBMIStatus(bmiHistory[idx].result).color }">
-                        <template v-if="bmiHistory[idx].bmi_value != null">{{ bmiHistory[idx].bmi_value }}</template>
-                        <template v-else>-</template>
-                        <small style="font-weight:400;opacity:0.7"> ({{ bmiHistory[idx].result }})</small>
+                      <span v-if="row.systolic != null" class="prev-data" style="margin:0">
+                        <span>{{ row.systolic }}/{{ row.diastolic ?? '-' }}</span>
+                        <span class="status-badge-sm" :style="{ background: mapStatus(evalBPLabel(row.systolic, row.diastolic)).bg, color: mapStatus(evalBPLabel(row.systolic, row.diastolic)).color }">
+                          {{ evalBPLabel(row.systolic, row.diastolic) }}
+                        </span>
                       </span>
                       <span v-else>-</span>
                     </td>
-                    <td>
-                      <span v-if="bloodSugarHistory[idx]" class="history-val" :style="{ color: mapSugarStatus(bloodSugarHistory[idx].conclusion).color }">
-                        <template v-if="bloodSugarHistory[idx].result != null">{{ bloodSugarHistory[idx].result }}</template>
-                        <template v-else>-</template>
-                        <small style="font-weight:400;opacity:0.7"> ({{ bloodSugarHistory[idx].conclusion }})</small>
-                      </span>
-                      <span v-else>-</span>
+                    <td class="history-val">
+                      <span class="vital-label">HR: </span>{{ row.heart_rate ?? '-' }}
+                      <span v-if="row.heart_rate != null" class="status-badge-sm" :style="{ background: mapStatus(evalHRLabel(row.heart_rate)).bg, color: mapStatus(evalHRLabel(row.heart_rate)).color }">{{ evalHRLabel(row.heart_rate) }}</span>
                     </td>
-                    <td>
-                      <span :class="['status-dot', evalRow(vs).some(i => i.status !== 'normal') ? 'risk' : 'ok']"></span>
+                    <td class="history-val">
+                      <span class="vital-label">Temp: </span>{{ row.temperature != null ? Number(row.temperature).toFixed(1) : '-' }}
+                      <span v-if="row.temperature != null" class="status-badge-sm" :style="{ background: mapStatus(evalTempLabel(row.temperature)).bg, color: mapStatus(evalTempLabel(row.temperature)).color }">{{ evalTempLabel(row.temperature) }}</span>
+                    </td>
+                    <td class="history-val">
+                      <span class="vital-label">SpO2: </span>{{ row.spo2 ?? '-' }}
+                      <span v-if="row.spo2 != null" class="status-badge-sm" :style="{ background: mapStatus(evalSpO2Label(row.spo2)).bg, color: mapStatus(evalSpO2Label(row.spo2)).color }">{{ evalSpO2Label(row.spo2) }}</span>
+                    </td>
+                    <td class="history-val">
+                      <span class="vital-label">Resp: </span>{{ row.respiratory_rate ?? '-' }}
+                      <span v-if="row.respiratory_rate != null" class="status-badge-sm" :style="{ background: mapStatus(evalRespLabel(row.respiratory_rate)).bg, color: mapStatus(evalRespLabel(row.respiratory_rate)).color }">{{ evalRespLabel(row.respiratory_rate) }}</span>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
+          </div>
+
+          <div v-if="bmiHistory.length === 0 && bloodSugarHistory.length === 0 && vitalHistory.length === 0 && metrics.length > 0">
+            <div class="empty-metrics">{{ t('healthMonitor.noData') }}</div>
           </div>
 
           <div class="card" v-if="systemHealth">
@@ -492,7 +522,6 @@ function evalRespLabel(r) {
               </div>
             </div>
           </div>
-        </template>
       </main>
     </div>
   </div>
@@ -593,6 +622,14 @@ function evalRespLabel(r) {
   margin-bottom: 12px;
 }
 
+.card-clickable {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.card-clickable:hover {
+  transform: translateY(-2px);
+}
+
 .select-input {
   width: 100%;
   padding: 10px 12px;
@@ -621,6 +658,11 @@ function evalRespLabel(r) {
 }
 .input-group input:focus { border-color: #4caf50; }
 .input-disabled { opacity: 0.5; cursor: not-allowed; }
+
+.prev-data { font-size:0.75rem; color:#999; margin-bottom:8px; display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.prev-vitals { gap:6px; font-size:0.7rem; }
+.status-badge-sm { padding:1px 6px; border-radius:8px; font-size:0.65rem; font-weight:700; }
+.status-dot-sm { display:inline-block; width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 
 .btn {
   padding: 10px 16px;
@@ -745,6 +787,7 @@ function evalRespLabel(r) {
 }
 
 .history-val { font-weight: 700; }
+.vital-label { font-size: 0.65rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
 
 .status-dot {
   display: inline-block;

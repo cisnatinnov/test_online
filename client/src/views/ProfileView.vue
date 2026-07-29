@@ -107,6 +107,27 @@ function mapSugarStatus(result) {
 }
 
 function flash(m, type) { msg.value = m; msgType.value = type; setTimeout(() => msg.value = '', 3000) }
+
+function evalHRBadge(hr) {
+  if (hr < 60) return { label: t('healthMonitor.low'), color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
+  if (hr <= 100) return { label: t('healthMonitor.normal'), color: '#4caf50', bg: 'rgba(76,175,80,0.12)' }
+  return { label: t('healthMonitor.high'), color: '#f44336', bg: 'rgba(244,67,54,0.12)' }
+}
+function evalTempBadge(t) {
+  if (t < 35) return { label: t('healthMonitor.low'), color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
+  if (t <= 37.2) return { label: t('healthMonitor.normal'), color: '#4caf50', bg: 'rgba(76,175,80,0.12)' }
+  return { label: t('healthMonitor.high'), color: '#f44336', bg: 'rgba(244,67,54,0.12)' }
+}
+function evalSpO2Badge(s) {
+  if (s < 90) return { label: t('healthMonitor.highRisk'), color: '#f44336', bg: 'rgba(244,67,54,0.12)' }
+  if (s < 95) return { label: t('healthMonitor.low'), color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
+  return { label: t('healthMonitor.normal'), color: '#4caf50', bg: 'rgba(76,175,80,0.12)' }
+}
+function evalRespBadge(r) {
+  if (r < 12) return { label: t('healthMonitor.low'), color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
+  if (r <= 20) return { label: t('healthMonitor.normal'), color: '#4caf50', bg: 'rgba(76,175,80,0.12)' }
+  return { label: t('healthMonitor.high'), color: '#f44336', bg: 'rgba(244,67,54,0.12)' }
+}
 </script>
 
 <template>
@@ -246,10 +267,22 @@ function flash(m, type) { msg.value = m; msgType.value = type; setTimeout(() => 
                 <tr v-for="(v, idx) in vitalHistory" :key="idx">
                   <td>{{ formatDate(v.createdAt) }}</td>
                   <td>{{ v.systolic }}/{{ v.diastolic }}</td>
-                  <td>{{ v.heart_rate }}</td>
-                  <td>{{ v.temperature }}</td>
-                  <td>{{ v.spo2 }}</td>
-                  <td>{{ v.respiratory_rate }}</td>
+                  <td>
+                    <span class="vital-label-sm">HR: </span>{{ v.heart_rate }}
+                    <span v-if="v.heart_rate != null" class="status-badge-sm" :style="{ background: evalHRBadge(v.heart_rate).bg, color: evalHRBadge(v.heart_rate).color }">{{ evalHRBadge(v.heart_rate).label }}</span>
+                  </td>
+                  <td>
+                    <span class="vital-label-sm">Temp: </span>{{ v.temperature }}
+                    <span v-if="v.temperature != null" class="status-badge-sm" :style="{ background: evalTempBadge(v.temperature).bg, color: evalTempBadge(v.temperature).color }">{{ evalTempBadge(v.temperature).label }}</span>
+                  </td>
+                  <td>
+                    <span class="vital-label-sm">SpO2: </span>{{ v.spo2 }}
+                    <span v-if="v.spo2 != null" class="status-badge-sm" :style="{ background: evalSpO2Badge(v.spo2).bg, color: evalSpO2Badge(v.spo2).color }">{{ evalSpO2Badge(v.spo2).label }}</span>
+                  </td>
+                  <td>
+                    <span class="vital-label-sm">Resp: </span>{{ v.respiratory_rate }}
+                    <span v-if="v.respiratory_rate != null" class="status-badge-sm" :style="{ background: evalRespBadge(v.respiratory_rate).bg, color: evalRespBadge(v.respiratory_rate).color }">{{ evalRespBadge(v.respiratory_rate).label }}</span>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -348,6 +381,8 @@ function flash(m, type) { msg.value = m; msgType.value = type; setTimeout(() => 
   border-bottom: 1px solid rgba(255,255,255,0.04);
   color: var(--text-secondary);
 }
+.vital-label-sm { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.status-badge-sm { padding:1px 6px; border-radius:8px; font-size:0.65rem; font-weight:700; margin-left:4px; }
 @media (max-width: 768px) {
   .identity-grid { grid-template-columns: 1fr; }
   .metrics-grid { grid-template-columns: 1fr; }

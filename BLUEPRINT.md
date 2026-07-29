@@ -32,18 +32,19 @@
 1. **Register** (username, email, password + optional identity data)
 2. **Login** (username/email + password)
 3. **2FA Verification** (email or WhatsApp channel)
-4. **Dashboard** with user dropdown menu (profile, language, health monitoring, logout) and navigation to Health, Estate, Chat, Library features
+4. **Dashboard** (public landing page) with sidebar navigation (dashboard, profile, health, money, estate, chat, library, categories, tools, language, logout) and patient identity/health data entry cards with expandable history tables for BMI, blood sugar, and vital signs
 5. **Profile** (via `/profile` ProfileView):
    - a. View identity info (name, NIK, height, birthplace, birthdate, address)
    - b. Personal health monitoring: BMI history, blood sugar history, vital signs history
    - c. Color-coded metric cards for latest health data
 6. **Health Features** (via `/health` HealthMonitorView):
-   - a. Record vitals (BP, heart rate, temperature, SpO2, respiratory rate) + weight for BMI
-   - b. BMI calculated automatically using weight (kg) + identity height (cm)
-   - c. Color-coded metric cards: green (normal), orange (low/underweight), red (high/overweight)
-   - d. History table showing last 10 readings with all vitals + BMI
-   - e. System health checks (DB, memory, CPU, uptime)
-   - f. API traffic dashboard with request logs, hourly charts, status/method breakdowns
+   - a. Record vitals (BP, heart rate, temperature, SpO2, respiratory rate), BMI (weight), and blood sugar via separate input cards
+   - b. Each input card shows the most recent recorded value with a color-coded label (low/yellow, normal/green, high/red)
+   - c. Patient auto-selected for non-admin users; admin sees patient dropdown
+   - d. Color-coded metric cards: green (normal), orange (low/underweight), red (high/overweight)
+   - e. Collapsible history tables (click to expand) showing last 10 readings for BMI, blood sugar, and vital signs separately with BP status flags (low/normal/high) and color-coded status badges on each vital sign data cell (HR, Temp, SpO2, Resp)
+   - f. System health checks (DB, memory, CPU, uptime)
+   - g. API traffic dashboard with request logs, hourly charts, status/method breakdowns
 6. **Blood Sugar** - track with age-based thresholds (Rendah/Normal/Tinggi)
 7. **Money Management** (via `/money` MoneyDashboardView):
    - a. Expense CRUD with amount, category, description, date
@@ -79,8 +80,7 @@
     - d. Population Statistics (BMI, sugar, vital signs, risk distribution across all patients)
 12. **Patient Data List** (admin-only, all identities with current BMI, blood sugar, and vital signs status, PDF export)
 13. **History** (auth required; non-admin users see only their own patients' BMI, blood sugar, and vital signs records; admin sees all)
-14. **Summary** (auth required; non-admin users see aggregate stats for their own patients only; admin sees all)
-15. **Tools & Games** (accessible from dashboard navigation):
+14. **Tools & Games** (accessible from dashboard navigation):
     - a. Games: Hangman, Coin Catcher, Roleplay Adventure, Turtle Racing, Aim Trainer, Rock Paper Scissors
     - b. Math: Shapes Calculator (2D/3D), Equation Grapher, Scientific Calculator, Statistics, Quadratic Function
     - c. NER: Text Summarizer, Sentiment Analysis
@@ -140,9 +140,9 @@
 | `/login` | Public | LoginView | Login with username/email + password, real-time email format validation |
 | `/register` | Public | RegisterView | Registration with patient identity, real-time email & password validation with strength progress bar |
 | `/verify-2fa` | Public | Verify2FAView | 2FA verification (email or WhatsApp) |
-| `/` | Auth | DashboardView | Main hub with user dropdown menu (profile, language, health, logout) and navigation to Health, Estate, Chat, Library |
+| `/` | Public | DashboardView | Landing page / main hub. Shows public landing with login/register when unauthenticated; full dashboard with patient identity, BMI/blood sugar/vital signs data entry cards and expandable history tables when authenticated |
 | `/profile` | Auth | ProfileView | User profile with identity info and personal health monitoring (BMI, blood sugar, vital signs history) |
-| `/health` | Auth | HealthMonitorView | Health monitoring: record vitals + weight, BMI display, color-coded metrics, history table, API traffic dashboard (admin-only traffic section) |
+| `/health` | Auth | HealthMonitorView | Health monitoring: record vitals + weight, BMI display, color-coded metrics, history tables for BMI/blood sugar/vital signs with BP status flags, API traffic dashboard (admin-only traffic section) |
 | `/money` | Auth | MoneyDashboardView | Money management: expense/saving CRUD, category breakdowns, trend charts |
 | `/estate` | Auth | EstateView | Estate management: create estates, plant trees, canvas visualization, stats, drone plans |
 | `/chat` | Auth | ChatView | Real-time chat: rooms, messaging, online users, typing indicators |
@@ -150,7 +150,6 @@
 | `/categories` | Auth | CategoriesView | Category management: spending/saving category CRUD with duplicate prevention |
 | `/list` | Admin Only | ListView | Patient data list with tabbed BMI/blood sugar view and search |
 | `/history/:id` | Auth | HistoryView | Patient BMI, blood sugar, and vital signs history (non-admin sees own patients only; admin sees all) |
-| `/summary` | Auth | SummaryView | Dashboard statistics cards (non-admin sees own patients only; admin sees all) |
 | `/tools` | Auth | ToolsView | Navigation hub for games, math tools, and NER tools |
 
 ### Static Pages (`client/public/` or `client/dist/`)
@@ -186,7 +185,7 @@
 - `GET /stats?period=24h` - API traffic stats with period filtering (1h, 24h, 7d, 30d): total requests, avg response time, status breakdown, method breakdown, hourly traffic, 50 most recent requests with user info
 
 ### Vital Signs (`/api/vital-signs` - auth required, data isolation)
-- `POST /` - Create vital signs record (BP, heart rate, temp, SpO2, respiratory rate), marks previous as past
+- `POST /` - Create vital signs record (BP, heart rate, temp, SpO2, respiratory rate), marks previous as past; identity_id auto-resolved for non-admin users
 - `PUT /:identityId` - Update vital signs record
 - `GET /latest/:identityId` - Get latest vital signs with clinical evaluation
 - `GET /list` - List all patients with latest vital signs and evaluation
