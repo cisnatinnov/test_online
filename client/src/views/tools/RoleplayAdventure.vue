@@ -74,6 +74,7 @@ reset()
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="reset()">New Game</button>
+      <button class="link-btn" @click="router.push('/')">Home</button>
     </div>
     <h2 style="text-align:center">Roleplay Adventure</h2>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:10px 0">

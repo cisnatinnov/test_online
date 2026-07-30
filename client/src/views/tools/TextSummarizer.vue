@@ -46,7 +46,7 @@ function summarize() {
   <div style="max-width:700px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
-      <button class="link-btn" @click="router.push('/')">Dashboard</button>
+      <button class="link-btn" @click="router.push('/')">Home</button>
     </div>
     <h2 style="text-align:center">Text Summarizer</h2>
     <textarea v-model="text" style="width:100%;padding:12px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;resize:vertical;font-family:inherit;line-height:1.5" rows="8" placeholder="Paste or type a long text to summarize..."></textarea>

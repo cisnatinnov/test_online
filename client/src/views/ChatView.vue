@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { useChatStore } from '../stores/chat'
+import { SentimentIntensityAnalyzer } from 'vader-sentiment'
 import Sidebar from '../components/Sidebar.vue'
 
 const { t } = useI18n()
@@ -23,6 +24,17 @@ const availableUsers = ref([])
 const searchQuery = ref('')
 const messagesEl = ref(null)
 const typingTimeout = ref(null)
+const blockedMsg = ref('')
+
+function getSentimentIcon(text) {
+  if (!text) return ''
+  const scores = SentimentIntensityAnalyzer.polarity_scores(text)
+  if (scores.compound >= 0.5) return '😊'
+  if (scores.compound <= -0.5) return '😠'
+  if (scores.compound <= -0.05) return '😟'
+  if (scores.compound >= 0.05) return '🙂'
+  return '😐'
+}
 
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return availableUsers.value
@@ -44,6 +56,10 @@ onMounted(async () => {
   chat.connect()
   await chat.loadRooms()
   availableUsers.value = await chat.loadUsers()
+  chat.socket.value?.on('chat:error', ({ message }) => {
+    blockedMsg.value = message || 'Message was blocked'
+    setTimeout(() => { blockedMsg.value = '' }, 3000)
+  })
 })
 
 onUnmounted(() => {
@@ -200,7 +216,7 @@ function getOtherUser(room) {
                 {{ msg.username || msg.User?.username }}
               </div>
               <div class="msg-bubble">
-                <div class="msg-content">{{ msg.content }}</div>
+                <div class="msg-content">{{ msg.content }} <span class="sentiment-icon">{{ getSentimentIcon(msg.content || msg.content) }}</span></div>
                 <div class="msg-time">{{ formatMsgTime(msg.createdAt) }}</div>
               </div>
             </div>
@@ -210,6 +226,10 @@ function getOtherUser(room) {
           </div>
 
           <div class="typing-bar" v-if="typingInRoom">{{ typingInRoom }}</div>
+
+          <div v-if="blockedMsg" class="blocked-msg">
+            ⚠️ {{ blockedMsg }}
+          </div>
 
           <div class="chat-input">
             <input v-model="inputMsg" @keydown.enter="send" @keydown="onKeydown"
@@ -443,6 +463,24 @@ function getOtherUser(room) {
 .msg.own .msg-bubble { border-bottom-left-radius: 16px; border-bottom-right-radius: 4px; }
 
 .msg-content { font-size: 0.88rem; line-height: 1.4; word-break: break-word; }
+.sentiment-icon { font-size: 0.75rem; margin-left: 4px; vertical-align: middle; }
+
+.blocked-msg {
+  padding: 8px 20px;
+  background: rgba(231,76,60,0.15);
+  border: 1px solid rgba(231,76,60,0.3);
+  border-radius: 8px;
+  margin: 0 20px 8px;
+  font-size: 0.8rem;
+  color: #e74c3c;
+  text-align: center;
+  animation: fadeOut 3s forwards;
+}
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
 .msg-time { font-size: 0.65rem; opacity: 0.5; margin-top: 4px; text-align: right; }
 
 .empty-chat { text-align: center; color: #555; margin-top: 40px; }

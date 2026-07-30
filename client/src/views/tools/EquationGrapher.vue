@@ -91,7 +91,7 @@ onMounted(() => draw())
   <div style="max-width:700px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
-      <button class="link-btn" @click="router.push('/')">Dashboard</button>
+      <button class="link-btn" @click="router.push('/')">Home</button>
     </div>
     <h2 style="text-align:center">Equation Grapher</h2>
     <div style="margin:15px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">

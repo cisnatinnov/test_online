@@ -91,7 +91,7 @@ update2dFields(); update3dFields()
   <div style="max-width:600px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
-      <button class="link-btn" @click="router.push('/')">Dashboard</button>
+      <button class="link-btn" @click="router.push('/')">Home</button>
     </div>
     <h2 style="text-align:center">Shapes Calculator</h2>
     <div style="display:flex;gap:10px;margin:15px 0">

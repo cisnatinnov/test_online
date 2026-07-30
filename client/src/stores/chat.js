@@ -14,6 +14,7 @@ export const useChatStore = defineStore('chat', () => {
   const onlineUserIds = ref(new Set())
   const typingUsers = ref({})
   const connected = ref(false)
+let pendingMessageId = null
 
   const currentRoomMessages = computed(() => messages.value)
 
@@ -28,6 +29,7 @@ export const useChatStore = defineStore('chat', () => {
     s.on('disconnect', () => { connected.value = false })
 
     s.on('chat:message', (msg) => {
+      pendingMessageId = null
       if (msg.roomId === currentRoom.value?.id) {
         messages.value.push(msg)
       }
@@ -54,6 +56,13 @@ export const useChatStore = defineStore('chat', () => {
           delete typingUsers.value[`${roomId}:${userId}`]
         }
       }, 3500)
+    })
+
+    s.on('chat:error', ({ message }) => {
+      if (pendingMessageId) {
+        messages.value = messages.value.filter(m => m.id !== pendingMessageId)
+        pendingMessageId = null
+      }
     })
 
     s.on('chat:room:updated', () => {
@@ -135,7 +144,9 @@ export const useChatStore = defineStore('chat', () => {
 
   function sendMessage(content) {
     if (!currentRoom.value || !content.trim()) return
-    const optimistic = { id: Date.now(), roomId: currentRoom.value.id, userId: auth.user?.id, username: auth.user?.username, content, createdAt: new Date().toISOString() }
+    const id = Date.now()
+    const optimistic = { id, roomId: currentRoom.value.id, userId: auth.user?.id, username: auth.user?.username, content, createdAt: new Date().toISOString() }
+    pendingMessageId = id
     messages.value.push(optimistic)
     socket.value?.emit('chat:send', { roomId: currentRoom.value.id, content })
   }

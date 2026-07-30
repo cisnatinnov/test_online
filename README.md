@@ -88,6 +88,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **Online Users**: Track which users are currently online
 - **Typing Indicators**: See when other users are typing
 - **Participant Management**: Add/remove users from group chats
+- **Message Sentiment**: Real-time sentiment analysis using VADER; each message shows a sentiment icon (😊 positive, 😠 negative, 😐 neutral); toxic messages are blocked server-side
 
 ### Library Management
 - **Book Management**: CRUD for books with title, author, ISBN, publisher, year, category, description, quantity, and shelf location
@@ -177,6 +178,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── patientHealthController.js # Patient risk scoring, trends, alerts, population stats
 │   ├── estateController.js      # Estate CRUD, tree CRUD, stats, drone plan
 │   ├── chatController.js        # Real-time chat (Socket.IO + REST)
+│   ├── sentimentController.js   # Sentiment analysis using VADER (vader-sentiment)
 │   ├── libraryController.js     # Book CRUD, borrow/return, overdue fine, stats, library settings
 │   └── adminController.js       # Admin user/data listing
 ├── middlewares/
@@ -201,6 +203,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── patientHealthRoutes.js
 │   ├── estateRoutes.js
 │   ├── chatRoutes.js
+│   ├── sentimentRoutes.js
 │   └── libraryRoutes.js
 ├── utils/
 │   ├── helpers.js               # BMI calc, blood sugar eval, vital sign eval, risk scoring, trend analysis

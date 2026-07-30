@@ -34,7 +34,7 @@ function eval_() {
   <div style="max-width:420px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
-      <button class="link-btn" @click="router.push('/')">Dashboard</button>
+      <button class="link-btn" @click="router.push('/')">Home</button>
     </div>
     <h2 style="text-align:center">Scientific Calculator</h2>
     <div style="background:#1a1a2e;color:#2ecc71;font-size:28px;padding:15px;border-radius:8px;text-align:right;word-break:break-all;min-height:60px;margin-bottom:10px;font-family:monospace">{{ display }}</div>

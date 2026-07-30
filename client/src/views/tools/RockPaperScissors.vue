@@ -41,7 +41,7 @@ function play(pick) {
   <div style="max-width:500px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
-      <button class="link-btn" @click="router.push('/')">Dashboard</button>
+      <button class="link-btn" @click="router.push('/')">Home</button>
     </div>
     <h2 style="text-align:center">Rock Paper Scissors</h2>
     <div style="display:flex;gap:30px;justify-content:center;margin:15px 0">

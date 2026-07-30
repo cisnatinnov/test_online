@@ -26,9 +26,10 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
    - [Estate Statistics](#estate-statistics)
    - [Drone Planning](#drone-planning)
 9. [Real-time Chat](#real-time-chat)
-   - [Chat Rooms](#chat-rooms)
-   - [Messaging](#messaging)
-   - [Online Users](#online-users)
+    - [Chat Rooms](#chat-rooms)
+    - [Messaging](#messaging)
+    - [Online Users](#online-users)
+    - [Message Sentiment](#message-sentiment)
 10. [Library Management](#library-management)
     - [Book Catalog](#book-catalog)
     - [Adding & Editing Books](#adding--editing-books)
@@ -49,7 +50,8 @@ Step-by-step guide for using the BMI health monitoring application with Vue 3 fr
 20. [Money Management PDF Export](#money-management-pdf-export)
 21. [Progressive Web App (PWA)](#progressive-web-app-pwa)
 22. [Internationalization](#internationalization)
-23. [Troubleshooting](#troubleshooting)
+23. [Tools & Games](#tools--games)
+24. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -399,6 +401,16 @@ Communicate with other users in real-time through chat rooms.
 
 - The sidebar shows a list of currently online users
 - Online status updates in real-time as users connect/disconnect
+
+### Message Sentiment
+
+Messages are analyzed in real-time using VADER sentiment analysis. Each message bubble shows a small sentiment icon:
+
+- 😊 Positive (compound score ≥ 0.05)
+- 😠 Negative (compound score ≤ -0.05)
+- 😐 Neutral (score between -0.05 and 0.05)
+
+Blocked messages containing toxic content are flagged by the server-side sentiment filter and cannot be sent.
 
 ---
 
@@ -827,6 +839,56 @@ Health evaluation labels — BMI status categories (Sangat kurus / Kurus / Norma
 - **Cross-Tab Sync**: Logging out in one browser tab automatically logs you out in all other tabs
 - **Browser History Clear**: Clearing browser history/localStorage will log you out on the next page interaction
 - **Automatic Redirect**: Any API call with an expired or invalid token triggers automatic logout and redirect to `/login`
+
+---
+
+## Tools & Games
+
+**Page:** `/tools`
+
+The Tools page is a navigation hub with three categories: Games, Math Tools, and NER Tools. All tools are implemented as Vue 3 components served via the Vue Router.
+
+### Games
+
+| Tool | Route | Description |
+|------|-------|-------------|
+| Hangman | `/tools/hangman` | Word guessing game with 20 tech-themed words and canvas hangman drawing |
+| Coin Catcher | `/tools/coin-catcher` | Catch falling coins, avoid bombs, 30s timer, mouse/keyboard controls |
+| Roleplay Adventure | `/tools/roleplay-adventure` | Text-based dungeon RPG with combat, gold, weapons, armor, branching story, boss fight |
+| Turtle Racing | `/tools/turtle-racing` | Bet on 6 colored turtles with animated race track |
+| Aim Trainer | `/tools/aim-trainer` | Click shrinking targets, 30s timer, tracks score/hits/misses/accuracy |
+| Rock Paper Scissors | `/tools/rock-paper-scissors` | Classic RPS vs computer with emoji display and scoreboard |
+
+### Math Tools
+
+| Tool | Route | Description |
+|------|-------|-------------|
+| Shapes | `/tools/shapes` | 2D and 3D shape calculator with canvas visualization |
+| Equation Grapher | `/tools/equation-grapher` | Plot multiple functions on adjustable coordinate system |
+| Scientific Calculator | `/tools/scientific-calculator` | Full calculator with trigonometric, logarithmic, and power functions |
+| Statistics | `/tools/statistics` | Mean, median, mode, std dev, variance, range, quartiles, IQR, histogram chart |
+| Quadratic | `/tools/quadratic` | Graph and solve ax²+bx+c with vertex, roots, discriminant, step-by-step solution |
+
+### NER Tools
+
+| Tool | Route | Description |
+|------|-------|-------------|
+| Text Summarizer | `/tools/text-summarizer` | Extractive text summarizer with adjustable ratio (10%/20%/30%), sentence scoring, visual highlighting |
+| Sentiment Analysis | `/tools/sentiment-analysis` | VADER-based sentiment analysis with positive/negative/neutral scoring, visual meter, word-level coloring |
+
+### Sentiment Analysis
+
+The Sentiment Analysis tool uses the VADER (Valence Aware Dictionary and sEntiment Reasoner) algorithm to analyze text sentiment in real-time. It computes a compound score ranging from -1 (most negative) to +1 (most positive) and classifies text as:
+
+- **Positive** (compound ≥ 0.05) - shown in green
+- **Neutral** (-0.05 < compound < 0.05) - shown in orange
+- **Negative** (compound ≤ -0.05) - shown in red
+
+The tool also shows individual word-level coloring and a visual needle meter for the overall sentiment.
+
+### Dashboard Buttons
+
+All tool pages include **Back** (returns to `/tools`) and **Home** (returns to `/`) buttons for easy navigation.
 
 ---
 

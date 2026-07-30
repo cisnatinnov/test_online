@@ -70,7 +70,7 @@ function drawHist(nums) {
   <div style="max-width:650px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
-      <button class="link-btn" @click="router.push('/')">Dashboard</button>
+      <button class="link-btn" @click="router.push('/')">Home</button>
     </div>
     <h2 style="text-align:center">Statistics Calculator</h2>
     <textarea v-model="input" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:15px;box-sizing:border-box;margin-bottom:10px" rows="3" placeholder="Enter numbers separated by commas, e.g. 12, 15, 18, 22, 25, 30"></textarea>

@@ -84,9 +84,10 @@
 12. **Patient Data List** (admin-only, `/list` ListView): searchable list of all users and their identities with "Health Monitor" link navigating to `/health?identity={id}`
 13. **History** (auth required; non-admin users see only their own patients' BMI, blood sugar, and vital signs records; admin sees all)
 14. **Tools & Games** (via `/tools` ToolsView, accessible from dashboard navigation):
-   - a. Games: Hangman, Coin Catcher, Roleplay Adventure, Turtle Racing, Aim Trainer, Rock Paper Scissors
-   - b. Math: Shapes Calculator (2D/3D), Equation Grapher, Scientific Calculator, Statistics, Quadratic Function
-   - c. NER: Text Summarizer, Sentiment Analysis
+    - a. Games: Hangman, Coin Catcher, Roleplay Adventure, Turtle Racing, Aim Trainer, Rock Paper Scissors
+    - b. Math: Shapes Calculator (2D/3D), Equation Grapher, Scientific Calculator, Statistics, Quadratic Function
+    - c. NER: Text Summarizer, Sentiment Analysis
+    - d. Sentiment Analysis uses the VADER algorithm (vader-sentiment) for real-time text sentiment scoring
 16. **System Health Monitoring** (admin-only via FE, DB connectivity, memory usage, CPU usage, uptime, readiness/liveness probes)
 17. **API Traffic Tracking** (admin-only, logs all API requests with method, path, status, response time, user)
 
@@ -165,26 +166,28 @@ Both client-side (ProfileView form) and server-side (`identityController.updateI
 | `/history/:id` | Auth | HistoryView | Patient BMI, blood sugar, and vital signs history (non-admin sees own patients only; admin sees all) |
 | `/tools` | Auth | ToolsView | Navigation hub for games, math tools, and NER tools with translated category titles |
 
-### Static Pages (`client/public/` or `client/dist/`)
+### Interactive Tools (Vue SPA - `client/src/views/tools/`)
 
-#### Games (`games/`)
-- `hangman.html` - Word guessing game with 20 tech-themed words and canvas hangman drawing
-- `coin-catcher.html` - Catch falling coins, avoid bombs, 30s timer, mouse/keyboard controls
-- `roleplay-adventure.html` - Text-based dungeon RPG with combat, gold, weapons, armor, branching story, boss fight
-- `turtle-racing.html` - Bet on 6 colored turtles with animated race track
-- `aim-trainer.html` - Click shrinking targets, 30s timer, tracks score/hits/misses/accuracy
-- `rock-paper-scissors.html` - Classic RPS vs computer with emoji display and scoreboard
+All tools are routed via Vue Router under `/tools/*`:
 
-#### Math Tools (`math/`)
-- `shapes.html` - 2D shapes (circle, rectangle, triangle, square, ellipse, trapezoid, parallelogram) and 3D shapes (cube, sphere, cylinder, cone, rectangular prism, pyramid, torus) with canvas visualization
-- `equation-grapher.html` - Plot multiple functions (sin, cos, tan, asin, acos, atan, log, sqrt, x^n) on adjustable coordinate system
-- `scientific-calculator.html` - Full calculator with sin/cos/tan/asin/acos/atan/log/ln/sqrt/cbrt/powers
-- `statistics.html` - Mean, median, mode, std dev, variance, range, quartiles, IQR, histogram chart
-- `quadratic.html` - Graph and solve ax^2+bx+c with vertex, roots, discriminant, step-by-step solution
+#### Games
+- `Hangman` (`/tools/hangman`) - Word guessing game with 20 tech-themed words and canvas hangman drawing
+- `Coin Catcher` (`/tools/coin-catcher`) - Catch falling coins, avoid bombs, 30s timer, mouse/keyboard controls
+- `Roleplay Adventure` (`/tools/roleplay-adventure`) - Text-based dungeon RPG with combat, gold, weapons, armor, branching story, boss fight
+- `Turtle Racing` (`/tools/turtle-racing`) - Bet on 6 colored turtles with animated race track
+- `Aim Trainer` (`/tools/aim-trainer`) - Click shrinking targets, 30s timer, tracks score/hits/misses/accuracy
+- `Rock Paper Scissors` (`/tools/rock-paper-scissors`) - Classic RPS vs computer with emoji display and scoreboard
 
-#### NER Tools (`ner/`)
-- `summary.html` - Extractive text summarizer with adjustable ratio (10%/20%/30%), sentence scoring, visual highlighting
-- `sentiment.html` - Lexicon-based sentiment analysis with positive/negative/neutral scoring, visual meter, word-level coloring
+#### Math Tools
+- `Shapes` (`/tools/shapes`) - 2D shapes (circle, rectangle, triangle, square, ellipse, trapezoid, parallelogram) and 3D shapes (cube, sphere, cylinder, cone, rectangular prism, pyramid, torus) with canvas visualization
+- `Equation Grapher` (`/tools/equation-grapher`) - Plot multiple functions (sin, cos, tan, asin, acos, atan, log, sqrt, x^n) on adjustable coordinate system
+- `Scientific Calculator` (`/tools/scientific-calculator`) - Full calculator with sin/cos/tan/asin/acos/atan/log/ln/sqrt/cbrt/powers
+- `Statistics` (`/tools/statistics`) - Mean, median, mode, std dev, variance, range, quartiles, IQR, histogram chart
+- `Quadratic` (`/tools/quadratic`) - Graph and solve ax^2+bx+c with vertex, roots, discriminant, step-by-step solution
+
+#### NER Tools
+- `Text Summarizer` (`/tools/text-summarizer`) - Extractive text summarizer with adjustable ratio (10%/20%/30%), sentence scoring, visual highlighting
+- `Sentiment Analysis` (`/tools/sentiment-analysis`) - VADER-based sentiment analysis with positive/negative/neutral scoring, visual meter, word-level coloring
 
 ## Health Monitoring Endpoints
 
