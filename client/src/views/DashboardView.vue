@@ -14,7 +14,7 @@ function onCollapsedChange(v) { sidebarCollapsed.value = v }
 
 const features = [
   { route: '/health', icon: 'health', label: 'healthMonitoring', desc: 'healthMonitoringDesc' },
-  { route: '/money', icon: 'money', label: 'moneyManagement', desc: 'moneyManagementDesc' },
+  ...(auth.user?.role !== 'admin' ? [{ route: '/money', icon: 'money', label: 'moneyManagement', desc: 'moneyManagementDesc' }] : []),
   { route: '/estate', icon: 'estate', label: 'estateManagement', desc: 'estateManagementDesc' },
   ...(auth.user?.role === 'admin' ? [{ route: '/list', icon: 'list', label: 'patientData', desc: 'patientDataDesc' }] : []),
   { route: '/tools', icon: 'tools', label: 'tools', desc: 'toolsDesc' },

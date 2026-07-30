@@ -238,7 +238,7 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
             </select>
             <button class="btn btn-blue" @click="onSearch">{{ t('library.search') }}</button>
           </div>
-          <button class="btn btn-green" @click="openAddBook">{{ t('library.addBook') }}</button>
+          <button v-if="isAdmin" class="btn btn-green" @click="openAddBook">{{ t('library.addBook') }}</button>
         </div>
 
         <div v-if="loading" class="loading">{{ t('library.loading') }}</div>
@@ -269,7 +269,7 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
             </div>
             <div class="book-actions">
               <button class="btn btn-sm btn-green" :disabled="book.available <= 0" @click="openBorrow(book)">{{ t('library.borrow') }}</button>
-              <button class="btn btn-sm btn-blue" @click="openEditBook(book)">{{ t('library.edit') }}</button>
+              <button v-if="isAdmin" class="btn btn-sm btn-blue" @click="openEditBook(book)">{{ t('library.edit') }}</button>
               <button v-if="isAdmin" class="btn btn-sm btn-red" @click="deleteBook(book)">{{ t('library.delete') }}</button>
             </div>
           </div>
