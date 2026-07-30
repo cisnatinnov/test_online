@@ -33,7 +33,7 @@ exports.createCategory = async (req, res) => {
       return apiResponse(res, { error: 'Category already exists', status: 409 });
     }
     const category = await Category.create({ name: name.trim(), type });
-    return apiResponse(res, { data: category });
+    return apiResponse(res, { status: 201, data: category });
   } catch (err) {
     if (err.name === 'SequelizeUniqueConstraintError') {
       return apiResponse(res, { error: 'Category already exists', status: 409 });
@@ -58,7 +58,7 @@ exports.updateCategory = async (req, res) => {
       return apiResponse(res, { error: 'Category name already exists', status: 409 });
     }
     await category.update({ name: name.trim() });
-    return apiResponse(res, { data: category });
+    return apiResponse(res, { status: 201, data: category });
   } catch (err) {
     if (err.name === 'SequelizeUniqueConstraintError') {
       return apiResponse(res, { error: 'Category name already exists', status: 409 });

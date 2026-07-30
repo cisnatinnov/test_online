@@ -146,7 +146,7 @@ function drawEstate() {
 async function loadTreesOnCanvas(ctx, scale, pad) {
   try {
     const { data: res } = await api.get(`/estate/${selectedEstateId.value}/trees`)
-    const trees = res.data?.trees || []
+    const trees = res.data?.data?.trees || []
     for (const tree of trees) {
       const cx = pad + tree.x * scale
       const cy = pad + (selectedEstate.value.length - tree.y) * scale

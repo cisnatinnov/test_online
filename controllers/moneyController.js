@@ -11,14 +11,18 @@ exports.createExpense = async (req, res) => {
     if (amount == null || !category) {
       return apiResponse(res, { error: 'amount dan category wajib diisi', status: 400 });
     }
+    const numAmount = Number(amount);
+    if (!Number.isFinite(numAmount) || numAmount <= 0) {
+      return apiResponse(res, { error: 'amount harus berupa angka positif', status: 400 });
+    }
     const expense = await Expense.create({
       user_id: req.user.id,
-      amount: Number(amount),
+      amount: numAmount,
       category,
       description: description || null,
       date: date || new Date(),
     });
-    return apiResponse(res, { data: expense });
+    return apiResponse(res, { status: 201, data: expense });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
@@ -82,14 +86,18 @@ exports.createSaving = async (req, res) => {
     if (amount == null || !category) {
       return apiResponse(res, { error: 'amount dan category wajib diisi', status: 400 });
     }
+    const numAmount = Number(amount);
+    if (!Number.isFinite(numAmount) || numAmount <= 0) {
+      return apiResponse(res, { error: 'amount harus berupa angka positif', status: 400 });
+    }
     const saving = await Saving.create({
       user_id: req.user.id,
-      amount: Number(amount),
+      amount: numAmount,
       category,
       description: description || null,
       date: date || new Date(),
     });
-    return apiResponse(res, { data: saving });
+    return apiResponse(res, { status: 201, data: saving });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }

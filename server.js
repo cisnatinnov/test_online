@@ -35,10 +35,18 @@ const healthTrafficMiddleware = require('./middlewares/healthTraffic');
 
 const app = express();
 app.use(helmet());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+const corsOrigin = process.env.CORS_ORIGIN;
+const allowedCorsOrigins = corsOrigin === '*' ? [] : (corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : []);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedCorsOrigins.length === 0) return callback(null, true);
+    if (!allowedCorsOrigins.includes(origin)) return callback(new Error('CORS origin not allowed'), false);
+    callback(null, true);
+  },
   credentials: true,
-}));
+};
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
 const clientDist = path.join(__dirname, 'client', 'dist');
 const fs = require('fs');
@@ -113,10 +121,7 @@ process.on('uncaughtException', (err) => {
 });
 
 const io = new Server(server, {
-  cors: {
-    origin: process.env.CORS_ORIGIN,
-    credentials: true,
-  },
+  cors: corsOptions,
   path: '/socket.io',
 });
 

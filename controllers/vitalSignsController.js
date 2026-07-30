@@ -112,7 +112,7 @@ exports.getLatestVitalSigns = async (req, res) => {
       order: [['id', 'DESC']],
     });
 
-    if (!vs) return apiResponse(res, { data: null });
+    if (!vs) return apiResponse(res, { data: { patientId: identity.id, name: identity.name, age: calculateAge(identity.birthdate) ?? null, gender: identity.gender ?? null, vitalSigns: null, evaluation: null } });
 
     const age = calculateAge(identity.birthdate) ?? vs.age;
     const evaluation = evaluateVitalSigns(vs, age, identity.gender);

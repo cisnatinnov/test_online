@@ -19,8 +19,8 @@
 17. **health_traffic** (id, method, path, status_code, response_time_ms, user_id, ip, user_agent, createdAt, updatedAt)
 
 ### Pagination
-- All list endpoints support `page` (default 1) and `limit` (default 25) query parameters
-- Allowed limit values: 5, 10, 25, 50, 100 (invalid values default to 25)
+- All list endpoints support `page` (default 1) and `limit` (default 10) query parameters
+- Allowed limit values: 5, 10, 25, 50, 100 (invalid values default to 10)
 - Response format: `{ total, page, limit, pages, [items] }`
 
 ### Transaction Notes

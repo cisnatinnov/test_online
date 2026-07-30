@@ -126,8 +126,10 @@ const sendWhatsApp = async (phone, code) => {
     const payload = { phone, message: `Kode verifikasi 2FA Anda: ${code}. Berlaku 5 menit.` };
     const headers = { 'Content-Type': 'application/json' };
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
-    await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(payload) });
-    return true;
+    try {
+      const resp = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(payload) });
+      return resp.ok;
+    } catch { return false; }
   }
   return false;
 };

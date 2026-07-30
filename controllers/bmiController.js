@@ -24,12 +24,14 @@ exports.createBMI = async (req, res) => {
       identity_id = userIdentity.id;
     }
 
-    const where = { id: identity_id, ...getUserIdFilter(req) };
+const where = { id: identity_id, ...getUserIdFilter(req) };
     const identity = await Identity.findOne({ where });
     if (!identity) {
       return apiResponse(res, { error: 'Data tidak ditemukan', status: 404 });
     }
-
+    if (!identity.height || Number(identity.height) <= 0) {
+      return apiResponse(res, { error: 'height identitas tidak valid', status: 400 });
+    }
     const age = calculateAge(identity.birthdate);
     const kesimpulan = hitungKesimpulan(Number(weight), Number(identity.height), age, identity.gender);
 
@@ -66,12 +68,14 @@ exports.updateBMI = async (req, res) => {
       return apiResponse(res, { error: 'weight wajib diisi', status: 400 });
     }
 
-    const where = { id: identityId, ...getUserIdFilter(req) };
+const where = { id: identityId, ...getUserIdFilter(req) };
     const identity = await Identity.findOne({ where });
     if (!identity) {
       return apiResponse(res, { error: 'Data tidak ditemukan', status: 404 });
     }
-
+    if (!identity.height || Number(identity.height) <= 0) {
+      return apiResponse(res, { error: 'height identitas tidak valid', status: 400 });
+    }
     const age = calculateAge(identity.birthdate);
     const kesimpulan = hitungKesimpulan(Number(weight), Number(identity.height), age, identity.gender);
 

@@ -51,6 +51,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **Change Password Validation**: Live per-field with full rules checklist (min 8, uppercase, lowercase, digit, symbol), strength progress bar, confirm-match check, and unchanged-password detection
 - **Chat Message Cap**: Chat messages limited to 5000 characters
 - **Room Membership Verification**: Verified before join/send operations
+- **Financial Amount Validation**: Expense and saving amounts must be positive numbers; negative or non-numeric values are rejected (400)
+- **BMI/Height Validation**: Height must be a positive number; zero or null height returns 400 instead of producing invalid BMI calculations
 
 ### System & Auth
 - **Authentication**: Register, Login with 2FA (Email / WhatsApp)
@@ -101,8 +103,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 
 
 ### Pagination
-- All list endpoints support pagination with `page` (default 1) and `limit` (default 20) query parameters
-- Allowed limit values: 5, 10, 20, 50, 100 (invalid values default to 20)
+- All list endpoints support pagination with `page` (default 1) and `limit` (default 10) query parameters
+- Allowed limit values: 5, 10, 25, 50, 100 (invalid values default to 10)
 - Response includes: `total`, `page`, `limit`, `pages` (total pages), and the items array
 
 ### Money Management PDF Export

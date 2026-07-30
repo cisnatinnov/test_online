@@ -715,7 +715,7 @@ All list endpoints support pagination with consistent query parameters.
 | Parameter | Default | Allowed Values | Description |
 |-----------|---------|----------------|-------------|
 | `page` | 1 | Any positive integer | Page number |
-| `limit` | 20 | 5, 10, 20, 50, 100 | Items per page |
+| `limit` | 10 | 5, 10, 25, 50, 100 | Items per page |
 
 ### Response Format
 
@@ -725,7 +725,7 @@ All list endpoints support pagination with consistent query parameters.
   "data": {
     "total": 150,
     "page": 1,
-    "limit": 20,
+    "limit": 10,
     "pages": 8,
     "items": [...]
   }

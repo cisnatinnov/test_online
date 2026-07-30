@@ -234,7 +234,7 @@ exports.getMessages = async (req, res) => {
       where,
       include: [{ model: User, attributes: ['id', 'username'] }],
       order: [['id', 'DESC']],
-      limit: Math.min(Number(limit) || 50, 200),
+      limit: Math.min(Math.max(Number(limit) || 50, 1), 200),
     });
 
     return apiResponse(res, { data: messages.reverse() });

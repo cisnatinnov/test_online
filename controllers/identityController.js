@@ -76,7 +76,7 @@ exports.createIdentity = async (req, res) => {
       }
     }
 
-    return apiResponse(res, { data: identity });
+    return apiResponse(res, { status: 201, data: identity });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
