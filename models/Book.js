@@ -48,6 +48,11 @@ const Book = sequelize.define('Book', {
     type: DataTypes.STRING(50),
     allowNull: true,
   },
+  condition: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    defaultValue: 'good',
+  },
 }, {
   tableName: 'books',
   timestamps: true,

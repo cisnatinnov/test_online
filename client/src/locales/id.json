@@ -418,6 +418,8 @@
     "quantity": "Jumlah",
     "shelfLabel": "Rak",
     "shelfPlaceholder": "A1, B2, dll.",
+    "conditionLabel": "Kondisi",
+    "condition": { "new": "Baru", "good": "Baik", "fair": "Cukup", "poor": "Buruk", "damaged": "Rusak" },
     "descriptionLabel": "Deskripsi",
     "descPlaceholder": "Deskripsi singkat buku...",
     "save": "Simpan",

@@ -438,6 +438,8 @@
     "quantity": "Quantity",
     "shelfLabel": "Shelf",
     "shelfPlaceholder": "A1, B2, etc.",
+    "conditionLabel": "Condition",
+    "condition": { "new": "New", "good": "Good", "fair": "Fair", "poor": "Poor", "damaged": "Damaged" },
     "descriptionLabel": "Description",
     "descPlaceholder": "Short book description...",
     "save": "Save",

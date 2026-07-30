@@ -26,7 +26,8 @@ const totalPages = ref(1)
 const showAddBook = ref(false)
 const showEditBook = ref(false)
 const editingBook = ref(null)
-const bookForm = ref({ title: '', author: '', isbn: '', publisher: '', year: '', category: '', description: '', quantity: 1, shelf: '' })
+const bookForm = ref({ title: '', author: '', isbn: '', publisher: '', year: '', category: '', description: '', quantity: 1, shelf: '', condition: 'good' })
+const conditionOptions = ['new', 'good', 'fair', 'poor', 'damaged']
 
 const showBorrowModal = ref(false)
 const borrowTarget = ref(null)
@@ -117,7 +118,7 @@ function switchTab(tab) {
 }
 
 function openAddBook() {
-  bookForm.value = { title: '', author: '', isbn: '', publisher: '', year: '', category: '', description: '', quantity: 1, shelf: '' }
+  bookForm.value = { title: '', author: '', isbn: '', publisher: '', year: '', category: '', description: '', quantity: 1, shelf: '', condition: 'good' }
   showAddBook.value = true
   showEditBook.value = false
 }
@@ -128,7 +129,7 @@ function openEditBook(book) {
     title: book.title, author: book.author, isbn: book.isbn || '',
     publisher: book.publisher || '', year: book.year || '',
     category: book.category || '', description: book.description || '',
-    quantity: book.quantity, shelf: book.shelf || '',
+    quantity: book.quantity, shelf: book.shelf || '', condition: book.condition || 'good',
   }
   showEditBook.value = true
   showAddBook.value = false
@@ -252,7 +253,10 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
           <div v-for="book in books" :key="book.id" class="book-card">
             <div class="book-header">
               <div class="book-category">{{ book.category || t('library.general') }}</div>
-              <div class="book-shelf" v-if="book.shelf">{{ t('library.shelf') }} {{ book.shelf }}</div>
+              <div class="book-header-right">
+                <span v-if="book.condition" :class="['book-condition', 'condition-' + book.condition]">{{ t('library.condition.' + book.condition) }}</span>
+                <span class="book-shelf" v-if="book.shelf">{{ t('library.shelf') }} {{ book.shelf }}</span>
+              </div>
             </div>
             <h3 class="book-title">{{ book.title }}</h3>
             <p class="book-author">{{ book.author }}</p>
@@ -484,6 +488,14 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
               <input v-model="bookForm.shelf" :placeholder="t('library.shelfPlaceholder')" />
             </div>
           </div>
+          <div class="form-row">
+            <div class="input-group">
+              <label>{{ t('library.conditionLabel') }}</label>
+              <select v-model="bookForm.condition" class="modal-select">
+                <option v-for="c in conditionOptions" :key="c" :value="c">{{ t('library.condition.' + c) }}</option>
+              </select>
+            </div>
+          </div>
           <div class="input-group">
             <label>{{ t('library.descriptionLabel') }}</label>
             <textarea v-model="bookForm.description" rows="3" :placeholder="t('library.descPlaceholder')"></textarea>
@@ -631,6 +643,13 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
 .book-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
 .book-category { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #795548; background: rgba(121,85,72,0.15); padding: 3px 8px; border-radius: 4px; font-weight: 600; }
 .book-shelf { font-size: 0.7rem; color: #888; }
+.book-header-right { display: flex; align-items: center; gap: 6px; }
+.book-condition { font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.condition-new { background: rgba(76,175,80,0.2); color: #66bb6a; }
+.condition-good { background: rgba(33,150,243,0.2); color: #64b5f6; }
+.condition-fair { background: rgba(255,193,7,0.2); color: #ffd54f; }
+.condition-poor { background: rgba(255,152,0,0.2); color: #ffb74d; }
+.condition-damaged { background: rgba(244,67,54,0.2); color: #ef5350; }
 
 .book-title { font-size: 1.1rem; font-weight: 700; color: #e0e0e0; margin-bottom: 4px; line-height: 1.3; }
 .book-author { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; }
@@ -711,7 +730,9 @@ onMounted(() => { loadBooks(); loadCategories(); loadSettings() })
   border-radius: 8px; color: #fff; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
   font-family: inherit; resize: vertical;
 }
-.input-group input:focus, .input-group textarea:focus { border-color: #795548; }
+.input-group input:focus, .input-group textarea:focus, .modal-select:focus { border-color: #795548; }
+.modal-select { padding: 10px 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+.modal-select option { background: #1a1a2e; color: #fff; }
 
 .borrow-info { background: rgba(121,85,72,0.1); padding: 14px; border-radius: 10px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px; }
 .borrow-info strong { color: #e0e0e0; }

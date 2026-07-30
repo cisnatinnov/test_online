@@ -418,6 +418,8 @@
     "quantity": "Cantidad",
     "shelfLabel": "Estante",
     "shelfPlaceholder": "A1, B2, etc.",
+    "conditionLabel": "Condicion",
+    "condition": { "new": "Nuevo", "good": "Bueno", "fair": "Regular", "poor": "Malo", "damaged": "Danado" },
     "descriptionLabel": "Descripcion",
     "descPlaceholder": "Descripcion breve del libro...",
     "save": "Guardar",

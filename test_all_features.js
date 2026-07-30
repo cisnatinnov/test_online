@@ -199,13 +199,13 @@ async function main() {
   ok('Non-admin settings update rejected', r.status === 403);
 
   // Books
-  r = await req('POST', '/library', { title: 'Laskar Pelangi', author: 'Andrea Hirata', isbn: '978-602-001-001', category: 'Fiksi', quantity: 3, shelf: 'A1' }, adminToken);
+  r = await req('POST', '/library', { title: 'Laskar Pelangi', author: 'Andrea Hirata', isbn: '978-602-001-001', category: 'Fiksi', quantity: 3, shelf: 'A1', condition: 'good' }, adminToken);
   ok('Create book', r.status === 201);
   const bookId = r.data.data?.id;
-  r = await req('POST', '/library', { title: 'Sang Pemimpi', author: 'Andrea Hirata', isbn: '978-602-001-002', category: 'Fiksi', quantity: 2 }, adminToken);
+  r = await req('POST', '/library', { title: 'Sang Pemimpi', author: 'Andrea Hirata', isbn: '978-602-001-002', category: 'Fiksi', quantity: 2, condition: 'new' }, adminToken);
   ok('Create book 2', r.status === 201);
   const bookId2 = r.data.data?.id;
-  r = await req('POST', '/library', { title: 'Bumi', author: 'Tere Liye', isbn: '978-602-001-003', category: 'Fiksi', quantity: 1 }, adminToken);
+  r = await req('POST', '/library', { title: 'Bumi', author: 'Tere Liye', isbn: '978-602-001-003', category: 'Fiksi', quantity: 1, condition: 'fair' }, adminToken);
   const bookId3 = r.data.data?.id;
 
   r = await req('GET', '/library', null, userToken);

@@ -102,7 +102,7 @@ exports.getBook = async (req, res) => {
 
 exports.createBook = async (req, res) => {
   try {
-    const { title, author, isbn, publisher, year, category, description, quantity, shelf } = req.body;
+    const { title, author, isbn, publisher, year, category, description, quantity, shelf, condition } = req.body;
     if (!title || !author) {
       return apiResponse(res, { error: 'Judul dan penulis wajib diisi', status: 400 });
     }
@@ -112,7 +112,7 @@ exports.createBook = async (req, res) => {
     const qty = quantity || 1;
     const book = await Book.create({
       title, author, isbn, publisher, year, category, description,
-      quantity: qty, available: qty, shelf,
+      quantity: qty, available: qty, shelf, condition,
     });
     return apiResponse(res, { status: 201, data: book });
   } catch (err) {
@@ -127,7 +127,7 @@ exports.updateBook = async (req, res) => {
   try {
     const book = await Book.findByPk(req.params.id);
     if (!book) return apiResponse(res, { error: 'Buku tidak ditemukan', status: 404 });
-    const { title, author, isbn, publisher, year, category, description, quantity, shelf } = req.body;
+    const { title, author, isbn, publisher, year, category, description, quantity, shelf, condition } = req.body;
     if (quantity != null && (!Number.isInteger(quantity) || quantity < 0)) {
       return apiResponse(res, { error: 'Jumlah harus bilangan bulat non-negatif', status: 400 });
     }
@@ -142,6 +142,7 @@ exports.updateBook = async (req, res) => {
       ...(description != null && { description }),
       ...(quantity != null && { quantity, available: book.available + diff }),
       ...(shelf != null && { shelf }),
+      ...(condition != null && { condition }),
     });
     return apiResponse(res, { data: book });
   } catch (err) {
