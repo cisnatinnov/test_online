@@ -15,6 +15,7 @@ const bmiController = require('./controllers/bmiController');
 const bloodSugarController = require('./controllers/bloodSugarController');
 const vitalSignsController = require('./controllers/vitalSignsController');
 const chatController = require('./controllers/chatController');
+const estateController = require('./controllers/estateController');
 
 const authRoutes = require('./routes/authRoutes');
 const bmiRoutes = require('./routes/bmiRoutes');
@@ -146,6 +147,8 @@ sequelize.sync({ alter: true, force: false })
       });
       console.log(`Admin account created: ${adminUsername}`);
     }
+
+    await estateController.seedEstates();
 
     server.listen(PORT, () => {
       console.log(`Server berjalan di http://localhost:${PORT}`);

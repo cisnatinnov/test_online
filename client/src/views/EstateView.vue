@@ -32,7 +32,7 @@ function flash(m, type) { msg.value = m; msgType.value = type; setTimeout(() => 
 async function loadEstates() {
   try {
     const { data: res } = await api.get('/estate?all=1')
-    estates.value = res.data || []
+    estates.value = res.data?.estates || []
   } catch { estates.value = [] }
 }
 
@@ -146,7 +146,7 @@ function drawEstate() {
 async function loadTreesOnCanvas(ctx, scale, pad) {
   try {
     const { data: res } = await api.get(`/estate/${selectedEstateId.value}/trees`)
-    const trees = res.data?.data?.trees || []
+    const trees = res.data?.trees || []
     for (const tree of trees) {
       const cx = pad + tree.x * scale
       const cy = pad + (selectedEstate.value.length - tree.y) * scale

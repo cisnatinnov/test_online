@@ -170,13 +170,13 @@ async function loadPatientHealth() {
 async function loadBmiHistory(page) {
   try {
     const { data: res } = await api.get(`/bmi/history/${selectedIdentity.value}`, { params: { page, limit: 10 } })
-    const list = res?.data?.data?.history || []
+    const list = res?.data?.history || []
     const current = page === 1 && list[0]
     if (page === 1) {
       latestBmi.value = current ? { weight: current.weight, bmi_value: current.bmi_value, bmi: current.result, status: current.result } : null
     }
     bmiHistory.value = list
-    bmiTotalPages.value = Math.ceil((res?.data?.data?.total || 0) / 10) || 1
+    bmiTotalPages.value = Math.ceil((res?.data?.total || 0) / 10) || 1
     bmiPage.value = page
   } catch { if (page === 1) latestBmi.value = null; bmiHistory.value = []; bmiTotalPages.value = 1 }
 }
@@ -184,13 +184,13 @@ async function loadBmiHistory(page) {
 async function loadSugarHistory(page) {
   try {
     const { data: res } = await api.get(`/bloodsugar/history/${selectedIdentity.value}`, { params: { page, limit: 10 } })
-    const list = res?.data?.data?.history || []
+    const list = res?.data?.history || []
     const current = page === 1 && list[0]
     if (page === 1) {
       latestBloodSugar.value = current ? { result: current.result, conclusion: current.conclusion || 'Normal', description: current.description || '', age: current.age } : null
     }
     bloodSugarHistory.value = list
-    sugarTotalPages.value = Math.ceil((res?.data?.data?.total || 0) / 10) || 1
+    sugarTotalPages.value = Math.ceil((res?.data?.total || 0) / 10) || 1
     sugarPage.value = page
   } catch { if (page === 1) latestBloodSugar.value = null; bloodSugarHistory.value = []; sugarTotalPages.value = 1 }
 }

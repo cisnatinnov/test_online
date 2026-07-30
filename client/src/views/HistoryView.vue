@@ -18,8 +18,8 @@ const sugarPage = ref(1); const sugarTotalPages = ref(1)
 async function loadBmiHistory(page) {
   try {
     const { data: res } = await api.get(`/history/${id}/bmi`, { params: { page, limit: 10 } })
-    bmiHistory.value = res.data?.data?.history || []
-    bmiTotalPages.value = Math.ceil((res.data?.data?.total || 0) / 10) || 1
+    bmiHistory.value = res.data?.history || []
+    bmiTotalPages.value = Math.ceil((res.data?.total || 0) / 10) || 1
     bmiPage.value = page
   } catch { bmiHistory.value = []; bmiTotalPages.value = 1 }
 }
@@ -27,8 +27,8 @@ async function loadBmiHistory(page) {
 async function loadSugarHistory(page) {
   try {
     const { data: res } = await api.get(`/history/${id}/bloodsugar`, { params: { page, limit: 10 } })
-    sugarHistory.value = res.data?.data?.history || []
-    sugarTotalPages.value = Math.ceil((res.data?.data?.total || 0) / 10) || 1
+    sugarHistory.value = res.data?.history || []
+    sugarTotalPages.value = Math.ceil((res.data?.total || 0) / 10) || 1
     sugarPage.value = page
   } catch { sugarHistory.value = []; sugarTotalPages.value = 1 }
 }

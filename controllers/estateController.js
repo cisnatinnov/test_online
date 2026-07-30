@@ -196,3 +196,24 @@ exports.getDronePlan = async (req, res) => {
     return apiResponse(res, { error: err.message, status: 500 });
   }
 };
+
+async function seedEstates() {
+  const count = await Estate.count();
+  if (count > 0) return;
+  const data = [
+    { width: 40, length: 60, trees: [{ x: 5, y: 8, height: 12 }, { x: 15, y: 25, height: 8 }, { x: 30, y: 10, height: 15 }, { x: 10, y: 40, height: 6 }, { x: 25, y: 50, height: 20 }] },
+    { width: 25, length: 25, trees: [{ x: 5, y: 5, height: 10 }, { x: 12, y: 18, height: 14 }, { x: 20, y: 8, height: 7 }] },
+    { width: 50, length: 30, trees: [{ x: 10, y: 10, height: 18 }, { x: 30, y: 5, height: 25 }, { x: 40, y: 20, height: 9 }, { x: 20, y: 22, height: 11 }] },
+    { width: 60, length: 40, trees: [{ x: 8, y: 12, height: 16 }, { x: 25, y: 30, height: 22 }, { x: 45, y: 8, height: 13 }, { x: 50, y: 35, height: 19 }, { x: 15, y: 20, height: 10 }, { x: 35, y: 15, height: 28 }] },
+    { width: 30, length: 50, trees: [{ x: 10, y: 15, height: 11 }, { x: 20, y: 35, height: 17 }, { x: 5, y: 42, height: 6 }, { x: 15, y: 28, height: 21 }] },
+  ];
+  for (const d of data) {
+    const estate = await Estate.create({ width: d.width, length: d.length });
+    for (const t of d.trees) {
+      await Tree.create({ estate_id: estate.id, x: t.x, y: t.y, height: t.height });
+    }
+  }
+  console.log('5 dummy estates seeded with trees');
+}
+
+exports.seedEstates = seedEstates;
