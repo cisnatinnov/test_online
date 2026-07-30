@@ -80,8 +80,8 @@ async function loadCategoryOptions() {
       api.get('/categories?type=spending'),
       api.get('/categories?type=saving')
     ])
-    spendingCategoryOptions.value = spRes.data.data || []
-    savingCategoryOptions.value = svRes.data.data || []
+    spendingCategoryOptions.value = spRes.data.data?.categories || []
+    savingCategoryOptions.value = svRes.data.data?.categories || []
   } catch (e) { console.error(e) }
 }
 
@@ -223,7 +223,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
               </select>
               <input v-model="newExpense.description" :placeholder="t('money.description')" class="form-input" />
               <input v-model="newExpense.date" type="date" class="form-input" />
-              <button class="btn-sm btn-save" @click="addExpense">{{ t('money.save') }}</button>
+              <button class="btn-sm btn-save" @click="addExpense">{{ t('money.saveExpense') }}</button>
             </div>
           </div>
 
@@ -252,7 +252,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
               </select>
               <input v-model="newSaving.description" :placeholder="t('money.description')" class="form-input" />
               <input v-model="newSaving.date" type="date" class="form-input" />
-              <button class="btn-sm btn-save" @click="addSaving">{{ t('money.save') }}</button>
+              <button class="btn-sm btn-save" @click="addSaving">{{ t('money.saveSaving') }}</button>
             </div>
           </div>
         </div>

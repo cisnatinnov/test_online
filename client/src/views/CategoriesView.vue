@@ -30,7 +30,7 @@ onMounted(loadCategories)
 async function loadCategories() {
   try {
     const { data: res } = await api.get('/categories')
-    categories.value = res.data || []
+    categories.value = res.data?.categories || []
   } catch (e) { console.error(e) }
 }
 

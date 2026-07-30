@@ -17,6 +17,8 @@ function onCollapsedChange(v) { sidebarCollapsed.value = v }
 const users = ref([])
 const loading = ref(true)
 const search = ref('')
+const page = ref(1)
+const itemsPerPage = 20
 
 onMounted(async () => {
   try {
@@ -41,6 +43,16 @@ const filtered = computed(() => {
     u.identities?.some(i => i.name?.toLowerCase().includes(q) || i.nik?.includes(q))
   )
 })
+
+const totalPages = computed(() => Math.ceil(filtered.value.length / itemsPerPage) || 1)
+
+const paginatedUsers = computed(() => {
+  const start = (page.value - 1) * itemsPerPage
+  return filtered.value.slice(start, start + itemsPerPage)
+})
+
+function prevPage() { if (page.value > 1) page.value-- }
+function nextPage() { if (page.value < totalPages.value) page.value++ }
 
 function openHealth(id) {
   router.push(`/health?identity=${id}`)
@@ -68,9 +80,9 @@ function formatDate(d) {
       <div v-if="loading" class="loading-state">{{ t('healthMonitor.loading') }}</div>
 
       <template v-else>
-        <input v-model="search" :placeholder="t('list.searchPlaceholder')" class="input" />
+        <input v-model="search" @input="page = 1" :placeholder="t('list.searchPlaceholder')" class="input" />
 
-        <div v-for="u in filtered" :key="u.id" class="user-section">
+        <div v-for="u in paginatedUsers" :key="u.id" class="user-section">
           <div class="user-header">
             <div class="user-avatar">{{ u.username?.charAt(0).toUpperCase() }}</div>
             <div class="user-meta">
@@ -91,6 +103,12 @@ function formatDate(d) {
           </div>
 
           <div v-else class="no-identities">{{ t('list.noData') }}</div>
+        </div>
+
+        <div v-if="totalPages > 1" class="pagination">
+          <button class="btn-page" :disabled="page <= 1" @click="prevPage">{{ t('library.previous') }}</button>
+          <span class="page-info">{{ page }} / {{ totalPages }}</span>
+          <button class="btn-page" :disabled="page >= totalPages" @click="nextPage">{{ t('library.next') }}</button>
         </div>
 
         <div v-if="!filtered.length && !loading" class="empty-state">{{ t('list.noData') }}</div>
@@ -228,6 +246,12 @@ function formatDate(d) {
 }
 .btn-primary { background: linear-gradient(135deg, #2e7d32, #66bb6a); color: #fff; }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(46,125,50,0.4); }
+
+.pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 20px; margin-bottom: 20px; }
+.page-info { font-size: 0.82rem; color: #999; }
+.btn-page { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 700; background: rgba(76,175,80,0.2); color: #66bb6a; transition: all 0.2s; }
+.btn-page:hover:not(:disabled) { background: rgba(76,175,80,0.35); }
+.btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
 
 @media (max-width: 768px) {
   .app-layout { margin-left: 0 !important; }

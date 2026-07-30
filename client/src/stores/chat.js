@@ -94,7 +94,7 @@ export const useChatStore = defineStore('chat', () => {
       })
       if (!handleFetchAuth(res)) return
       const json = await res.json()
-      rooms.value = json.data || []
+      rooms.value = json.data?.rooms || []
       updateRoomOnlineStatus()
     } catch (e) { console.error(e) }
   }
@@ -124,17 +124,19 @@ export const useChatStore = defineStore('chat', () => {
     } catch (e) { console.error(e) }
   }
 
-  function selectRoom(room) {
+  async function selectRoom(room) {
     if (currentRoom.value?.id === room.id) return
     if (currentRoom.value) socket.value?.emit('chat:leave', { roomId: currentRoom.value.id })
     currentRoom.value = room
     messages.value = []
-    loadMessages(room.id)
+    await loadMessages(room.id)
     socket.value?.emit('chat:join', { roomId: room.id })
   }
 
   function sendMessage(content) {
     if (!currentRoom.value || !content.trim()) return
+    const optimistic = { id: Date.now(), roomId: currentRoom.value.id, userId: auth.user?.id, username: auth.user?.username, content, createdAt: new Date().toISOString() }
+    messages.value.push(optimistic)
     socket.value?.emit('chat:send', { roomId: currentRoom.value.id, content })
   }
 
@@ -150,7 +152,7 @@ export const useChatStore = defineStore('chat', () => {
       })
       if (!handleFetchAuth(res)) return []
       const json = await res.json()
-      return json.data || []
+      return json.data?.users || []
     } catch (e) { console.error(e); return [] }
   }
 

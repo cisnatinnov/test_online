@@ -35,9 +35,18 @@ const lastSaved = ref(null)
 const showBmiHistory = ref(false)
 const showSugarHistory = ref(false)
 const showVitalHistory = ref(false)
+const bmiPage = ref(1); const bmiTotalPages = ref(1)
+const sugarPage = ref(1); const sugarTotalPages = ref(1)
+const vitalPage = ref(1); const vitalTotalPages = ref(1)
 const trafficStats = ref(null)
 const trafficPeriod = ref('24h')
 const trafficLoading = ref(false)
+const trafficPeriods = [
+  { value: '1h', labelKey: 'healthMonitor.period1h' },
+  { value: '24h', labelKey: 'healthMonitor.period24h' },
+  { value: '7d', labelKey: 'healthMonitor.period7d' },
+  { value: '30d', labelKey: 'healthMonitor.period30d' },
+]
 
 const metrics = computed(() => {
   const items = []
@@ -117,6 +126,7 @@ async function loadTrafficStats() {
 
 onMounted(async () => {
   const preselected = route.query.identity ? parseInt(route.query.identity) : null
+  if (route.query.identity) router.replace({ query: {} })
   await loadIdentities(preselected)
   await loadSystemHealth()
   if (auth.user?.role === 'admin') await loadTrafficStats()
@@ -150,45 +160,48 @@ async function loadPatientHealth() {
   try {
     const { data: res } = await api.get(`/vital-signs/latest/${selectedIdentity.value}`)
     latestVitals.value = res.data
-    const hist = await api.get(`/vital-signs/history/${selectedIdentity.value}`)
-    vitalHistory.value = (hist?.data?.data?.history || []).slice(0, 10)
-
     selectedIdentityData.value = identities.value.find(i => i.id === selectedIdentity.value) || null
-
-    try {
-      const { data: bmiRes } = await api.get(`/bmi/history/${selectedIdentity.value}`)
-      const bmiList = (bmiRes?.data?.history) || []
-      const current = bmiList[0] || null
-      if (current) {
-        latestBmi.value = {
-          weight: current.weight,
-          bmi_value: current.bmi_value,
-          bmi: current.result,
-          status: current.result,
-        }
-      } else {
-        latestBmi.value = null
-      }
-      bmiHistory.value = bmiList.slice(0, 10)
-    } catch { latestBmi.value = null; bmiHistory.value = [] }
-
-    try {
-      const { data: sugarRes } = await api.get(`/bloodsugar/history/${selectedIdentity.value}`)
-      const sugarList = (sugarRes?.data?.history) || []
-      const currentSugar = sugarList[0] || null
-      if (currentSugar) {
-        latestBloodSugar.value = {
-          result: currentSugar.result,
-          conclusion: currentSugar.conclusion || 'Normal',
-          description: currentSugar.description || '',
-          age: currentSugar.age,
-        }
-      } else {
-        latestBloodSugar.value = null
-      }
-      bloodSugarHistory.value = sugarList.slice(0, 10)
-    } catch { latestBloodSugar.value = null; bloodSugarHistory.value = [] }
+    await loadBmiHistory(1)
+    await loadSugarHistory(1)
+    await loadVitalHistory(1)
   } catch (e) { console.error(e) }
+}
+
+async function loadBmiHistory(page) {
+  try {
+    const { data: res } = await api.get(`/bmi/history/${selectedIdentity.value}`, { params: { page, limit: 10 } })
+    const list = res?.data?.history || []
+    const current = page === 1 && list[0]
+    if (page === 1) {
+      latestBmi.value = current ? { weight: current.weight, bmi_value: current.bmi_value, bmi: current.result, status: current.result } : null
+    }
+    bmiHistory.value = list
+    bmiTotalPages.value = Math.ceil((res?.data?.total || 0) / 10) || 1
+    bmiPage.value = page
+  } catch { if (page === 1) latestBmi.value = null; bmiHistory.value = []; bmiTotalPages.value = 1 }
+}
+
+async function loadSugarHistory(page) {
+  try {
+    const { data: res } = await api.get(`/bloodsugar/history/${selectedIdentity.value}`, { params: { page, limit: 10 } })
+    const list = res?.data?.history || []
+    const current = page === 1 && list[0]
+    if (page === 1) {
+      latestBloodSugar.value = current ? { result: current.result, conclusion: current.conclusion || 'Normal', description: current.description || '', age: current.age } : null
+    }
+    bloodSugarHistory.value = list
+    sugarTotalPages.value = Math.ceil((res?.data?.total || 0) / 10) || 1
+    sugarPage.value = page
+  } catch { if (page === 1) latestBloodSugar.value = null; bloodSugarHistory.value = []; sugarTotalPages.value = 1 }
+}
+
+async function loadVitalHistory(page) {
+  try {
+    const hist = await api.get(`/vital-signs/history/${selectedIdentity.value}`, { params: { page, limit: 10 } })
+    vitalHistory.value = hist?.data?.data?.history || []
+    vitalTotalPages.value = Math.ceil((hist?.data?.data?.total || 0) / 10) || 1
+    vitalPage.value = page
+  } catch { vitalHistory.value = []; vitalTotalPages.value = 1 }
 }
 
 async function submitBMI() {
@@ -342,6 +355,11 @@ function toggleHistory(type) {
                 </tbody>
               </table>
             </div>
+            <div v-if="bmiTotalPages > 1" class="pagination">
+              <button class="btn-page" :disabled="bmiPage <= 1" @click="loadBmiHistory(bmiPage - 1)">{{ t('library.previous') }}</button>
+              <span class="page-info">{{ bmiPage }} / {{ bmiTotalPages }}</span>
+              <button class="btn-page" :disabled="bmiPage >= bmiTotalPages" @click="loadBmiHistory(bmiPage + 1)">{{ t('library.next') }}</button>
+            </div>
           </div>
 
           <div class="card" v-if="showSugarHistory && bloodSugarHistory.length > 0">
@@ -366,6 +384,11 @@ function toggleHistory(type) {
                   </tr>
                 </tbody>
               </table>
+            </div>
+            <div v-if="sugarTotalPages > 1" class="pagination">
+              <button class="btn-page" :disabled="sugarPage <= 1" @click="loadSugarHistory(sugarPage - 1)">{{ t('library.previous') }}</button>
+              <span class="page-info">{{ sugarPage }} / {{ sugarTotalPages }}</span>
+              <button class="btn-page" :disabled="sugarPage >= sugarTotalPages" @click="loadSugarHistory(sugarPage + 1)">{{ t('library.next') }}</button>
             </div>
           </div>
 
@@ -421,6 +444,11 @@ function toggleHistory(type) {
                 </tbody>
               </table>
             </div>
+            <div v-if="vitalTotalPages > 1" class="pagination">
+              <button class="btn-page" :disabled="vitalPage <= 1" @click="loadVitalHistory(vitalPage - 1)">{{ t('library.previous') }}</button>
+              <span class="page-info">{{ vitalPage }} / {{ vitalTotalPages }}</span>
+              <button class="btn-page" :disabled="vitalPage >= vitalTotalPages" @click="loadVitalHistory(vitalPage + 1)">{{ t('library.next') }}</button>
+            </div>
           </div>
 
           <div v-if="bmiHistory.length === 0 && bloodSugarHistory.length === 0 && vitalHistory.length === 0 && metrics.length > 0">
@@ -453,10 +481,11 @@ function toggleHistory(type) {
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
               <h3 class="card-title" style="margin-bottom:0">{{ t('healthMonitor.apiTraffic') }}</h3>
               <div style="display:flex;gap:6px">
-                <button v-for="p in [t('healthMonitor.period1h'),t('healthMonitor.period24h'),t('healthMonitor.period7d'),t('healthMonitor.period30d')]" :key="p" @click="trafficPeriod = p; loadTrafficStats()" :style="{ padding:'4px 10px', borderRadius:'6px', border:'none', cursor:'pointer', fontSize:'0.72rem', fontWeight:700, background: trafficPeriod === p ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.08)', color: trafficPeriod === p ? '#81c784' : '#999' }">{{ p }}</button>
+                <button v-for="per in trafficPeriods" :key="per.value" @click="trafficPeriod = per.value; loadTrafficStats()" :style="{ padding:'4px 10px', borderRadius:'6px', border:'none', cursor:'pointer', fontSize:'0.72rem', fontWeight:700, background: trafficPeriod === per.value ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.08)', color: trafficPeriod === per.value ? '#81c784' : '#999' }">{{ t(per.labelKey) }}</button>
               </div>
             </div>
             <div v-if="trafficLoading" style="text-align:center;padding:20px;color:#666">{{ t('healthMonitor.loading') }}</div>
+            <div v-else-if="!trafficStats" style="text-align:center;padding:20px;color:#666">{{ t('healthMonitor.noData') }}</div>
             <div v-else-if="trafficStats">
               <div class="traffic-kpi-grid">
                 <div class="traffic-kpi">
@@ -676,6 +705,7 @@ function toggleHistory(type) {
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 .content { padding: 20px 24px; overflow-y: auto; }
+.content .card { margin-bottom: 16px; }
 
 .hero-empty {
   display: flex;
@@ -922,6 +952,12 @@ function toggleHistory(type) {
 }
 .status-badge.ok { background: rgba(76,175,80,0.2); color: #66bb6a; }
 .status-badge.err { background: rgba(244,67,54,0.2); color: #ef5350; }
+
+.pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 12px; }
+.page-info { font-size: 0.82rem; color: #999; }
+.btn-page { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 700; background: rgba(76,175,80,0.2); color: #66bb6a; transition: all 0.2s; }
+.btn-page:hover:not(:disabled) { background: rgba(76,175,80,0.35); }
+.btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
 
 @media (max-width: 768px) {
   .health-page { margin-left: 0 !important; }
