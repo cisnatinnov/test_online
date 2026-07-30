@@ -122,7 +122,7 @@ const io = new Server(server, {
 
 chatController.initSocket(io);
 
-sequelize.sync({ alter: false, force: false }) // force: true and alter: true in development only, remove in production
+sequelize.sync({ alter: true, force: false })
   .then(async () => {
     console.log('Database synced successfully!');
 

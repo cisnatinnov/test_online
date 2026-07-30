@@ -1,27 +1,108 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
-import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import { validateName, validateNik, validateHeight, validateBirthdate, validatePassword, passwordStrength } from '../utils/helpers'
+import Sidebar from '../components/Sidebar.vue'
 import api from '../api'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
 
+const sidebarOpen = ref(false)
+const sidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
+function onCollapsedChange(v) { sidebarCollapsed.value = v }
+
 const identities = ref([])
-const selectedIdentity = ref(null)
-const identityData = ref(null)
-const bmiHistory = ref([])
-const bloodSugarHistory = ref([])
-const vitalHistory = ref([])
-const latestBmi = ref(null)
-const latestBloodSugar = ref(null)
-const latestVitals = ref(null)
 const loading = ref(true)
 const msg = ref('')
 const msgType = ref('')
+const editingId = ref(null)
+const editForm = ref({ name: '', nik: '', height: '', gender: '', birthplace: '', birthdate: '', address: '' })
+
+const identityFields = ['name', 'nik', 'height', 'birthdate']
+const validators = { name: validateName, nik: validateNik, height: validateHeight, birthdate: validateBirthdate }
+const touched = ref({ name: false, nik: false, height: false, birthdate: false })
+const fieldErrors = ref({ name: '', nik: '', height: '', birthdate: '' })
+
+function validateField(field) {
+  touched.value[field] = true
+  fieldErrors.value[field] = validators[field](editForm.value[field], t)
+}
+
+function inputClass(field) {
+  return ['input', touched.value[field] && fieldErrors.value[field] ? 'input-error' : '']
+}
+
+function resetValidation() {
+  identityFields.forEach(f => { touched.value[f] = false; fieldErrors.value[f] = '' })
+}
+
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const pwMsg = ref('')
+const pwMsgType = ref('')
+const pwLoading = ref(false)
+
+const pwFields = ['current', 'new', 'confirm']
+const pwTouched = ref({ current: false, new: false, confirm: false })
+const pwErrors = ref({ current: '', new: [], confirm: '' })
+
+const pwStrength = computed(() => passwordStrength(newPassword.value, t))
+const pwProgress = computed(() => (pwStrength.value.score / 5) * 100)
+const pwRules = computed(() => {
+  const pw = newPassword.value
+  return [
+    { label: t('validation.minChars'), met: pw.length >= 8 },
+    { label: t('validation.uppercase'), met: /[A-Z]/.test(pw) },
+    { label: t('validation.lowercase'), met: /[a-z]/.test(pw) },
+    { label: t('validation.digit'), met: /[0-9]/.test(pw) },
+    { label: t('validation.symbol'), met: /[!@#$%^&*(),.?":{}|<>]/.test(pw) },
+  ]
+})
+
+function validatePwField(field) {
+  pwTouched.value[field] = true
+  if (field === 'current') {
+    pwErrors.value.current = currentPassword.value ? '' : t('validation.passwordRequired')
+    if (pwTouched.value.new) validatePwField('new')
+  }
+  if (field === 'new') {
+    if (!newPassword.value) {
+      pwErrors.value.new = [t('validation.passwordRequired')]
+    } else {
+      const errors = validatePassword(newPassword.value, t)
+      if (!errors.length && currentPassword.value && newPassword.value === currentPassword.value) {
+        errors.push(t('validation.passwordUnchanged'))
+      }
+      pwErrors.value.new = errors
+    }
+    if (pwTouched.value.confirm) validatePwField('confirm')
+  }
+  if (field === 'confirm') {
+    if (!confirmPassword.value) {
+      pwErrors.value.confirm = t('validation.passwordRequired')
+    } else {
+      pwErrors.value.confirm = confirmPassword.value === newPassword.value ? '' : t('validation.passwordMismatch')
+    }
+  }
+}
+
+function pwInputClass(field) {
+  const hasError = pwTouched.value[field] && (
+    (field === 'new' && pwErrors.value.new.length) ||
+    (field !== 'new' && pwErrors.value[field])
+  )
+  return ['input', hasError ? 'input-error' : '']
+}
+
+watch(locale, () => {
+  identityFields.forEach(f => { if (touched.value[f]) validateField(f) })
+  pwFields.forEach(f => { if (pwTouched.value[f]) validatePwField(f) })
+})
 
 onMounted(async () => {
   await loadIdentities()
@@ -30,361 +111,379 @@ onMounted(async () => {
 
 async function loadIdentities() {
   try {
-    const { data: res } = await api.get('/identities')
-    identities.value = res.data
-    if (res.data.length > 0) {
-      selectedIdentity.value = res.data[0].id
-      await loadIdentityHealth(res.data[0].id)
-    }
+    const { data: res } = await api.get('/identities?limit=100')
+    const list = res?.data?.identities || []
+    identities.value = list.filter(i => i.id_user === auth.user?.id)
   } catch (e) { console.error(e) }
-}
-
-async function selectIdentity(id) {
-  selectedIdentity.value = id
-  identityData.value = identities.value.find(i => i.id === id) || null
-  await loadIdentityHealth(id)
-}
-
-async function loadIdentityHealth(id) {
-  identityData.value = identities.value.find(i => i.id === id) || null
-  try {
-    const [bmiRes, sugarRes, vitalsRes] = await Promise.all([
-      api.get(`/bmi/history/${id}`).catch(() => ({ data: { data: [] } })),
-      api.get(`/bloodsugar/history/${id}`).catch(() => ({ data: { data: [] } })),
-      api.get(`/vital-signs/history/${id}`).catch(() => ({ data: { data: [] } }))
-    ])
-
-    const bmiList = (bmiRes.data.data || bmiRes.data || [])
-    const sugarList = (sugarRes.data.data || sugarRes.data || [])
-    const vitalsList = (vitalsRes.data.data || vitalsRes.data || [])
-
-    bmiHistory.value = bmiList.slice(0, 10)
-    bloodSugarHistory.value = sugarList.slice(0, 10)
-    vitalHistory.value = vitalsList.slice(0, 10)
-
-    const currentBmi = bmiList.find(b => b.status === 'current') || bmiList[0] || null
-    latestBmi.value = currentBmi ? {
-      weight: currentBmi.weight,
-      bmi_value: currentBmi.bmi_value,
-      result: currentBmi.result
-    } : null
-
-    const currentSugar = sugarList.find(b => b.status === 'current') || sugarList[0] || null
-    latestBloodSugar.value = currentSugar ? {
-      result: currentSugar.result,
-      conclusion: currentSugar.conclusion || 'Normal'
-    } : null
-
-    const currentVitals = vitalsList.find(v => v.status === 'current') || vitalsList[0] || null
-    latestVitals.value = currentVitals || null
-  } catch (e) { console.error(e) }
-}
-
-function formatDate(d) {
-  if (!d) return '-'
-  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
-function mapStatus(label) {
-  const l = (label || '').toLowerCase()
-  if (l.includes('normal')) return { color: '#4caf50', bg: 'rgba(76,175,80,0.12)' }
-  if (l.includes('rendah') || l.includes('kritis') || l.includes('bradikardia') || l.includes('bradipnea') || l.includes('hipotermia')) return { color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
-  return { color: '#f44336', bg: 'rgba(244,67,54,0.12)' }
-}
-
-function mapBMIStatus(status) {
-  const s = (status || '').toLowerCase()
-  if (s.includes('normal')) return { color: '#4caf50' }
-  if (s.includes('kurus') || s.includes('sangat kurus')) return { color: '#ff9800' }
-  return { color: '#f44336' }
-}
-
-function mapSugarStatus(result) {
-  const r = (result || '').toLowerCase()
-  if (r.includes('normal')) return { color: '#4caf50' }
-  if (r.includes('rendah')) return { color: '#ff9800' }
-  return { color: '#f44336' }
 }
 
 function flash(m, type) { msg.value = m; msgType.value = type; setTimeout(() => msg.value = '', 3000) }
 
-function evalHRBadge(hr) {
-  if (hr < 60) return { label: t('healthMonitor.low'), color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
-  if (hr <= 100) return { label: t('healthMonitor.normal'), color: '#4caf50', bg: 'rgba(76,175,80,0.12)' }
-  return { label: t('healthMonitor.high'), color: '#f44336', bg: 'rgba(244,67,54,0.12)' }
+function startEdit(id) {
+  const idata = identities.value.find(i => i.id === id)
+  if (!idata) return
+  resetValidation()
+  editingId.value = id
+  editForm.value = {
+    name: idata.name || '',
+    nik: idata.nik || '',
+    height: idata.height || '',
+    gender: idata.gender || '',
+    birthplace: idata.birthplace || '',
+    birthdate: idata.birthdate || '',
+    address: idata.address || '',
+  }
 }
-function evalTempBadge(t) {
-  if (t < 35) return { label: t('healthMonitor.low'), color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
-  if (t <= 37.2) return { label: t('healthMonitor.normal'), color: '#4caf50', bg: 'rgba(76,175,80,0.12)' }
-  return { label: t('healthMonitor.high'), color: '#f44336', bg: 'rgba(244,67,54,0.12)' }
+
+function cancelEdit() {
+  resetValidation()
+  editingId.value = null
 }
-function evalSpO2Badge(s) {
-  if (s < 90) return { label: t('healthMonitor.highRisk'), color: '#f44336', bg: 'rgba(244,67,54,0.12)' }
-  if (s < 95) return { label: t('healthMonitor.low'), color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
-  return { label: t('healthMonitor.normal'), color: '#4caf50', bg: 'rgba(76,175,80,0.12)' }
+
+async function saveEdit(id) {
+  identityFields.forEach(validateField)
+  if (identityFields.some(f => fieldErrors.value[f])) return
+  try {
+    await api.put(`/identities/${id}`, editForm.value)
+    flash('Identity updated', 'success')
+    editingId.value = null
+    await loadIdentities()
+  } catch (e) {
+    flash(e.response?.data?.error || 'Failed to update', 'error')
+  }
 }
-function evalRespBadge(r) {
-  if (r < 12) return { label: t('healthMonitor.low'), color: '#ff9800', bg: 'rgba(255,152,0,0.12)' }
-  if (r <= 20) return { label: t('healthMonitor.normal'), color: '#4caf50', bg: 'rgba(76,175,80,0.12)' }
-  return { label: t('healthMonitor.high'), color: '#f44336', bg: 'rgba(244,67,54,0.12)' }
+
+async function changePassword() {
+  pwMsg.value = ''
+  pwFields.forEach(validatePwField)
+  if (pwErrors.value.current || pwErrors.value.new.length || pwErrors.value.confirm) return
+  pwLoading.value = true
+  try {
+    await api.post('/auth/change-password', {
+      currentPassword: currentPassword.value,
+      newPassword: newPassword.value,
+    })
+    auth.logout()
+    router.push('/login')
+  } catch (e) {
+    pwMsg.value = e.response?.data?.error || 'Failed to change password'; pwMsgType.value = 'error'
+  }
+  pwLoading.value = false
 }
 </script>
 
 <template>
-  <div class="page-container">
-    <div class="page-header">
-      <h2>{{ t('nav.profile') }}</h2>
-      <div class="nav-bar">
-        <LanguageSwitcher />
-        <button @click="router.push('/')" class="btn btn-blue btn-sm">{{ t('nav.dashboard') }}</button>
-      </div>
-    </div>
+  <Sidebar :open="sidebarOpen" @close="sidebarOpen = false" @collapsed-change="onCollapsedChange" />
 
-    <div v-if="msg" :class="['flash', msgType === 'success' ? 'flash-success' : 'flash-error']">{{ msg }}</div>
+  <div class="app-layout" :style="{ marginLeft: sidebarCollapsed ? '60px' : '240px' }">
+    <header class="top-bar">
+      <button class="hamburger" @click="sidebarOpen = true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <h2 class="top-bar-title">{{ t('nav.profile') }}</h2>
+      <span class="top-bar-user">{{ auth.user?.username }}</span>
+    </header>
 
-    <div v-if="loading" style="text-align:center;padding:40px;color:var(--text-muted)">{{ t('healthMonitor.loading') }}</div>
+    <main class="app-content">
+      <div v-if="msg" :class="['flash', msgType === 'success' ? 'flash-success' : 'flash-error']">{{ msg }}</div>
 
-    <template v-else>
-      <template v-if="identityData">
-        <div class="card" style="margin-bottom:20px">
-          <h3 style="margin-bottom:16px;color:#fff">{{ t('nav.profile') }}</h3>
-          <div class="identity-grid">
-            <div class="identity-field">
-              <span class="identity-label">{{ t('auth.fullName') }}</span>
-              <span class="identity-value">{{ identityData.name }}</span>
-            </div>
-            <div class="identity-field">
-              <span class="identity-label">{{ t('auth.nik') }}</span>
-              <span class="identity-value">{{ identityData.nik || '-' }}</span>
-            </div>
-            <div class="identity-field">
-              <span class="identity-label">{{ t('auth.height') }}</span>
-              <span class="identity-value">{{ identityData.height ? identityData.height + ' ' + t('healthMonitor.celsius').replace('C', 'cm') : '-' }}</span>
-            </div>
-            <div class="identity-field">
-              <span class="identity-label">{{ t('auth.birthplace') }}</span>
-              <span class="identity-value">{{ identityData.birthplace || '-' }}</span>
-            </div>
-            <div class="identity-field">
-              <span class="identity-label">{{ t('auth.birthdate') }}</span>
-              <span class="identity-value">{{ identityData.birthdate || '-' }}</span>
-            </div>
-            <div class="identity-field">
-              <span class="identity-label">{{ t('auth.address') }}</span>
-              <span class="identity-value">{{ identityData.address || '-' }}</span>
-            </div>
+      <div v-if="loading" class="loading-state">{{ t('healthMonitor.loading') }}</div>
+
+      <template v-else>
+        <div class="card user-card">
+          <div class="user-avatar">{{ auth.user?.username?.charAt(0).toUpperCase() }}</div>
+          <div class="user-info">
+            <h3>{{ auth.user?.username }}</h3>
+            <span class="user-email">{{ auth.user?.email }}</span>
+            <span class="user-role">{{ auth.user?.role }}</span>
           </div>
         </div>
 
-        <h3 style="margin-bottom:16px;color:#fff">{{ t('healthMonitor.healthDashboard') }}</h3>
-        <div class="metrics-grid" style="margin-bottom:20px">
-          <div v-if="latestBmi" class="metric-card" :style="{ borderLeftColor: mapBMIStatus(latestBmi.result).color }">
-            <div class="metric-header">
-              <span class="metric-label">{{ t('dashboard.bmi') }}</span>
-              <span class="metric-badge" :style="{ background: mapBMIStatus(latestBmi.result).color + '22', color: mapBMIStatus(latestBmi.result).color }">{{ latestBmi.result }}</span>
-            </div>
-            <div class="metric-value" :style="{ color: mapBMIStatus(latestBmi.result).color }">{{ latestBmi.bmi_value ?? '-' }}<small>{{ t('healthMonitor.kgM2') }}</small></div>
+        <div class="card" v-for="id in identities" :key="id.id" style="margin-top:16px">
+          <div class="card-title-row">
+            <h3 class="card-title">{{ id.name }}</h3>
+            <button v-if="editingId !== id.id" @click="startEdit(id.id)" class="btn btn-sm btn-edit">Edit</button>
           </div>
 
-          <div v-if="latestBloodSugar" class="metric-card" :style="{ borderLeftColor: mapSugarStatus(latestBloodSugar.conclusion).color }">
-            <div class="metric-header">
-              <span class="metric-label">{{ t('dashboard.bloodSugar') }}</span>
-              <span class="metric-badge" :style="{ background: mapSugarStatus(latestBloodSugar.conclusion).color + '22', color: mapSugarStatus(latestBloodSugar.conclusion).color }">{{ latestBloodSugar.conclusion }}</span>
+          <template v-if="editingId === id.id">
+            <div class="edit-form">
+              <div class="form-field">
+                <label class="field-label">{{ t('auth.fullName') }} *</label>
+                <input v-model="editForm.name" :class="inputClass('name')" @focus="touched.name = true" @input="validateField('name')" @blur="validateField('name')" />
+                <div v-if="touched.name && fieldErrors.name" class="field-error">{{ fieldErrors.name }}</div>
+              </div>
+              <div class="form-field">
+                <label class="field-label">{{ t('auth.nik') }}</label>
+                <input v-model="editForm.nik" :class="inputClass('nik')" @focus="touched.nik = true" @input="validateField('nik')" @blur="validateField('nik')" />
+                <div v-if="touched.nik && fieldErrors.nik" class="field-error">{{ fieldErrors.nik }}</div>
+              </div>
+              <div class="form-field">
+                <label class="field-label">{{ t('auth.height') }}</label>
+                <input v-model="editForm.height" type="number" :class="inputClass('height')" @focus="touched.height = true" @input="validateField('height')" @blur="validateField('height')" />
+                <div v-if="touched.height && fieldErrors.height" class="field-error">{{ fieldErrors.height }}</div>
+              </div>
+              <div class="form-field">
+                <label class="field-label">{{ t('auth.gender') }}</label>
+                <select v-model="editForm.gender" class="input">
+                  <option value="">{{ t('auth.gender') }}</option>
+                  <option value="Male">{{ t('auth.male') }}</option>
+                  <option value="Female">{{ t('auth.female') }}</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="field-label">{{ t('auth.birthplace') }}</label>
+                <input v-model="editForm.birthplace" class="input" />
+              </div>
+              <div class="form-field">
+                <label class="field-label">{{ t('auth.birthdate') }}</label>
+                <input v-model="editForm.birthdate" type="date" :class="inputClass('birthdate')" @focus="touched.birthdate = true" @input="validateField('birthdate')" @blur="validateField('birthdate')" />
+                <div v-if="touched.birthdate && fieldErrors.birthdate" class="field-error">{{ fieldErrors.birthdate }}</div>
+              </div>
+              <div class="form-field">
+                <label class="field-label">{{ t('auth.address') }}</label>
+                <input v-model="editForm.address" class="input" />
+              </div>
+              <div class="form-actions">
+                <button @click="saveEdit(id.id)" class="btn btn-primary">Save</button>
+                <button @click="cancelEdit" class="btn btn-cancel">Cancel</button>
+              </div>
             </div>
-            <div class="metric-value" :style="{ color: mapSugarStatus(latestBloodSugar.conclusion).color }">{{ latestBloodSugar.result ?? '-' }}<small>{{ t('healthMonitor.mgDl') }}</small></div>
-          </div>
+          </template>
 
-          <div v-if="latestVitals" class="metric-card" :style="{ borderLeftColor: mapStatus('normal').color }">
-            <div class="metric-header">
-              <span class="metric-label">{{ t('healthMonitor.bloodPressure') }}</span>
-              <span class="metric-badge" :style="{ background: mapStatus('normal').color + '22', color: mapStatus('normal').color }">{{ t('healthMonitor.normal') }}</span>
+          <template v-else>
+            <div class="identity-grid">
+              <div class="identity-item">
+                <span class="identity-label">{{ t('auth.nik') }}</span>
+                <span class="identity-value">{{ id.nik || '-' }}</span>
+              </div>
+              <div class="identity-item">
+                <span class="identity-label">{{ t('auth.gender') }}</span>
+                <span class="identity-value">{{ id.gender || '-' }}</span>
+              </div>
+              <div class="identity-item">
+                <span class="identity-label">{{ t('auth.height') }}</span>
+                <span class="identity-value">{{ id.height ? id.height + ' cm' : '-' }}</span>
+              </div>
+              <div class="identity-item">
+                <span class="identity-label">{{ t('auth.birthplace') }}</span>
+                <span class="identity-value">{{ id.birthplace || '-' }}</span>
+              </div>
+              <div class="identity-item">
+                <span class="identity-label">{{ t('auth.birthdate') }}</span>
+                <span class="identity-value">{{ id.birthdate || '-' }}</span>
+              </div>
+              <div class="identity-item">
+                <span class="identity-label">{{ t('auth.address') }}</span>
+                <span class="identity-value">{{ id.address || '-' }}</span>
+              </div>
             </div>
-            <div class="metric-value" :style="{ color: mapStatus('normal').color }">{{ latestVitals.systolic }}/{{ latestVitals.diastolic }}<small>{{ t('healthMonitor.mmHg') }}</small></div>
-          </div>
+          </template>
         </div>
 
-        <div class="card" v-if="bmiHistory.length > 0" style="margin-bottom:20px">
-          <h3 style="margin-bottom:12px;color:#fff">{{ t('history.bmiHistory') }}</h3>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>{{ t('history.date') }}</th>
-                  <th>{{ t('dashboard.weightKg') }}</th>
-                  <th>{{ t('dashboard.bmi') }}</th>
-                  <th>{{ t('history.result') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(b, idx) in bmiHistory" :key="idx">
-                  <td>{{ formatDate(b.createdAt) }}</td>
-                  <td>{{ b.weight }} {{ t('healthMonitor.kgM2').split('/')[0] }}</td>
-                  <td>{{ b.bmi_value ?? '-' }}</td>
-                  <td><span :style="{ color: mapBMIStatus(b.result).color, fontWeight: 700 }">{{ b.result }}</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card" v-if="bloodSugarHistory.length > 0" style="margin-bottom:20px">
-          <h3 style="margin-bottom:12px;color:#fff">{{ t('history.sugarHistory') }}</h3>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>{{ t('history.date') }}</th>
-                  <th>{{ t('dashboard.sugarMgDl') }}</th>
-                  <th>{{ t('history.conclusion') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(s, idx) in bloodSugarHistory" :key="idx">
-                  <td>{{ formatDate(s.createdAt) }}</td>
-                  <td>{{ s.result }} {{ t('healthMonitor.mgDl') }}</td>
-                  <td><span :style="{ color: mapSugarStatus(s.conclusion).color, fontWeight: 700 }">{{ s.conclusion }}</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card" v-if="vitalHistory.length > 0">
-          <h3 style="margin-bottom:12px;color:#fff">{{ t('dashboard.vitalSigns') }}</h3>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>{{ t('history.date') }}</th>
-                  <th>{{ t('healthMonitor.bloodPressure') }}</th>
-                  <th>{{ t('healthMonitor.bpm') }}</th>
-                  <th>{{ t('healthMonitor.celsius') }}</th>
-                  <th>{{ t('healthMonitor.spo2Label') }}</th>
-                  <th>{{ t('healthMonitor.perMin') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(v, idx) in vitalHistory" :key="idx">
-                  <td>{{ formatDate(v.createdAt) }}</td>
-                  <td>{{ v.systolic }}/{{ v.diastolic }}</td>
-                  <td>
-                    <span class="vital-label-sm">HR: </span>{{ v.heart_rate }}
-                    <span v-if="v.heart_rate != null" class="status-badge-sm" :style="{ background: evalHRBadge(v.heart_rate).bg, color: evalHRBadge(v.heart_rate).color }">{{ evalHRBadge(v.heart_rate).label }}</span>
-                  </td>
-                  <td>
-                    <span class="vital-label-sm">Temp: </span>{{ v.temperature }}
-                    <span v-if="v.temperature != null" class="status-badge-sm" :style="{ background: evalTempBadge(v.temperature).bg, color: evalTempBadge(v.temperature).color }">{{ evalTempBadge(v.temperature).label }}</span>
-                  </td>
-                  <td>
-                    <span class="vital-label-sm">SpO2: </span>{{ v.spo2 }}
-                    <span v-if="v.spo2 != null" class="status-badge-sm" :style="{ background: evalSpO2Badge(v.spo2).bg, color: evalSpO2Badge(v.spo2).color }">{{ evalSpO2Badge(v.spo2).label }}</span>
-                  </td>
-                  <td>
-                    <span class="vital-label-sm">Resp: </span>{{ v.respiratory_rate }}
-                    <span v-if="v.respiratory_rate != null" class="status-badge-sm" :style="{ background: evalRespBadge(v.respiratory_rate).bg, color: evalRespBadge(v.respiratory_rate).color }">{{ evalRespBadge(v.respiratory_rate).label }}</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div class="card" style="margin-top:16px">
+          <h3 class="card-title">{{ t('auth.password') }}</h3>
+          <div v-if="pwMsg" :class="['pw-msg', pwMsgType]">{{ pwMsg }}</div>
+          <div class="pw-form">
+            <div class="form-field">
+              <input v-model="currentPassword" type="password" placeholder="Current password" :class="pwInputClass('current')" @focus="pwTouched.current = true" @input="validatePwField('current')" @blur="validatePwField('current')" />
+              <div v-if="pwTouched.current && pwErrors.current" class="field-error">{{ pwErrors.current }}</div>
+            </div>
+            <div class="form-field">
+              <input v-model="newPassword" type="password" placeholder="New password" :class="pwInputClass('new')" @focus="pwTouched.new = true" @input="validatePwField('new')" @blur="validatePwField('new')" />
+              <div v-if="newPassword" class="pw-strength">
+                <div class="pw-strength-track">
+                  <div class="pw-strength-bar" :style="{ width: pwProgress + '%', background: pwStrength.color }"></div>
+                </div>
+                <div class="pw-strength-label" :style="{ color: pwStrength.color }">{{ pwStrength.label }}</div>
+              </div>
+              <div v-if="newPassword" class="pw-rules">
+                <div v-for="rule in pwRules" :key="rule.label" class="pw-rule" :style="{ color: rule.met ? '#81c784' : '#888' }">
+                  <span>{{ rule.met ? '✓' : '○' }}</span> {{ rule.label }}
+                </div>
+              </div>
+              <div v-if="pwTouched.new && pwErrors.new.length" class="field-error">{{ pwErrors.new.join('. ') }}</div>
+            </div>
+            <div class="form-field">
+              <input v-model="confirmPassword" type="password" placeholder="Confirm new password" :class="pwInputClass('confirm')" @focus="pwTouched.confirm = true" @input="validatePwField('confirm')" @blur="validatePwField('confirm')" />
+              <div v-if="pwTouched.confirm && pwErrors.confirm" class="field-error">{{ pwErrors.confirm }}</div>
+            </div>
+            <button @click="changePassword" class="btn btn-primary" :disabled="pwLoading">
+              {{ pwLoading ? t('healthMonitor.saving') : 'Change Password' }}
+            </button>
           </div>
         </div>
       </template>
-    </template>
+    </main>
   </div>
 </template>
 
 <style scoped>
-.identity-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.app-layout {
+  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.identity-field {
+
+.top-bar {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: rgba(0,0,0,0.2);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(10px);
 }
-.identity-label {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
-.identity-value {
-  font-size: 0.92rem;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px;
-}
-.metric-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-left: 4px solid;
+.hamburger:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+.top-bar-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+.top-bar-user { margin-left: auto; font-size: 13px; color: #999; }
+
+.app-content { padding: 24px; max-width: 700px; margin: 0 auto; }
+
+.loading-state { text-align: center; padding: 40px; color: #888; }
+
+.card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px;
 }
-.metric-header {
+
+.card-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #81c784;
+  margin: 0;
+}
+
+.card-title-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
 }
-.metric-label {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
-.metric-badge {
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.7rem;
-  font-weight: 700;
-}
-.metric-value {
-  font-size: 1.6rem;
+
+.user-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2e7d32, #66bb6a);
+  color: #fff;
+  font-size: 24px;
   font-weight: 800;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 15px rgba(76,175,80,0.3);
 }
-.metric-value small {
-  font-size: 0.55em;
-  font-weight: 600;
-  opacity: 0.7;
-  margin-left: 2px;
+
+.user-info h3 { font-size: 1.1rem; color: #fff; margin-bottom: 2px; }
+.user-email { display: block; font-size: 0.82rem; color: #999; }
+.user-role {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(76,175,80,0.15);
+  color: #81c784;
 }
-.table-wrap {
-  overflow-x: auto;
-}
-.data-table {
+
+.identity-grid { display: flex; flex-direction: column; gap: 2px; }
+.identity-item { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.identity-item:last-child { border-bottom: none; }
+.identity-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.identity-value { font-size: 0.92rem; color: #e0e0e0; font-weight: 500; }
+
+.edit-form { display: flex; flex-direction: column; gap: 10px; }
+
+.form-field { display: flex; flex-direction: column; gap: 4px; }
+.field-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.field-error { color: #ef5350; font-size: 11px; }
+
+.form-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+.pw-form { display: flex; flex-direction: column; gap: 10px; }
+.pw-msg { padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; }
+.pw-msg.success { background: rgba(76,175,80,0.15); color: #81c784; }
+.pw-msg.error { background: rgba(244,67,54,0.15); color: #ef5350; }
+
+.pw-strength { margin-top: 2px; }
+.pw-strength-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+.pw-strength-bar { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
+.pw-strength-label { font-size: 11px; margin-top: 2px; }
+.pw-rules { margin-top: 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.pw-rule { font-size: 11px; display: flex; align-items: center; gap: 4px; }
+
+.input {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-}
-.data-table th {
   padding: 10px 12px;
-  text-align: left;
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.72rem;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.88rem;
+  outline: none;
+  box-sizing: border-box;
+}
+.input:focus { border-color: #4caf50; }
+
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.2s;
 }
-.data-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  color: var(--text-secondary);
+.btn-sm { padding: 6px 12px; font-size: 0.72rem; }
+.btn-primary { background: linear-gradient(135deg, #2e7d32, #66bb6a); color: #fff; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(46,125,50,0.4); }
+.btn-edit { background: rgba(76,175,80,0.15); color: #81c784; }
+.btn-edit:hover { background: rgba(76,175,80,0.25); }
+.btn-cancel { background: rgba(255,255,255,0.08); color: #999; }
+.btn-cancel:hover { background: rgba(255,255,255,0.12); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.flash {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
 }
-.vital-label-sm { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
-.status-badge-sm { padding:1px 6px; border-radius:8px; font-size:0.65rem; font-weight:700; margin-left:4px; }
+.flash-success { background: rgba(76,175,80,0.2); color: #81c784; border: 1px solid rgba(76,175,80,0.3); }
+.flash-error { background: rgba(244,67,54,0.2); color: #ef5350; border: 1px solid rgba(244,67,54,0.3); }
+
 @media (max-width: 768px) {
-  .identity-grid { grid-template-columns: 1fr; }
-  .metrics-grid { grid-template-columns: 1fr; }
+  .app-layout { margin-left: 0 !important; }
+  .hamburger { display: flex; }
+  .app-content { padding: 16px; }
 }
 </style>

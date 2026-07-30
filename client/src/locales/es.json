@@ -1,7 +1,7 @@
 {
   "app": { "title": "VitaSuite" },
   "nav": {
-    "dashboard": "Panel",
+    "dashboard": "Inicio",
     "health": "Salud",
     "money": "Dinero",
     "list": "Lista",
@@ -43,6 +43,9 @@
     "birthdate": "Fecha de nacimiento",
     "height": "Estatura (cm)",
     "address": "Direccion",
+    "gender": "Genero",
+    "male": "Masculino",
+    "female": "Femenino",
     "loggingIn": "Iniciando sesion...",
     "loginBtn": "Iniciar sesion",
     "registering": "Registrando...",
@@ -71,7 +74,14 @@
     "usernameRequired": "El usuario es obligatorio",
     "passwordRequired": "La contrasena es obligatoria",
     "emailRequired": "El correo electronico es obligatorio",
-    "invalidEmail": "El formato del correo electronico no es valido"
+    "invalidEmail": "El formato del correo electronico no es valido",
+    "nameRequired": "El nombre es obligatorio",
+    "nikInvalid": "El NIK debe contener entre 1 y 20 digitos",
+    "heightInvalid": "La altura debe estar entre 1 y 300 cm",
+    "birthdateInvalid": "La fecha de nacimiento no puede estar en el futuro",
+    "allFieldsRequired": "Todos los campos son obligatorios",
+    "passwordMismatch": "Las contrasenas no coinciden",
+    "passwordUnchanged": "La nueva contrasena debe ser diferente de la actual"
   },
   "passwordStrength": {
     "weak": "Debil",
@@ -434,7 +444,13 @@
     "moneyManagement": "Gesti\u00f3n de Dinero",
     "moneyManagementDesc": "Realice un seguimiento de gastos y ahorros con desgloses por categor\u00eda y gr\u00e1ficos",
     "estateManagement": "Gesti\u00f3n de Fincas",
-    "estateManagementDesc": "Administre fincas de palma aceitera con plantaci\u00f3n de \u00e1rboles y planificaci\u00f3n con drones"
+    "estateManagementDesc": "Administre fincas de palma aceitera con plantaci\u00f3n de \u00e1rboles y planificaci\u00f3n con drones",
+    "patientData": "Datos de Pacientes (admin only)",
+    "patientDataDesc": "Ver y gestionar todos los registros de salud de pacientes",
+    "tools": "Herramientas",
+    "toolsDesc": "Juegos, calculadoras y utilidades",
+    "library": "Biblioteca",
+    "libraryDesc": "Explore, preste y gestione libros"
   },
   "history": {
     "title": "Historial del Paciente #",

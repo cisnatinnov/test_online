@@ -22,7 +22,7 @@ exports.getIdentities = async (req, res) => {
 };
 
 exports.createIdentity = async (req, res) => {
-  const { nik, name, height, birthplace, birthdate, address, id_user } = req.body;
+  const { nik, name, height, gender, birthplace, birthdate, address, id_user } = req.body;
   try {
     if (!name) {
       return apiResponse(res, { error: 'Nama wajib diisi', status: 400 });
@@ -44,6 +44,7 @@ exports.createIdentity = async (req, res) => {
       nik: nik || null,
       name,
       height: height ? Number(height) : null,
+      gender: gender || null,
       birthplace: birthplace || null,
       birthdate: birthdate || null,
       address: address || null,
@@ -83,8 +84,30 @@ exports.createIdentity = async (req, res) => {
 
 exports.updateIdentity = async (req, res) => {
   const { id } = req.params;
-  const { nik, name, height, birthplace, birthdate, address } = req.body;
+  const { nik, name, height, gender, birthplace, birthdate, address } = req.body;
   try {
+    if (name !== undefined && !String(name).trim()) {
+      return apiResponse(res, { error: 'Nama wajib diisi', status: 400 });
+    }
+    if (nik && !/^\d{1,20}$/.test(nik)) {
+      return apiResponse(res, { error: 'NIK harus berisi 1-20 digit angka', status: 400 });
+    }
+    if (height !== undefined && height !== null && height !== '') {
+      const h = Number(height);
+      if (!Number.isFinite(h) || h < 1 || h > 300) {
+        return apiResponse(res, { error: 'Tinggi harus antara 1 dan 300 cm', status: 400 });
+      }
+    }
+    if (gender && !['Male', 'Female'].includes(gender)) {
+      return apiResponse(res, { error: 'Jenis kelamin tidak valid', status: 400 });
+    }
+    if (birthdate) {
+      const d = new Date(birthdate);
+      if (isNaN(d.getTime()) || d > new Date()) {
+        return apiResponse(res, { error: 'Tanggal lahir tidak valid', status: 400 });
+      }
+    }
+
     const where = { id, ...getUserIdFilter(req) };
     const identity = await Identity.findOne({ where });
     if (!identity) {
@@ -95,6 +118,7 @@ exports.updateIdentity = async (req, res) => {
     if (nik !== undefined) updateData.nik = nik || null;
     if (name !== undefined) updateData.name = name;
     if (height !== undefined) updateData.height = height ? Number(height) : null;
+    if (gender !== undefined) updateData.gender = gender || null;
     if (birthplace !== undefined) updateData.birthplace = birthplace || null;
     if (birthdate !== undefined) updateData.birthdate = birthdate || null;
     if (address !== undefined) updateData.address = address || null;

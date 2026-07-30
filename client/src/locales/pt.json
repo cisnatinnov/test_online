@@ -1,7 +1,7 @@
 {
   "app": { "title": "VitaSuite" },
   "nav": {
-    "dashboard": "Painel",
+    "dashboard": "In\u00edcio",
     "health": "Saude",
     "money": "Dinheiro",
     "list": "Lista",
@@ -43,6 +43,9 @@
     "birthdate": "Data de Nascimento",
     "height": "Altura (cm)",
     "address": "Endereco",
+    "gender": "Genero",
+    "male": "Masculino",
+    "female": "Feminino",
     "loggingIn": "Entrando...",
     "loginBtn": "Entrar",
     "registering": "Cadastrando...",
@@ -71,7 +74,14 @@
     "usernameRequired": "O usuario e obrigatorio",
     "passwordRequired": "A senha e obrigatoria",
     "emailRequired": "O e-mail e obrigatorio",
-    "invalidEmail": "O formato do e-mail e invalido"
+    "invalidEmail": "O formato do e-mail e invalido",
+    "nameRequired": "O nome e obrigatorio",
+    "nikInvalid": "O NIK deve conter de 1 a 20 digitos",
+    "heightInvalid": "A altura deve estar entre 1 e 300 cm",
+    "birthdateInvalid": "A data de nascimento nao pode estar no futuro",
+    "allFieldsRequired": "Todos os campos sao obrigatorios",
+    "passwordMismatch": "As senhas nao coincidem",
+    "passwordUnchanged": "A nova senha deve ser diferente da senha atual"
   },
   "passwordStrength": {
     "weak": "Fraco",
@@ -434,7 +444,13 @@
     "moneyManagement": "Gest\u00e3o Financeira",
     "moneyManagementDesc": "Acompanhe despesas e economias com detalhamento por categoria e gr\u00e1ficos",
     "estateManagement": "Gest\u00e3o de Planta\u00e7\u00e3o",
-    "estateManagementDesc": "Gerencie planta\u00e7\u00f5es de palma de \u00f3leo com plantio de \u00e1rvores e planejamento com drones"
+    "estateManagementDesc": "Gerencie planta\u00e7\u00f5es de palma de \u00f3leo com plantio de \u00e1rvores e planejamento com drones",
+    "patientData": "Dados do Paciente (admin only)",
+    "patientDataDesc": "Visualizar e gerenciar todos os registros de sa\u00fade do paciente",
+    "tools": "Ferramentas",
+    "toolsDesc": "Jogos, calculadoras e utilit\u00e1rios",
+    "library": "Biblioteca",
+    "libraryDesc": "Explore, empreste e gerencie livros"
   },
   "history": {
     "title": "Historico do Paciente #",

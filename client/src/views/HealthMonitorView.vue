@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import Sidebar from '../components/Sidebar.vue'
@@ -9,6 +9,7 @@ import api from '../api'
 const { t } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const sidebarOpen = ref(false)
 const sidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
 function onCollapsedChange(v) { sidebarCollapsed.value = v }
@@ -45,30 +46,30 @@ const metrics = computed(() => {
     const ev = latestVitals.value.evaluation
     if (v && ev) {
       if (ev.bloodPressure) {
-        items.push({ label: t('healthMonitor.bloodPressure'), value: `${v.systolic}/${v.diastolic}`, unit: t('healthMonitor.mmHg'), ...mapStatus(ev.bloodPressure.label) })
+        items.push({ type: 'vital', label: t('healthMonitor.bloodPressure'), value: `${v.systolic}/${v.diastolic}`, unit: t('healthMonitor.mmHg'), ...mapStatus(ev.bloodPressure.label) })
       }
       if (ev.heartRate) {
-        items.push({ label: t('healthMonitor.heartRate'), value: v.heart_rate, unit: t('healthMonitor.bpm'), ...mapStatus(ev.heartRate.label) })
+        items.push({ type: 'vital', label: t('healthMonitor.heartRate'), value: v.heart_rate, unit: t('healthMonitor.bpm'), ...mapStatus(ev.heartRate.label) })
       }
       if (ev.temperature) {
-        items.push({ label: t('healthMonitor.temperature'), value: v.temperature, unit: t('healthMonitor.celsius'), ...mapStatus(ev.temperature.label) })
+        items.push({ type: 'vital', label: t('healthMonitor.temperature'), value: v.temperature, unit: t('healthMonitor.celsius'), ...mapStatus(ev.temperature.label) })
       }
       if (ev.spo2) {
-        items.push({ label: t('healthMonitor.spo2Label'), value: v.spo2, unit: '%', ...mapStatus(ev.spo2.label) })
+        items.push({ type: 'vital', label: t('healthMonitor.spo2Label'), value: v.spo2, unit: '%', ...mapStatus(ev.spo2.label) })
       }
       if (ev.respiratoryRate) {
-        items.push({ label: t('healthMonitor.respiratoryRate'), value: v.respiratory_rate, unit: t('healthMonitor.perMin'), ...mapStatus(ev.respiratoryRate.label) })
+        items.push({ type: 'vital', label: t('healthMonitor.respiratoryRate'), value: v.respiratory_rate, unit: t('healthMonitor.perMin'), ...mapStatus(ev.respiratoryRate.label) })
       }
     }
   }
 
   if (latestBmi.value) {
-    items.push({ label: t('healthMonitor.bmiHeader'), value: latestBmi.value.bmi_value ?? latestBmi.value.bmi, unit: t('healthMonitor.kgM2'), ...mapBMIStatus(latestBmi.value.status) })
+    items.push({ type: 'bmi', label: t('healthMonitor.bmiHeader'), value: latestBmi.value.bmi_value ?? latestBmi.value.bmi, unit: t('healthMonitor.kgM2'), ...mapBMIStatus(latestBmi.value.status) })
   }
   if (latestBloodSugar.value) {
     const sugarVal = latestBloodSugar.value.result
     const sugarUnit = sugarVal != null ? t('healthMonitor.mgDl') : ''
-    items.push({ label: t('healthMonitor.bloodSugarLabel'), value: sugarVal, unit: sugarUnit, ...mapSugarStatus(latestBloodSugar.value.conclusion) })
+    items.push({ type: 'sugar', label: t('healthMonitor.bloodSugarLabel'), value: sugarVal, unit: sugarUnit, ...mapSugarStatus(latestBloodSugar.value.conclusion) })
   }
   return items
 })
@@ -111,18 +112,23 @@ async function loadTrafficStats() {
 }
 
 onMounted(async () => {
-  await loadIdentities()
+  const preselected = route.query.identity ? parseInt(route.query.identity) : null
+  await loadIdentities(preselected)
   await loadSystemHealth()
   if (auth.user?.role === 'admin') await loadTrafficStats()
 })
 
-async function loadIdentities() {
+async function loadIdentities(preselected) {
   try {
     const { data: res } = await api.get('/identities')
     const list = res?.data?.identities || []
     identities.value = list
     if (list.length > 0) {
-      selectedIdentity.value = list[0].id
+      if (preselected && list.some(i => i.id === preselected)) {
+        selectedIdentity.value = preselected
+      } else {
+        selectedIdentity.value = list[0].id
+      }
       await loadPatientHealth()
     }
   } catch (e) { console.error(e) }
@@ -236,9 +242,9 @@ function evalHRLabel(hr) {
   if (hr <= 100) return t('healthMonitor.normal')
   return t('healthMonitor.high')
 }
-function evalTempLabel(t) {
-  if (t < 35) return t('healthMonitor.low')
-  if (t <= 37.2) return t('healthMonitor.normal')
+function evalTempLabel(temp) {
+  if (temp < 35) return t('healthMonitor.low')
+  if (temp <= 37.2) return t('healthMonitor.normal')
   return t('healthMonitor.high')
 }
 function evalSpO2Label(s) {
@@ -250,6 +256,12 @@ function evalRespLabel(r) {
   if (r < 12) return t('healthMonitor.low')
   if (r <= 20) return t('healthMonitor.normal')
   return t('healthMonitor.high')
+}
+
+function toggleHistory(type) {
+  if (type === 'bmi') showBmiHistory.value = !showBmiHistory.value
+  else if (type === 'sugar') showSugarHistory.value = !showSugarHistory.value
+  else if (type === 'vital') showVitalHistory.value = !showVitalHistory.value
 }
 </script>
 
@@ -313,10 +325,13 @@ function evalRespLabel(r) {
           </div>
 
           <div class="metrics-grid">
-            <div v-for="m in metrics" :key="m.label" class="metric-card" :style="{ borderColor: m.color }">
+            <div v-for="m in metrics" :key="m.label" class="metric-card card-clickable" :style="{ borderColor: m.color }" @click="toggleHistory(m.type)">
               <div class="metric-header">
                 <span class="metric-label">{{ m.label }}</span>
                 <span class="metric-badge" :style="{ background: m.bg, color: m.color }">{{ m.icon }}</span>
+                <span class="metric-expand-hint">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </span>
               </div>
               <div class="metric-value" :style="{ color: m.color }">{{ m.value }}<small>{{ m.unit }}</small></div>
               <div class="metric-bar">
@@ -329,9 +344,9 @@ function evalRespLabel(r) {
             {{ t('healthMonitor.noVitalsYet') }}
           </div>
 
-          <div class="card card-clickable" v-if="bmiHistory.length > 0" @click="showBmiHistory = !showBmiHistory">
-            <h3 class="card-title">{{ t('history.bmiHistory') }} <span style="font-size:0.7rem;color:#888;text-transform:none;letter-spacing:0">[{{ showBmiHistory ? '-' : '+' }}]</span></h3>
-            <div v-if="showBmiHistory" class="history-table-wrap">
+          <div class="card" v-if="showBmiHistory && bmiHistory.length > 0">
+            <h3 class="card-title">{{ t('history.bmiHistory') }}</h3>
+            <div class="history-table-wrap">
               <table class="history-table">
                 <thead>
                   <tr>
@@ -355,9 +370,9 @@ function evalRespLabel(r) {
             </div>
           </div>
 
-          <div class="card card-clickable" v-if="bloodSugarHistory.length > 0" @click="showSugarHistory = !showSugarHistory">
-            <h3 class="card-title">{{ t('history.sugarHistory') }} <span style="font-size:0.7rem;color:#888;text-transform:none;letter-spacing:0">[{{ showSugarHistory ? '-' : '+' }}]</span></h3>
-            <div v-if="showSugarHistory" class="history-table-wrap">
+          <div class="card" v-if="showSugarHistory && bloodSugarHistory.length > 0">
+            <h3 class="card-title">{{ t('history.sugarHistory') }}</h3>
+            <div class="history-table-wrap">
               <table class="history-table">
                 <thead>
                   <tr>
@@ -379,9 +394,9 @@ function evalRespLabel(r) {
             </div>
           </div>
 
-          <div class="card card-clickable" v-if="vitalHistory.length > 0" @click="showVitalHistory = !showVitalHistory">
-            <h3 class="card-title">{{ t('healthMonitor.vitalHistory') }} <span style="font-size:0.7rem;color:#888;text-transform:none;letter-spacing:0">[{{ showVitalHistory ? '-' : '+' }}]</span></h3>
-            <div v-if="showVitalHistory" class="history-table-wrap">
+          <div class="card" v-if="showVitalHistory && vitalHistory.length > 0">
+            <h3 class="card-title">{{ t('healthMonitor.vitalHistory') }}</h3>
+            <div class="history-table-wrap">
               <table class="history-table">
                 <thead>
                   <tr>
@@ -738,9 +753,10 @@ function evalRespLabel(r) {
   border-left: 4px solid;
   border-radius: 12px;
   padding: 16px;
-  transition: transform 0.2s;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.metric-card:hover { transform: translateY(-2px); }
+.metric-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
 
 .metric-header {
   display: flex;
@@ -750,6 +766,8 @@ function evalRespLabel(r) {
 }
 .metric-label { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .metric-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
+.metric-expand-hint { color: #555; opacity: 0; transition: opacity 0.2s, transform 0.2s; display: flex; align-items: center; }
+.metric-card:hover .metric-expand-hint { opacity: 1; transform: translateX(2px); }
 
 .metric-value { font-size: 1.6rem; font-weight: 800; line-height: 1; margin-bottom: 8px; }
 .metric-value small { font-size: 0.55em; font-weight: 600; opacity: 0.7; margin-left: 2px; }

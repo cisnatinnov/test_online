@@ -107,13 +107,13 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - PDF includes: summary (total expense, saving, balance), itemized tables with date, category, description, and amount
 
 ### Frontend (Vue 3 SPA)
-- **Health Monitor Page**: Record vitals (BP, HR, temp, SpO2, resp rate), BMI, and blood sugar via separate input cards; color-coded metric cards with previous data labels (low/yellow, normal/green, high/red); collapsible history tables for BMI, blood sugar, and vital signs (click card title to expand) with BP status flags and color-coded status badges on each vital sign data cell (HR, Temp, SpO2, Resp: Low/Normal/High); API traffic dashboard with request logs, hourly charts, and status breakdowns (admin-only API traffic section). Patient auto-selected for non-admin users; `identity_id` auto-resolved from user's identity for non-admin.
+- **Health Monitor Page**: Record vitals (BP, HR, temp, SpO2, resp rate), BMI, and blood sugar via separate input cards; color-coded metric cards with previous data labels (low/yellow, normal/green, high/red); click on metric cards to toggle corresponding history sections (BMI, blood sugar, vital signs) — hidden by default, shown on click with chevron hint; BP status flags and color-coded status badges on each vital sign data cell (HR, Temp, SpO2, Resp: Low/Normal/High); API traffic dashboard with request logs, hourly charts, and status breakdowns (admin-only API traffic section). Patient auto-selected for non-admin users; `identity_id` auto-resolved from user's identity for non-admin. Accepts `?identity=` query param for admin direct navigation to a specific patient.
 - **Money Dashboard Page**: Expense/saving CRUD, category dropdowns (from Category API), category breakdowns, trend charts, financial summary
 - **Estate View Page**: Create estates, plant trees, view canvas visualization, stats, drone plans
 - **Chat Page**: Real-time messaging with chat rooms, online users, typing indicators
 - **Category Management Page**: Spending/saving category CRUD with duplicate prevention, integrated with Money Dashboard dropdowns
 - **Library Page**: Book catalog with search/filter, borrowing management, fine display, library statistics with category breakdown, admin-only fine/duration settings panel
-- **Dashboard Page**: Public landing page showing login/register for unauthenticated users; sidebar navigation to all features, patient identity creation/selection, BMI/blood sugar/vital signs data entry cards with expandable history tables when authenticated
+- **Dashboard Page**: Public landing page showing login/register for unauthenticated users; welcome greeting with user avatar, feature navigation cards (health, money, estate, chat, library, tools) that link to respective pages, and an admin-only "Patient Data" card when authenticated
 
 ## Tech Stack
 
@@ -140,7 +140,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │   ├── index.js                 # Associations & exports
 │   ├── User.js                  # User accounts (username, email, password, phone, role)
 │   ├── TwoFactorCode.js         # 2FA codes (code, expires_at, used, channel)
-│   ├── Identity.js              # Patient identity (nik, name, height, birthplace, birthdate, address)
+│   ├── Identity.js              # Patient identity (nik, name, height, birthplace, birthdate, address, gender)
 │   ├── BMI.js                   # BMI records (weight, age, result, status current/past)
 │   ├── BloodSugar.js            # Blood sugar records (age, result, conclusion, status)
 │   ├── VitalSigns.js            # Vital signs (BP, HR, temp, SpO2, resp rate, status)
@@ -238,7 +238,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 │           ├── EstateView.vue
 │           ├── ChatView.vue
 │           ├── LibraryView.vue
-│           ├── ListView.vue
+│   ├── ListView.vue             # Admin user/identity list with health detail navigation
 │           ├── HistoryView.vue
 │           ├── ToolsView.vue
 │           └── tools/           # 13 tool Vue components
@@ -338,6 +338,7 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | POST | `/login` | Login (returns temp 2FA token) | No |
 | POST | `/send-2fa` | Send 2FA code (email or WhatsApp) | No |
 | POST | `/verify-2fa` | Verify 2FA code (returns JWT) | No |
+| POST | `/change-password` | Change password (currentPassword, newPassword); logs out all sessions | Yes |
 
 ### Identity (`/api/identities`)
 
@@ -601,16 +602,16 @@ Risk score is calculated from combined BMI, blood sugar, vital signs, and age fa
 | `/login` | LoginView | Public | Login with username/email + password |
 | `/register` | RegisterView | Public | Registration with patient identity |
 | `/verify-2fa` | Verify2FAView | Public | 2FA verification (email or WhatsApp) |
-| `/` | DashboardView | Public | Landing page / main hub. Public landing with login/register when unauthenticated; patient identity, BMI/blood sugar/vital signs data entry with expandable history tables when authenticated |
-| `/profile` | ProfileView | Auth | User profile with identity info and personal health monitoring (BMI, blood sugar, vital signs history) |
-| `/health` | HealthMonitorView | Auth | Record vitals, BMI, and blood sugar via separate input cards with previous data labels (low/yellow, normal/green, high/red); patient auto-selected for non-admin; view metrics, history table, API traffic dashboard (admin-only) |
+| `/` | DashboardView | Public | Landing page / main hub. Welcome greeting with avatar, feature navigation cards (health, money, estate, chat, library, tools); admin-only "Patient Data" card when authenticated |
+| `/profile` | ProfileView | Auth | User profile: view and edit identity info (name, NIK, height, birthplace, birthdate, address, gender), change password with logout redirect |
+| `/health` | HealthMonitorView | Auth | Record vitals, BMI, and blood sugar via separate input cards with previous data labels; click metric cards to toggle history sections; admin API traffic dashboard; accepts `?identity=` query param |
 | `/money` | MoneyDashboardView | Auth | Expense/saving CRUD, category breakdowns, trend charts |
 | `/estate` | EstateView | Auth | Estate CRUD, tree planting, canvas visualization, drone plans |
 | `/chat` | ChatView | Auth | Real-time chat rooms, messaging, online users |
 | `/library` | LibraryView | Auth | Book catalog, search/filter, borrowing, return, fine, statistics, admin settings |
-| `/list` | ListView | Admin Only | Patient data list with tabs |
+| `/list` | ListView | Admin Only | Searchable list of all users and their identities with "Health Monitor" navigation link to `/health?identity={id}` |
 | `/history/:id` | HistoryView | Auth | Patient BMI, blood sugar, and vital signs history (non-admin sees own patients only; admin sees all) |
-| `/tools` | ToolsView | Auth | Navigation hub for games, math, and NER tools |
+| `/tools` | ToolsView | Auth | Navigation hub for games, math, and NER tools with translated category titles |
 
 ## Testing
 

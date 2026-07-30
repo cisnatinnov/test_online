@@ -1,7 +1,7 @@
 {
   "app": { "title": "VitaSuite" },
   "nav": {
-    "dashboard": "Dasbor",
+    "dashboard": "Beranda",
     "health": "Kesehatan",
     "money": "Keuangan",
     "list": "Daftar",
@@ -43,6 +43,9 @@
     "birthdate": "Tanggal Lahir",
     "height": "Tinggi Badan (cm)",
     "address": "Alamat",
+    "gender": "Jenis Kelamin",
+    "male": "Laki-laki",
+    "female": "Perempuan",
     "loggingIn": "Sedang masuk...",
     "loginBtn": "Masuk",
     "registering": "Sedang mendaftar...",
@@ -71,7 +74,14 @@
     "usernameRequired": "Nama Pengguna wajib diisi",
     "passwordRequired": "Kata Sandi wajib diisi",
     "emailRequired": "Email wajib diisi",
-    "invalidEmail": "Format email tidak valid"
+    "invalidEmail": "Format email tidak valid",
+    "nameRequired": "Nama wajib diisi",
+    "nikInvalid": "NIK harus berisi 1-20 digit angka",
+    "heightInvalid": "Tinggi harus antara 1 dan 300 cm",
+    "birthdateInvalid": "Tanggal lahir tidak boleh di masa depan",
+    "allFieldsRequired": "Semua kolom wajib diisi",
+    "passwordMismatch": "Kata sandi tidak cocok",
+    "passwordUnchanged": "Kata sandi baru harus berbeda dari kata sandi saat ini"
   },
   "passwordStrength": {
     "weak": "Lemah",
@@ -434,7 +444,13 @@
     "moneyManagement": "Manajemen Keuangan",
     "moneyManagementDesc": "Catat pengeluaran dan tabungan dengan rincian kategori dan grafik",
     "estateManagement": "Manajemen Perkebunan",
-    "estateManagementDesc": "Kelola perkebunan kelapa sawit dengan penanaman pohon dan perencanaan drone"
+    "estateManagementDesc": "Kelola perkebunan kelapa sawit dengan penanaman pohon dan perencanaan drone",
+    "patientData": "Data Pasien (admin only)",
+    "patientDataDesc": "Lihat dan kelola semua rekam medis pasien",
+    "tools": "Alat",
+    "toolsDesc": "Game, kalkulator, dan utilitas",
+    "library": "Perpustakaan",
+    "libraryDesc": "Jelajahi, pinjam, dan kelola buku"
   },
   "history": {
     "title": "Riwayat Pasien #",

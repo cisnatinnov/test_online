@@ -20,7 +20,7 @@ const MAX_PASSWORD_LENGTH = 128;
 const MAX_NAME_LENGTH = 100;
 
 exports.register = async (req, res) => {
-  const { username, email, password, phone, nik, name, birthplace, birthdate, height, address } = req.body;
+  const { username, email, password, phone, nik, name, gender, birthplace, birthdate, height, address } = req.body;
   try {
     if (!username || !email || !password) {
       return apiResponse(res, { error: 'Username, email, dan password harus diisi', status: 400 });
@@ -69,6 +69,7 @@ exports.register = async (req, res) => {
         nik: nik || null,
         name,
         height: height ? Number(height) : null,
+        gender: gender || null,
         birthplace: birthplace || null,
         birthdate: birthdate || null,
         address: address || null,
@@ -180,6 +181,50 @@ exports.send2FA = async (req, res) => {
       return apiResponse(res, { error: 'Token tidak valid', status: 400 });
     }
     return apiResponse(res, { error: 'Gagal mengirim kode: ' + err.message, status: 500 });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  try {
+    if (!currentPassword || !newPassword) {
+      return apiResponse(res, { error: 'Current password and new password are required', status: 400 });
+    }
+    if (newPassword.length > MAX_PASSWORD_LENGTH) {
+      return apiResponse(res, { error: `Password maksimal ${MAX_PASSWORD_LENGTH} karakter`, status: 400 });
+    }
+    if (newPassword.length < 8) {
+      return apiResponse(res, { error: 'Password minimal 8 karakter', status: 400 });
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      return apiResponse(res, { error: 'Password harus memiliki minimal 1 huruf kapital', status: 400 });
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      return apiResponse(res, { error: 'Password harus memiliki minimal 1 huruf kecil', status: 400 });
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      return apiResponse(res, { error: 'Password harus memiliki minimal 1 angka', status: 400 });
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+      return apiResponse(res, { error: 'Password harus memiliki minimal 1 simbol', status: 400 });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return apiResponse(res, { error: 'User tidak ditemukan', status: 404 });
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      return apiResponse(res, { error: 'Current password is incorrect', status: 401 });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await user.update({ password: hashedPassword });
+
+    return apiResponse(res, { data: { message: 'Password changed successfully' } });
+  } catch (err) {
+    return apiResponse(res, { error: err.message, status: 500 });
   }
 };
 

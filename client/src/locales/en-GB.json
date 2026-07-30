@@ -1,7 +1,7 @@
 {
   "app": { "title": "VitaSuite" },
   "nav": {
-    "dashboard": "Dashboard",
+    "dashboard": "Home",
     "health": "Health",
     "money": "Money",
     "list": "List",
@@ -43,6 +43,9 @@
     "birthdate": "Date of Birth",
     "height": "Height (cm)",
     "address": "Address",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
     "loggingIn": "Logging in...",
     "loginBtn": "Login",
     "registering": "Registering...",
@@ -71,7 +74,14 @@
     "usernameRequired": "Username is required",
     "passwordRequired": "Password is required",
     "emailRequired": "Email is required",
-    "invalidEmail": "Email format is invalid"
+    "invalidEmail": "Email format is invalid",
+    "nameRequired": "Name is required",
+    "nikInvalid": "NIK must contain 1-20 digits",
+    "heightInvalid": "Height must be between 1 and 300 cm",
+    "birthdateInvalid": "Birthdate cannot be in the future",
+    "allFieldsRequired": "All fields are required",
+    "passwordMismatch": "Passwords do not match",
+    "passwordUnchanged": "New password must be different from current password"
   },
   "passwordStrength": {
     "weak": "Weak",
@@ -466,7 +476,13 @@
     "moneyManagement": "Money Management",
     "moneyManagementDesc": "Track expenses and savings with category breakdowns and charts",
     "estateManagement": "Estate Management",
-    "estateManagementDesc": "Manage palm oil estates with tree planting and drone planning"
+    "estateManagementDesc": "Manage palm oil estates with tree planting and drone planning",
+    "patientData": "Patient Data (admin only)",
+    "patientDataDesc": "View and manage all patient health records",
+    "tools": "Tools",
+    "toolsDesc": "Games, calculators, and utilities",
+    "library": "Library",
+    "libraryDesc": "Browse, borrow, and manage books"
   },
   "history": {
     "title": "Patient History #",

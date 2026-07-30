@@ -150,11 +150,12 @@ The dashboard is the landing page (`/`) and the main screen after login. For **u
 
 For **authenticated users**, it shows:
 
-- **Sidebar navigation** to all features (Dashboard, Profile, Health, Money, Estate, Chat, Library, Categories, Tools, Language, Logout)
-- **Patient identity** selection dropdown (admin can create new identities)
-- **BMI Card** - enter weight and save BMI; click the card to expand BMI history table
-- **Blood Sugar Card** - enter blood sugar value and save; click the card to expand blood sugar history
-- **Vital Signs Card** - enter BP, HR, temp, SpO2, respiratory rate; click the card to expand vital signs history with abbreviation labels (HR, Temp, SpO2, Resp)
+- **Sidebar navigation** to all features (Home, Profile, Health, Money, Estate, Chat, Library, Categories, Tools, Language, Logout)
+- **Welcome greeting** with the user's avatar/initial displayed prominently
+- **Feature navigation cards** that link directly to each feature page:
+  - Health Monitor, Money Management, Estate Management, Chat, Library, Tools
+- **Patient Data card** (admin only) - links to the Patient Data List page (`/list`) for browsing all users and their identities
+- Each card has an icon, title, and brief description; click to navigate to the corresponding page
 
 ---
 
@@ -162,12 +163,16 @@ For **authenticated users**, it shows:
 
 **Page:** `/profile`
 
-View your identity information and personal health monitoring data.
+View and edit your identity information, change your password, and monitor personal health data.
 
-1. **Select an identity** from the dropdown (if you have multiple patients)
-2. **Identity Info** shows:
-   - Name, NIK, Height, Place of Birth, Date of Birth, Address
-3. **Health Dashboard** shows color-coded metric cards:
+1. **Identity Card** shows your profile information:
+   - Name, NIK, Height, Place of Birth, Date of Birth, Address, Gender
+   - Click the **edit icon** to modify any field inline
+   - Changes are saved per-field (no form submit)
+2. **Change Password** section:
+   - Enter your **current password** and a **new password** (must meet password rules)
+   - After successful change, you are logged out and redirected to `/login` (all sessions invalidated)
+3. **Health Metrics** shows color-coded cards:
    - **BMI** - latest BMI value and category
    - **Blood Sugar** - latest blood sugar reading and conclusion
    - **Blood Pressure** - latest systolic/diastolic reading
@@ -211,7 +216,9 @@ Non-admin users see only their own patients' data. Admin users can see all patie
 
 ### Health History
 
-Below the metric cards, three **history tables** show the last 10 readings for each category:
+History sections are **hidden by default**. Click on the corresponding **metric card** (BMI, Blood Sugar, or Vital Signs) to toggle its history table open/closed. A chevron icon on the card hints at the expandable behavior.
+
+Each history table shows the last 10 readings:
 
 **BMI History**: Shows date, weight (kg), BMI value, and category status (color-coded).
 
@@ -630,6 +637,17 @@ ADMIN_PASSWORD=Admin@123
 - Admin can **filter traffic by period** (1h, 24h, 7d, 30d)
 - Admin can **create identities for any user** via `POST /api/identities` with `id_user` body param (email notification sent to the assigned user)
 - Admin can **view all patients** in the Health Monitor; non-admin users see only their own patients
+- Admin can **navigate directly to any patient's health data** using the `?identity=` query parameter on the Health Monitor page
+
+### Admin Patient Data List
+
+**Page:** `/list` (admin only)
+
+The Patient Data List shows a searchable table of all registered users and their associated patient identities:
+
+- **Search** by user ID or identity name to filter results
+- Each row shows a user (ID, username, email) and all their identities (name, NIK, height, birthplace, birthdate, address, gender)
+- Click **"Health Monitor"** button on any identity row to navigate directly to that patient's health data at `/health?identity={id}`
 
 ---
 

@@ -2,7 +2,7 @@
 
 1. **users** (id, username, email, password, phone, role, createdAt, updatedAt)
 2. **two_factor_codes** (id, user_id, code, expires_at, used, channel, createdAt, updatedAt)
-3. **identity** (id, id_user, nik, name, height, birthplace, birthdate, address, createdAt, updatedAt)
+3. **identity** (id, id_user, nik, name, height, birthplace, birthdate, address, gender, createdAt, updatedAt)
 4. **bmi** (id, id_identity, weight, age, result, status [current/past], createdAt, updatedAt)
 5. **bloodsugar** (id, id_identity, age, result, conclusion, status [current/past], createdAt, updatedAt)
 6. **vital_signs** (id, id_identity, systolic, diastolic, heart_rate, temperature, spo2, respiratory_rate, age, status [current/past], createdAt, updatedAt)
@@ -32,17 +32,18 @@
 1. **Register** (username, email, password + optional identity data)
 2. **Login** (username/email + password)
 3. **2FA Verification** (email or WhatsApp channel)
-4. **Dashboard** (public landing page) with sidebar navigation (dashboard, profile, health, money, estate, chat, library, categories, tools, language, logout) and patient identity/health data entry cards with expandable history tables for BMI, blood sugar, and vital signs
+4. **Dashboard** (public landing page) with sidebar navigation (Home, profile, health, money, estate, chat, library, categories, tools, language, logout) and welcome feature cards linking to each page; admin-only Patient Data card
 5. **Profile** (via `/profile` ProfileView):
-   - a. View identity info (name, NIK, height, birthplace, birthdate, address)
-   - b. Personal health monitoring: BMI history, blood sugar history, vital signs history
-   - c. Color-coded metric cards for latest health data
+   - a. View and edit identity info (name, NIK, height, birthplace, birthdate, address, gender)
+   - b. Change password with logout redirect (password invalidated on all sessions)
+   - c. Personal health monitoring: BMI history, blood sugar history, vital signs history
+   - d. Color-coded metric cards for latest health data
 6. **Health Features** (via `/health` HealthMonitorView):
    - a. Record vitals (BP, heart rate, temperature, SpO2, respiratory rate), BMI (weight), and blood sugar via separate input cards
    - b. Each input card shows the most recent recorded value with a color-coded label (low/yellow, normal/green, high/red)
-   - c. Patient auto-selected for non-admin users; admin sees patient dropdown
-   - d. Color-coded metric cards: green (normal), orange (low/underweight), red (high/overweight)
-   - e. Collapsible history tables (click to expand) showing last 10 readings for BMI, blood sugar, and vital signs separately with BP status flags (low/normal/high) and color-coded status badges on each vital sign data cell (HR, Temp, SpO2, Resp)
+   - c. Patient auto-selected for non-admin users; admin sees patient dropdown; supports `?identity=` query param for direct navigation
+   - d. Color-coded metric cards: green (normal), orange (low/underweight), red (high/overweight); click card to toggle history
+   - e. History sections hidden by default; clicking the corresponding metric card reveals the last 10 readings for BMI, blood sugar, and vital signs separately with BP status flags (low/normal/high) and color-coded status badges on each vital sign data cell (HR, Temp, SpO2, Resp)
    - f. System health checks (DB, memory, CPU, uptime)
    - g. API traffic dashboard with request logs, hourly charts, status/method breakdowns
 6. **Blood Sugar** - track with age-based thresholds (Rendah/Normal/Tinggi)
@@ -78,12 +79,12 @@
     - b. Health Trend Analysis (BMI and blood sugar direction tracking over time)
     - c. Health Alerts (flag high-risk patients for immediate attention)
     - d. Population Statistics (BMI, sugar, vital signs, risk distribution across all patients)
-12. **Patient Data List** (admin-only, all identities with current BMI, blood sugar, and vital signs status, PDF export)
+12. **Patient Data List** (admin-only, `/list` ListView): searchable list of all users and their identities with "Health Monitor" link navigating to `/health?identity={id}`
 13. **History** (auth required; non-admin users see only their own patients' BMI, blood sugar, and vital signs records; admin sees all)
-14. **Tools & Games** (accessible from dashboard navigation):
-    - a. Games: Hangman, Coin Catcher, Roleplay Adventure, Turtle Racing, Aim Trainer, Rock Paper Scissors
-    - b. Math: Shapes Calculator (2D/3D), Equation Grapher, Scientific Calculator, Statistics, Quadratic Function
-    - c. NER: Text Summarizer, Sentiment Analysis
+14. **Tools & Games** (via `/tools` ToolsView, accessible from dashboard navigation):
+   - a. Games: Hangman, Coin Catcher, Roleplay Adventure, Turtle Racing, Aim Trainer, Rock Paper Scissors
+   - b. Math: Shapes Calculator (2D/3D), Equation Grapher, Scientific Calculator, Statistics, Quadratic Function
+   - c. NER: Text Summarizer, Sentiment Analysis
 16. **System Health Monitoring** (admin-only via FE, DB connectivity, memory usage, CPU usage, uptime, readiness/liveness probes)
 17. **API Traffic Tracking** (admin-only, logs all API requests with method, path, status, response time, user)
 
@@ -140,17 +141,17 @@
 | `/login` | Public | LoginView | Login with username/email + password, real-time email format validation |
 | `/register` | Public | RegisterView | Registration with patient identity, real-time email & password validation with strength progress bar |
 | `/verify-2fa` | Public | Verify2FAView | 2FA verification (email or WhatsApp) |
-| `/` | Public | DashboardView | Landing page / main hub. Shows public landing with login/register when unauthenticated; full dashboard with patient identity, BMI/blood sugar/vital signs data entry cards and expandable history tables when authenticated |
-| `/profile` | Auth | ProfileView | User profile with identity info and personal health monitoring (BMI, blood sugar, vital signs history) |
-| `/health` | Auth | HealthMonitorView | Health monitoring: record vitals + weight, BMI display, color-coded metrics, history tables for BMI/blood sugar/vital signs with BP status flags, API traffic dashboard (admin-only traffic section) |
+| `/` | Public | DashboardView | Landing page / main hub. Welcome greeting with avatar, feature navigation cards (health, money, estate, chat, library, tools); admin-only Patient Data card when authenticated |
+| `/profile` | Auth | ProfileView | User profile: view and edit identity info (name, NIK, height, birthplace, birthdate, address, gender); change password with logout redirect |
+| `/health` | Auth | HealthMonitorView | Health monitoring: record vitals + weight, BMI display, color-coded metrics, click metric cards to toggle history sections, admin API traffic dashboard. Supports `?identity=` query param for direct patient navigation |
 | `/money` | Auth | MoneyDashboardView | Money management: expense/saving CRUD, category breakdowns, trend charts |
 | `/estate` | Auth | EstateView | Estate management: create estates, plant trees, canvas visualization, stats, drone plans |
 | `/chat` | Auth | ChatView | Real-time chat: rooms, messaging, online users, typing indicators |
 | `/library` | Auth | LibraryView | Library management: book catalog, search/filter, borrowing, return, fine display, statistics, admin settings panel |
 | `/categories` | Auth | CategoriesView | Category management: spending/saving category CRUD with duplicate prevention |
-| `/list` | Admin Only | ListView | Patient data list with tabbed BMI/blood sugar view and search |
+| `/list` | Admin Only | ListView | Searchable list of all users and their identities with "Health Monitor" link to `/health?identity={id}` |
 | `/history/:id` | Auth | HistoryView | Patient BMI, blood sugar, and vital signs history (non-admin sees own patients only; admin sees all) |
-| `/tools` | Auth | ToolsView | Navigation hub for games, math tools, and NER tools |
+| `/tools` | Auth | ToolsView | Navigation hub for games, math tools, and NER tools with translated category titles |
 
 ### Static Pages (`client/public/` or `client/dist/`)
 

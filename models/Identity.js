@@ -11,6 +11,9 @@ const Identity = sequelize.define('Identity', {
   height: {
     type: DataTypes.DECIMAL,
   },
+  gender: {
+    type: DataTypes.STRING(10),
+  },
   birthplace: {
     type: DataTypes.STRING(255),
   },

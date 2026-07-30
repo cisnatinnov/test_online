@@ -11,7 +11,7 @@ const { t, locale } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 
-const form = ref({ username: '', email: '', password: '', phone: '', name: '', nik: '', birthplace: '', birthdate: '', height: '', address: '' })
+const form = ref({ username: '', email: '', password: '', phone: '', name: '', nik: '', gender: '', birthplace: '', birthdate: '', height: '', address: '' })
 const error = ref('')
 const success = ref('')
 const loading = ref(false)
@@ -148,6 +148,11 @@ async function register() {
           <input v-model="form.phone" :placeholder="t('auth.phone')" class="input" />
           <input v-model="form.name" :placeholder="t('auth.fullName')" class="input" />
           <input v-model="form.nik" :placeholder="t('auth.nik')" class="input" />
+          <select v-model="form.gender" class="input">
+            <option value="">{{ t('auth.gender') }}</option>
+            <option value="Male">{{ t('auth.male') }}</option>
+            <option value="Female">{{ t('auth.female') }}</option>
+          </select>
           <input v-model="form.birthplace" :placeholder="t('auth.birthplace')" class="input" />
           <input v-model="form.birthdate" type="date" class="input" />
           <input v-model="form.height" type="number" :placeholder="t('auth.height')" class="input" />
