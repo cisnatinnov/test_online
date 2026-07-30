@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDate, calculateAge, validatePassword, passwordStrength, validateName, validateNik, validateHeight, validateBirthdate } from './helpers'
+import { formatDate, calculateAge, validatePassword, passwordStrength, validateName, validateNik, validateHeight, validateBirthdate, translateBmiStatus, translateSugarConclusion, translateSugarDescription } from './helpers'
 
 const t = (key) => ({
   'validation.minChars': 'Minimum 8 characters',
@@ -11,6 +11,17 @@ const t = (key) => ({
   'validation.nikInvalid': 'NIK must contain 1-20 digits',
   'validation.heightInvalid': 'Height must be between 1 and 300 cm',
   'validation.birthdateInvalid': 'Birthdate is invalid',
+  'healthStatus.severelyUnderweight': 'Severely underweight',
+  'healthStatus.underweight': 'Underweight',
+  'healthStatus.normal': 'Normal',
+  'healthStatus.overweight': 'Overweight',
+  'healthStatus.obese': 'Obese',
+  'healthStatus.sugarLow': 'Low',
+  'healthStatus.sugarHigh': 'High',
+  'healthStatus.none': 'None',
+  'healthStatus.sugarLowDesc': 'Your blood sugar is low.',
+  'healthStatus.sugarNormalDesc': 'Your blood sugar is normal.',
+  'healthStatus.sugarHighDesc': 'Your blood sugar is high.',
   'passwordStrength.weak': 'Weak',
   'passwordStrength.medium': 'Medium',
   'passwordStrength.strong': 'Strong',
@@ -99,6 +110,45 @@ describe('validateBirthdate', () => {
   it('returns error for invalid or future dates', () => {
     expect(validateBirthdate('not-a-date', t)).toBe('Birthdate is invalid')
     expect(validateBirthdate('2999-01-01', t)).toBe('Birthdate is invalid')
+  })
+})
+
+describe('translateBmiStatus', () => {
+  it('translates known Indonesian BMI statuses', () => {
+    expect(translateBmiStatus('Sangat kurus', t)).toBe('Severely underweight')
+    expect(translateBmiStatus('Kurus', t)).toBe('Underweight')
+    expect(translateBmiStatus('Normal', t)).toBe('Normal')
+    expect(translateBmiStatus('Gemuk', t)).toBe('Overweight')
+    expect(translateBmiStatus('Obesitas', t)).toBe('Obese')
+  })
+  it('falls back to raw value for unknown status and empty for falsy', () => {
+    expect(translateBmiStatus('Custom', t)).toBe('Custom')
+    expect(translateBmiStatus('', t)).toBe('')
+    expect(translateBmiStatus(null, t)).toBe('')
+  })
+})
+
+describe('translateSugarConclusion', () => {
+  it('translates known conclusions', () => {
+    expect(translateSugarConclusion('Rendah', t)).toBe('Low')
+    expect(translateSugarConclusion('Normal', t)).toBe('Normal')
+    expect(translateSugarConclusion('Tinggi', t)).toBe('High')
+    expect(translateSugarConclusion('Tidak ada', t)).toBe('None')
+  })
+  it('falls back to raw value for unknown conclusion', () => {
+    expect(translateSugarConclusion('???', t)).toBe('???')
+  })
+})
+
+describe('translateSugarDescription', () => {
+  it('translates known descriptions', () => {
+    expect(translateSugarDescription('Kadar gula Anda rendah.', t)).toBe('Your blood sugar is low.')
+    expect(translateSugarDescription('Kadar gula Anda normal.', t)).toBe('Your blood sugar is normal.')
+    expect(translateSugarDescription('Kadar gula Anda tinggi.', t)).toBe('Your blood sugar is high.')
+  })
+  it('falls back to raw value for unknown description and empty for falsy', () => {
+    expect(translateSugarDescription('Other text', t)).toBe('Other text')
+    expect(translateSugarDescription('', t)).toBe('')
   })
 })
 

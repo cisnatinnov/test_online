@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import api from '../api'
-import { formatDate } from '../utils/helpers'
+import { formatDate, translateBmiStatus, translateSugarConclusion, translateSugarDescription } from '../utils/helpers'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -43,7 +43,7 @@ onMounted(async () => {
             <td>{{ formatDate(b.createdAt) }}</td>
             <td>{{ b.weight }} kg</td>
             <td>{{ b.age ?? '-' }}</td>
-            <td :style="{ color: b.result==='Normal'?'var(--accent-green)':'var(--accent-red)', fontWeight:'bold' }">{{ b.result }}</td>
+            <td :style="{ color: b.result==='Normal'?'var(--accent-green)':'var(--accent-red)', fontWeight:'bold' }">{{ translateBmiStatus(b.result, t) || '-' }}</td>
           </tr>
         </tbody>
       </table>
@@ -58,7 +58,10 @@ onMounted(async () => {
           <tr v-for="s in sugarHistory" :key="s.id">
             <td>{{ formatDate(s.createdAt) }}</td>
             <td>{{ s.result }}</td>
-            <td>{{ s.conclusion }}</td>
+            <td>
+              {{ translateSugarConclusion(s.conclusion, t) || '-' }}
+              <div v-if="s.description" style="font-size:11px;color:#888">{{ translateSugarDescription(s.description, t) }}</div>
+            </td>
           </tr>
         </tbody>
       </table>

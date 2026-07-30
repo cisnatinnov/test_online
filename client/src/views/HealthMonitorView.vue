@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
+import { calculateAge, translateBmiStatus, translateSugarConclusion, translateSugarDescription } from '../utils/helpers'
 import Sidebar from '../components/Sidebar.vue'
 import api from '../api'
 
@@ -69,7 +70,8 @@ const metrics = computed(() => {
   if (latestBloodSugar.value) {
     const sugarVal = latestBloodSugar.value.result
     const sugarUnit = sugarVal != null ? t('healthMonitor.mgDl') : ''
-    items.push({ type: 'sugar', label: t('healthMonitor.bloodSugarLabel'), value: sugarVal, unit: sugarUnit, ...mapSugarStatus(latestBloodSugar.value.conclusion) })
+    const sugarDesc = translateSugarDescription(latestBloodSugar.value.description, t)
+    items.push({ type: 'sugar', label: t('healthMonitor.bloodSugarLabel'), value: sugarVal, unit: sugarUnit, desc: sugarDesc, ...mapSugarStatus(latestBloodSugar.value.conclusion) })
   }
   return items
 })
@@ -78,6 +80,8 @@ const overallStatus = computed(() => {
   if (!latestVitals.value?.evaluation) return 'unknown'
   return latestVitals.value.evaluation.overall === 'Semua normal' ? 'normal' : 'risk'
 })
+
+const patientAge = computed(() => calculateAge(selectedIdentityData.value?.birthdate))
 
 function mapStatus(label) {
   const l = (label || '').toLowerCase()
@@ -221,43 +225,6 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-function evalRow(vs) {
-  if (!vs) return []
-  const items = []
-  if (vs.systolic != null && vs.diastolic != null) items.push({ label: t('healthMonitor.bp'), val: `${vs.systolic}/${vs.diastolic}`, ...mapStatus(evalBPLabel(vs.systolic, vs.diastolic)) })
-  if (vs.heart_rate != null) items.push({ label: t('healthMonitor.hr'), val: vs.heart_rate, ...mapStatus(evalHRLabel(vs.heart_rate)) })
-  if (vs.temperature != null) items.push({ label: t('healthMonitor.temp'), val: vs.temperature, ...mapStatus(evalTempLabel(vs.temperature)) })
-  if (vs.spo2 != null) items.push({ label: t('healthMonitor.spo2Header'), val: vs.spo2, ...mapStatus(evalSpO2Label(vs.spo2)) })
-  if (vs.respiratory_rate != null) items.push({ label: t('healthMonitor.resp'), val: vs.respiratory_rate, ...mapStatus(evalRespLabel(vs.respiratory_rate)) })
-  return items
-}
-
-function evalBPLabel(sys, dia) {
-  if (sys < 90 || dia < 60) return t('healthMonitor.low')
-  if (sys <= 120 && dia <= 80) return t('healthMonitor.normal')
-  return t('healthMonitor.high')
-}
-function evalHRLabel(hr) {
-  if (hr < 60) return t('healthMonitor.low')
-  if (hr <= 100) return t('healthMonitor.normal')
-  return t('healthMonitor.high')
-}
-function evalTempLabel(temp) {
-  if (temp < 35) return t('healthMonitor.low')
-  if (temp <= 37.2) return t('healthMonitor.normal')
-  return t('healthMonitor.high')
-}
-function evalSpO2Label(s) {
-  if (s < 90) return t('healthMonitor.highRisk')
-  if (s < 95) return t('healthMonitor.low')
-  return t('healthMonitor.normal')
-}
-function evalRespLabel(r) {
-  if (r < 12) return t('healthMonitor.low')
-  if (r <= 20) return t('healthMonitor.normal')
-  return t('healthMonitor.high')
-}
-
 function toggleHistory(type) {
   if (type === 'bmi') showBmiHistory.value = !showBmiHistory.value
   else if (type === 'sugar') showSugarHistory.value = !showSugarHistory.value
@@ -324,6 +291,12 @@ function toggleHistory(type) {
             </span>
           </div>
 
+          <div v-if="selectedIdentityData" class="patient-chip">
+            <span class="patient-name">{{ selectedIdentityData.name }}</span>
+            <span class="patient-meta">{{ t('history.age') }}: {{ patientAge ?? '-' }}</span>
+            <span class="patient-meta">{{ selectedIdentityData.gender === 'Male' ? t('auth.male') : selectedIdentityData.gender === 'Female' ? t('auth.female') : '-' }}</span>
+          </div>
+
           <div class="metrics-grid">
             <div v-for="m in metrics" :key="m.label" class="metric-card card-clickable" :style="{ borderColor: m.color }" @click="toggleHistory(m.type)">
               <div class="metric-header">
@@ -334,6 +307,7 @@ function toggleHistory(type) {
                 </span>
               </div>
               <div class="metric-value" :style="{ color: m.color }">{{ m.value }}<small>{{ m.unit }}</small></div>
+              <div v-if="m.desc" class="metric-desc">{{ m.desc }}</div>
               <div class="metric-bar">
                 <div class="metric-bar-fill" :style="{ width: '100%', background: m.color, opacity: 0.3 }"></div>
               </div>
@@ -362,7 +336,7 @@ function toggleHistory(type) {
                     <td class="history-val">{{ row.weight }}</td>
                     <td class="history-val">{{ row.bmi_value != null ? Number(row.bmi_value).toFixed(1) : '-' }}</td>
                     <td>
-                      <span :style="{ color: mapBMIStatus(row.result).color }">{{ row.result || '-' }}</span>
+                      <span :style="{ color: mapBMIStatus(row.result).color }">{{ translateBmiStatus(row.result, t) || '-' }}</span>
                     </td>
                   </tr>
                 </tbody>
@@ -386,7 +360,8 @@ function toggleHistory(type) {
                     <td>{{ formatDate(row.createdAt) }}</td>
                     <td class="history-val">{{ row.result }}</td>
                     <td>
-                      <span :style="{ color: mapSugarStatus(row.conclusion).color }">{{ row.conclusion || '-' }}</span>
+                      <span :style="{ color: mapSugarStatus(row.conclusion).color }">{{ translateSugarConclusion(row.conclusion, t) || '-' }}</span>
+                      <div v-if="row.description" class="history-desc">{{ translateSugarDescription(row.description, t) }}</div>
                     </td>
                   </tr>
                 </tbody>
@@ -401,6 +376,7 @@ function toggleHistory(type) {
                 <thead>
                   <tr>
                     <th>{{ t('healthMonitor.date') }}</th>
+                    <th>{{ t('healthMonitor.status') }}</th>
                     <th>{{ t('healthMonitor.bp') }}</th>
                     <th>{{ t('healthMonitor.hr') }}</th>
                     <th>{{ t('healthMonitor.temp') }}</th>
@@ -409,32 +385,37 @@ function toggleHistory(type) {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(row, idx) in vitalHistory" :key="row.id || idx">
+                  <tr v-for="(row, idx) in vitalHistory" :key="row.id || idx" :class="{ 'row-current': row.status === 'current' }">
                     <td>{{ formatDate(row.date || row.createdAt) }}</td>
+                    <td>
+                      <span class="status-badge-sm" :style="row.status === 'current' ? { background: 'rgba(76,175,80,0.15)', color: '#81c784' } : { background: 'rgba(255,255,255,0.08)', color: '#999' }">
+                        {{ row.status === 'current' ? t('healthMonitor.current') : t('healthMonitor.past') }}
+                      </span>
+                    </td>
                     <td>
                       <span v-if="row.systolic != null" class="prev-data" style="margin:0">
                         <span>{{ row.systolic }}/{{ row.diastolic ?? '-' }}</span>
-                        <span class="status-badge-sm" :style="{ background: mapStatus(evalBPLabel(row.systolic, row.diastolic)).bg, color: mapStatus(evalBPLabel(row.systolic, row.diastolic)).color }">
-                          {{ evalBPLabel(row.systolic, row.diastolic) }}
+                        <span v-if="row.evaluation?.bloodPressure" class="status-badge-sm" :style="{ background: mapStatus(row.evaluation.bloodPressure.label).bg, color: mapStatus(row.evaluation.bloodPressure.label).color }">
+                          {{ row.evaluation.bloodPressure.label }}
                         </span>
                       </span>
                       <span v-else>-</span>
                     </td>
                     <td class="history-val">
                       <span class="vital-label">HR: </span>{{ row.heart_rate ?? '-' }}
-                      <span v-if="row.heart_rate != null" class="status-badge-sm" :style="{ background: mapStatus(evalHRLabel(row.heart_rate)).bg, color: mapStatus(evalHRLabel(row.heart_rate)).color }">{{ evalHRLabel(row.heart_rate) }}</span>
+                      <span v-if="row.evaluation?.heartRate" class="status-badge-sm" :style="{ background: mapStatus(row.evaluation.heartRate.label).bg, color: mapStatus(row.evaluation.heartRate.label).color }">{{ row.evaluation.heartRate.label }}</span>
                     </td>
                     <td class="history-val">
                       <span class="vital-label">Temp: </span>{{ row.temperature != null ? Number(row.temperature).toFixed(1) : '-' }}
-                      <span v-if="row.temperature != null" class="status-badge-sm" :style="{ background: mapStatus(evalTempLabel(row.temperature)).bg, color: mapStatus(evalTempLabel(row.temperature)).color }">{{ evalTempLabel(row.temperature) }}</span>
+                      <span v-if="row.evaluation?.temperature" class="status-badge-sm" :style="{ background: mapStatus(row.evaluation.temperature.label).bg, color: mapStatus(row.evaluation.temperature.label).color }">{{ row.evaluation.temperature.label }}</span>
                     </td>
                     <td class="history-val">
                       <span class="vital-label">SpO2: </span>{{ row.spo2 ?? '-' }}
-                      <span v-if="row.spo2 != null" class="status-badge-sm" :style="{ background: mapStatus(evalSpO2Label(row.spo2)).bg, color: mapStatus(evalSpO2Label(row.spo2)).color }">{{ evalSpO2Label(row.spo2) }}</span>
+                      <span v-if="row.evaluation?.spo2" class="status-badge-sm" :style="{ background: mapStatus(row.evaluation.spo2.label).bg, color: mapStatus(row.evaluation.spo2.label).color }">{{ row.evaluation.spo2.label }}</span>
                     </td>
                     <td class="history-val">
                       <span class="vital-label">Resp: </span>{{ row.respiratory_rate ?? '-' }}
-                      <span v-if="row.respiratory_rate != null" class="status-badge-sm" :style="{ background: mapStatus(evalRespLabel(row.respiratory_rate)).bg, color: mapStatus(evalRespLabel(row.respiratory_rate)).color }">{{ evalRespLabel(row.respiratory_rate) }}</span>
+                      <span v-if="row.evaluation?.respiratoryRate" class="status-badge-sm" :style="{ background: mapStatus(row.evaluation.respiratoryRate.label).bg, color: mapStatus(row.evaluation.respiratoryRate.label).color }">{{ row.evaluation.respiratoryRate.label }}</span>
                     </td>
                   </tr>
                 </tbody>
@@ -772,6 +753,8 @@ function toggleHistory(type) {
 .metric-value { font-size: 1.6rem; font-weight: 800; line-height: 1; margin-bottom: 8px; }
 .metric-value small { font-size: 0.55em; font-weight: 600; opacity: 0.7; margin-left: 2px; }
 
+.metric-desc { font-size: 0.72rem; color: #999; margin-top: -4px; margin-bottom: 6px; }
+
 .metric-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
 .metric-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
 
@@ -805,7 +788,31 @@ function toggleHistory(type) {
 }
 
 .history-val { font-weight: 700; }
+.history-desc { font-size: 0.72rem; color: #888; font-weight: 400; margin-top: 2px; }
 .vital-label { font-size: 0.65rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.row-current { background: rgba(76,175,80,0.06); }
+
+.patient-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  width: fit-content;
+}
+.patient-name { font-size: 0.88rem; font-weight: 700; color: #e0e0e0; }
+.patient-meta {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(76,175,80,0.12);
+  color: #81c784;
+}
 
 .status-dot {
   display: inline-block;

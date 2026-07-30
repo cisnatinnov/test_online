@@ -11,9 +11,63 @@ const calculateAge = (birthdate) => {
   return age;
 };
 
-const hitungKesimpulan = (weight, heightCm) => {
+// Sex-specific pediatric BMI cutoffs (simplified, interpolated from Cole et al.
+// international cutoffs that link child BMI to the adult 25/30 thresholds).
+const PEDIATRIC_BMI_AGES = [2, 5, 8, 11, 14, 17, 18];
+const PEDIATRIC_BMI_CUTOFFS = {
+  male: {
+    overweight: [18.4, 17.4, 18.6, 20.6, 22.8, 24.7, 25],
+    obese: [20.1, 19.3, 21.0, 23.8, 26.7, 29.4, 30],
+  },
+  female: {
+    overweight: [18.0, 17.1, 18.4, 20.7, 23.3, 24.8, 25],
+    obese: [19.8, 19.2, 20.8, 24.0, 27.6, 29.8, 30],
+  },
+};
+
+const interpolateCutoff = (age, values) => {
+  if (age <= PEDIATRIC_BMI_AGES[0]) return values[0];
+  for (let i = 1; i < PEDIATRIC_BMI_AGES.length; i++) {
+    if (age <= PEDIATRIC_BMI_AGES[i]) {
+      const ratio = (age - PEDIATRIC_BMI_AGES[i - 1]) / (PEDIATRIC_BMI_AGES[i] - PEDIATRIC_BMI_AGES[i - 1]);
+      return values[i - 1] + ratio * (values[i] - values[i - 1]);
+    }
+  }
+  return values[values.length - 1];
+};
+
+// BMI classification based on age and gender:
+// - Children/adolescents (2-17): sex-specific pediatric cutoffs (Cole-style, interpolated)
+// - Elderly (>= 60): higher healthy range (22-27) per geriatric guidance
+// - Adults (18-59) and unknown age: WHO-style categories (same cutoffs for all genders)
+const hitungKesimpulan = (weight, heightCm, age = null, gender = null) => {
   const heightM = heightCm / 100;
   const bmi = weight / (heightM * heightM);
+  const numericAge = Number(age);
+
+  if (Number.isFinite(numericAge) && numericAge >= 2 && numericAge < 18) {
+    const sex = gender === 'Female' ? 'female' : 'male';
+    const overweight = interpolateCutoff(numericAge, PEDIATRIC_BMI_CUTOFFS[sex].overweight);
+    const obese = interpolateCutoff(numericAge, PEDIATRIC_BMI_CUTOFFS[sex].obese);
+    // Underweight gap narrows from ~6.5 (adult) to ~3.5 (young children).
+    const gap = 3.5 + ((numericAge - 2) / 16) * 3;
+    const thin = overweight - gap;
+    const severeThin = thin - 1.5;
+    if (bmi >= obese) return { bmi: bmi.toFixed(2), status: 'Obesitas' };
+    if (bmi >= overweight) return { bmi: bmi.toFixed(2), status: 'Gemuk' };
+    if (bmi >= thin) return { bmi: bmi.toFixed(2), status: 'Normal' };
+    if (bmi >= severeThin) return { bmi: bmi.toFixed(2), status: 'Kurus' };
+    return { bmi: bmi.toFixed(2), status: 'Sangat kurus' };
+  }
+
+  if (Number.isFinite(numericAge) && numericAge >= 60) {
+    if (bmi < 18.5) return { bmi: bmi.toFixed(2), status: 'Sangat kurus' };
+    if (bmi < 22) return { bmi: bmi.toFixed(2), status: 'Kurus' };
+    if (bmi <= 27) return { bmi: bmi.toFixed(2), status: 'Normal' };
+    if (bmi <= 30) return { bmi: bmi.toFixed(2), status: 'Gemuk' };
+    return { bmi: bmi.toFixed(2), status: 'Obesitas' };
+  }
+
   if (bmi < 17) return { bmi: bmi.toFixed(2), status: 'Sangat kurus' };
   if (bmi >= 17 && bmi < 18.5) return { bmi: bmi.toFixed(2), status: 'Kurus' };
   if (bmi >= 18.5 && bmi < 25) return { bmi: bmi.toFixed(2), status: 'Normal' };
@@ -21,7 +75,10 @@ const hitungKesimpulan = (weight, heightCm) => {
   return { bmi: bmi.toFixed(2), status: 'Obesitas' };
 };
 
-const hitungKriteriaGula = (age, sugarValue) => {
+// Blood sugar criteria are age-based (>= 50 years gets a +10 mg/dL tolerance).
+// Fasting glucose cutoffs are sex-independent, so gender is accepted for API
+// consistency but does not change the thresholds.
+const hitungKriteriaGula = (age, sugarValue, gender = null) => {
   const sugar = Number(sugarValue);
   if (!Number.isFinite(sugar)) return null;
   const ageFactor = Number(age) >= 50 ? 10 : 0;
@@ -144,10 +201,28 @@ const analisisTren = (bmiHistory, sugarHistory, heightCm) => {
   };
 };
 
-const evalBloodPressure = (systolic, diastolic) => {
+// Blood pressure evaluation based on age:
+// - Children (1-12): PALS hypotension threshold (systolic < 70 + 2 x age) and a
+//   simplified pediatric hypertension approximation (adult bands do not apply)
+// - Adults & elderly (>= 13): ACC/AHA bands (sex-independent)
+const evalBloodPressure = (systolic, diastolic, age = null, gender = null) => {
   const sys = Number(systolic);
   const dia = Number(diastolic);
   if (!Number.isFinite(sys) || !Number.isFinite(dia)) return null;
+
+  const numericAge = Number(age);
+  if (Number.isFinite(numericAge) && numericAge >= 1 && numericAge < 13) {
+    const lowSys = 70 + 2 * numericAge;
+    const highSys = 100 + 2 * numericAge;
+    const highDia = Math.round(65 + 1.5 * numericAge);
+    if (sys < lowSys || dia < 40) {
+      return { label: 'Rendah', colorClass: 'sugar-low', description: `Tekanan darah rendah untuk usia ${numericAge} tahun (batas bawah sistolik: ${lowSys} mmHg).` };
+    }
+    if (sys > highSys || dia > highDia) {
+      return { label: 'Tinggi', colorClass: 'sugar-high', description: `Tekanan darah tinggi untuk usia ${numericAge} tahun (perkiraan batas: ${highSys}/${highDia} mmHg).` };
+    }
+    return { label: 'Normal', colorClass: 'sugar-normal', description: `Tekanan darah normal untuk usia ${numericAge} tahun.` };
+  }
 
   if (sys < 90 || dia < 60) {
     return { label: 'Rendah', colorClass: 'sugar-low', description: 'Tekanan darah Anda rendah (hipotensi).' };
@@ -167,7 +242,9 @@ const evalBloodPressure = (systolic, diastolic) => {
   return { label: 'Krisis', colorClass: 'sugar-high', description: 'Tekanan darah sangat tinggi! Segera cari pertolongan medis.' };
 };
 
-const evalHeartRate = (bpm, age) => {
+// Heart rate evaluation based on age (infant/child/adult bands) and gender
+// (adult women average a slightly higher resting heart rate, upper bound widened to 105).
+const evalHeartRate = (bpm, age, gender = null) => {
   const rate = Number(bpm);
   if (!Number.isFinite(rate)) return null;
 
@@ -178,6 +255,7 @@ const evalHeartRate = (bpm, age) => {
   if (isInfant) { normalLow = 100; normalHigh = 160; }
   else if (isChild) { normalLow = 70; normalHigh = 120; }
   else { normalLow = 60; normalHigh = 100; }
+  if (!isInfant && !isChild && gender === 'Female') normalHigh = 105;
 
   if (rate < normalLow) {
     return { label: 'Rendah (Bradikardia)', colorClass: 'sugar-low', description: `Detak jantung rendah: ${rate} bpm (normal: ${normalLow}-${normalHigh}).` };
@@ -220,16 +298,20 @@ const evalSpO2 = (percent) => {
   return { label: 'Normal', colorClass: 'sugar-normal', description: `Saturasi oksigen normal: ${val}%.` };
 };
 
+// Respiratory rate evaluation based on age (infant/child/adult/elderly bands;
+// sex-independent). Elderly (>= 65) get a slightly wider normal band (12-24).
 const evalRespiratoryRate = (rate, age) => {
   const val = Number(rate);
   if (!Number.isFinite(val)) return null;
 
   const isChild = age && age < 12;
   const isInfant = age && age < 1;
+  const isElderly = age && age >= 65;
 
   let normalLow, normalHigh;
   if (isInfant) { normalLow = 30; normalHigh = 60; }
   else if (isChild) { normalLow = 18; normalHigh = 30; }
+  else if (isElderly) { normalLow = 12; normalHigh = 24; }
   else { normalLow = 12; normalHigh = 20; }
 
   if (val < normalLow) {

@@ -83,6 +83,19 @@
     "passwordMismatch": "Las contrasenas no coinciden",
     "passwordUnchanged": "La nueva contrasena debe ser diferente de la actual"
   },
+  "healthStatus": {
+    "severelyUnderweight": "Muy bajo de peso",
+    "underweight": "Bajo de peso",
+    "normal": "Normal",
+    "overweight": "Sobrepeso",
+    "obese": "Obesidad",
+    "sugarLow": "Bajo",
+    "sugarHigh": "Alto",
+    "none": "No disponible",
+    "sugarLowDesc": "Su nivel de azucar en sangre es bajo.",
+    "sugarNormalDesc": "Su nivel de azucar en sangre es normal.",
+    "sugarHighDesc": "Su nivel de azucar en sangre es alto."
+  },
   "passwordStrength": {
     "weak": "Debil",
     "medium": "Medio",
@@ -229,7 +242,9 @@
     "period7d": "7d",
     "period30d": "30d",
     "vitalHistory": "Historial de Signos Vitales",
-    "noVitalHistory": "Aún no hay historial de signos vitales"
+    "noVitalHistory": "Aún no hay historial de signos vitales",
+    "current": "Actual",
+    "past": "Anterior"
   },
   "money": {
     "title": "Gestor de Dinero",

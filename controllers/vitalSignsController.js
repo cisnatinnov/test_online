@@ -41,13 +41,14 @@ exports.createVitalSigns = async (req, res) => {
       }, { transaction: t });
     });
 
-    const evaluation = evaluateVitalSigns(vs, age);
+    const evaluation = evaluateVitalSigns(vs, age, identity.gender);
 
     return apiResponse(res, {
       data: {
         patientId: identity.id,
         name: identity.name,
         age,
+        gender: identity.gender ?? null,
         vitalSigns: formatVitalSigns(vs),
         evaluation,
       },
@@ -82,13 +83,14 @@ exports.updateVitalSigns = async (req, res) => {
       }, { transaction: t });
     });
 
-    const evaluation = evaluateVitalSigns(vs, age);
+    const evaluation = evaluateVitalSigns(vs, age, identity.gender);
 
     return apiResponse(res, {
       data: {
         patientId: identity.id,
         name: identity.name,
         age,
+        gender: identity.gender ?? null,
         vitalSigns: formatVitalSigns(vs),
         evaluation,
       },
@@ -113,13 +115,14 @@ exports.getLatestVitalSigns = async (req, res) => {
     if (!vs) return apiResponse(res, { data: null });
 
     const age = calculateAge(identity.birthdate) ?? vs.age;
-    const evaluation = evaluateVitalSigns(vs, age);
+    const evaluation = evaluateVitalSigns(vs, age, identity.gender);
 
     return apiResponse(res, {
       data: {
         patientId: identity.id,
         name: identity.name,
         age,
+        gender: identity.gender ?? null,
         vitalSigns: formatVitalSigns(vs),
         evaluation,
       },
@@ -141,7 +144,13 @@ exports.getHistoryVitalSigns = async (req, res) => {
       limit,
       offset,
     });
-    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items: rows.map(formatVitalSigns), itemName: 'history' }) });
+    const age = calculateAge(identity.birthdate);
+    const items = rows.map((row) => {
+      const formatted = formatVitalSigns(row);
+      formatted.evaluation = evaluateVitalSigns(row, age ?? row.age, identity.gender);
+      return formatted;
+    });
+    return apiResponse(res, { data: paginateResponse({ total: count, page, limit, items, itemName: 'history' }) });
   } catch (err) {
     return apiResponse(res, { error: err.message, status: 500 });
   }
@@ -165,13 +174,14 @@ exports.getVitalSignsList = async (req, res) => {
       });
 
       const age = calculateAge(identity.birthdate) ?? vs?.age ?? null;
-      const evaluation = vs ? evaluateVitalSigns(vs, age) : null;
+      const evaluation = vs ? evaluateVitalSigns(vs, age, identity.gender) : null;
 
       formattedData.push({
         id: identity.id,
         nik: identity.nik ?? '',
         name: identity.name ?? '',
         age,
+        gender: identity.gender ?? null,
         vitalSigns: vs ? formatVitalSigns(vs) : null,
         evaluation,
       });
@@ -197,17 +207,17 @@ function formatVitalSigns(vs) {
   };
 }
 
-function evaluateVitalSigns(vs, age) {
+function evaluateVitalSigns(vs, age, gender = null) {
   const results = {};
   let hasAbnormal = false;
 
   if (vs.systolic != null && vs.diastolic != null) {
-    results.bloodPressure = evalBloodPressure(vs.systolic, vs.diastolic);
+    results.bloodPressure = evalBloodPressure(vs.systolic, vs.diastolic, age, gender);
     if (results.bloodPressure.label !== 'Normal') hasAbnormal = true;
   }
 
   if (vs.heart_rate != null) {
-    results.heartRate = evalHeartRate(vs.heart_rate, age);
+    results.heartRate = evalHeartRate(vs.heart_rate, age, gender);
     if (results.heartRate.label !== 'Normal') hasAbnormal = true;
   }
 

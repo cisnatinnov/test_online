@@ -31,7 +31,7 @@ exports.createBloodSugar = async (req, res) => {
     }
 
     const age = calculateAge(identity.birthdate);
-    const sugarCriteria = hitungKriteriaGula(age, sugar);
+    const sugarCriteria = hitungKriteriaGula(age, sugar, identity.gender);
 
     const bloodSugar = await sequelize.transaction(async (t) => {
       await BloodSugar.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' }, transaction: t });
@@ -46,7 +46,7 @@ exports.createBloodSugar = async (req, res) => {
     });
 
     const existingBmi = await BMI.findOne({ where: { id_identity: identity.id, status: 'current' }, order: [['id', 'DESC']] });
-    const kesimpulan = existingBmi ? hitungKesimpulan(Number(existingBmi.weight), Number(identity.height)) : null;
+    const kesimpulan = existingBmi ? hitungKesimpulan(Number(existingBmi.weight), Number(identity.height), age, identity.gender) : null;
 
     return apiResponse(res, { data: formatPatientResponse(identity, existingBmi, bloodSugar, kesimpulan, sugarCriteria) });
   } catch (err) {
@@ -69,7 +69,7 @@ exports.updateBloodSugar = async (req, res) => {
     }
 
     const age = calculateAge(identity.birthdate);
-    const sugarCriteria = hitungKriteriaGula(age, sugar);
+    const sugarCriteria = hitungKriteriaGula(age, sugar, identity.gender);
 
     const bloodSugar = await sequelize.transaction(async (t) => {
       await BloodSugar.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' }, transaction: t });
@@ -84,7 +84,7 @@ exports.updateBloodSugar = async (req, res) => {
     });
 
     const existingBmi = await BMI.findOne({ where: { id_identity: identity.id, status: 'current' }, order: [['id', 'DESC']] });
-    const kesimpulan = existingBmi ? hitungKesimpulan(Number(existingBmi.weight), Number(identity.height)) : null;
+    const kesimpulan = existingBmi ? hitungKesimpulan(Number(existingBmi.weight), Number(identity.height), age, identity.gender) : null;
 
     return apiResponse(res, { data: formatPatientResponse(identity, existingBmi, bloodSugar, kesimpulan, sugarCriteria) });
   } catch (err) {

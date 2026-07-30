@@ -62,6 +62,48 @@ export function validateBirthdate(birthdate, t = (key) => key) {
   return ''
 }
 
+// The API stores health evaluation labels as canonical Indonesian strings.
+// These translators map them to i18n keys so they follow the selected language,
+// falling back to the raw value when the label is unknown.
+const BMI_STATUS_KEYS = {
+  'Sangat kurus': 'healthStatus.severelyUnderweight',
+  'Kurus': 'healthStatus.underweight',
+  'Normal': 'healthStatus.normal',
+  'Gemuk': 'healthStatus.overweight',
+  'Obesitas': 'healthStatus.obese',
+}
+
+const SUGAR_CONCLUSION_KEYS = {
+  'Rendah': 'healthStatus.sugarLow',
+  'Normal': 'healthStatus.normal',
+  'Tinggi': 'healthStatus.sugarHigh',
+  'Tidak ada': 'healthStatus.none',
+}
+
+const SUGAR_DESCRIPTION_KEYS = {
+  'Kadar gula Anda rendah.': 'healthStatus.sugarLowDesc',
+  'Kadar gula Anda normal.': 'healthStatus.sugarNormalDesc',
+  'Kadar gula Anda tinggi.': 'healthStatus.sugarHighDesc',
+}
+
+function translateLabel(value, map, t) {
+  if (!value) return ''
+  const key = map[value]
+  return key ? t(key) : value
+}
+
+export function translateBmiStatus(status, t = (key) => key) {
+  return translateLabel(status, BMI_STATUS_KEYS, t)
+}
+
+export function translateSugarConclusion(conclusion, t = (key) => key) {
+  return translateLabel(conclusion, SUGAR_CONCLUSION_KEYS, t)
+}
+
+export function translateSugarDescription(description, t = (key) => key) {
+  return translateLabel(description, SUGAR_DESCRIPTION_KEYS, t)
+}
+
 export function passwordStrength(pw, t = (key) => key) {
   if (!pw) return { score: 0, label: '', color: '' }
   let score = 0

@@ -83,6 +83,19 @@
     "passwordMismatch": "As senhas nao coincidem",
     "passwordUnchanged": "A nova senha deve ser diferente da senha atual"
   },
+  "healthStatus": {
+    "severelyUnderweight": "Muito abaixo do peso",
+    "underweight": "Abaixo do peso",
+    "normal": "Normal",
+    "overweight": "Sobrepeso",
+    "obese": "Obesidade",
+    "sugarLow": "Baixo",
+    "sugarHigh": "Alto",
+    "none": "Nao disponivel",
+    "sugarLowDesc": "Seu nivel de acucar no sangue esta baixo.",
+    "sugarNormalDesc": "Seu nivel de acucar no sangue esta normal.",
+    "sugarHighDesc": "Seu nivel de acucar no sangue esta alto."
+  },
   "passwordStrength": {
     "weak": "Fraco",
     "medium": "Medio",
@@ -229,7 +242,9 @@
     "period7d": "7d",
     "period30d": "30d",
     "vitalHistory": "Histórico de Sinais Vitais",
-    "noVitalHistory": "Nenhum histórico de sinais vitais ainda"
+    "noVitalHistory": "Nenhum histórico de sinais vitais ainda",
+    "current": "Atual",
+    "past": "Anterior"
   },
   "money": {
     "title": "Gerenciador de Dinheiro",

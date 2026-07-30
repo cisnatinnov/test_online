@@ -163,22 +163,20 @@ For **authenticated users**, it shows:
 
 **Page:** `/profile`
 
-View and edit your identity information, change your password, and monitor personal health data.
+View and edit your identity information and change your password.
 
-1. **Identity Card** shows your profile information:
-   - Name, NIK, Height, Place of Birth, Date of Birth, Address, Gender
-   - Click the **edit icon** to modify any field inline
-   - Changes are saved per-field (no form submit)
+1. **Identity Cards** — each field (name, NIK, height, birthplace, birthdate, address, gender) is shown in its own card. Click the **Edit** button on any card to open an inline form with Save/Cancel. Live validation rules:
+   - **Name**: required
+   - **NIK**: must be 1-20 digits only
+   - **Height**: must be 1-300 cm
+   - **Birthdate**: must not be in the future, must be a valid date
+   - Save is blocked while any field has an error
 2. **Change Password** section:
-   - Enter your **current password** and a **new password** (must meet password rules)
+   - **Current Password** — required, must not be empty
+   - **New Password** — required, must meet full password rules (min 8 chars, uppercase, lowercase, digit, symbol). A rules checklist and strength bar (red→orange→green) update as you type.
+   - **Confirm New Password** — required, must match the new password; also checked against current password to prevent reuse
+   - All three fields validate on input and on blur; save is blocked while any error is visible
    - After successful change, you are logged out and redirected to `/login` (all sessions invalidated)
-3. **Health Metrics** shows color-coded cards:
-   - **BMI** - latest BMI value and category
-   - **Blood Sugar** - latest blood sugar reading and conclusion
-   - **Blood Pressure** - latest systolic/diastolic reading
-4. **BMI History** table - last 10 BMI records with date, weight, BMI value, and result
-5. **Blood Sugar History** table - last 10 blood sugar records with date, value, and conclusion
-6. **Vital Signs History** table - last 10 readings with BP, heart rate, temperature, SpO2, and respiratory rate
 
 ---
 
@@ -204,6 +202,7 @@ Non-admin users see only their own patients' data. Admin users can see all patie
 
 **Main content area** on the right:
 
+- **Patient Chip**: Shows the selected patient's name, age, and gender above the metric cards
 - **Metric Cards**: Color-coded cards for each recorded vital sign:
   - **Green** = Normal
   - **Orange** = Low / Underweight
@@ -212,6 +211,7 @@ Non-admin users see only their own patients' data. Admin users can see all patie
   - Normal: Green
   - Underweight (Kurus / Sangat kurus): Orange
   - Overweight (Gemuk / Obesitas): Red
+- **Blood Sugar Card**: Shows the latest value with colored conclusion label (Rendah/Normal/Tinggi); the conclusion is translated to the selected language
 - **Overall Status Badge**: "All Normal" (green) or "Abnormal Detected" (red)
 
 ### Health History
@@ -220,11 +220,11 @@ History sections are **hidden by default**. Click on the corresponding **metric 
 
 Each history table shows the last 10 readings:
 
-**BMI History**: Shows date, weight (kg), BMI value, and category status (color-coded).
+**BMI History**: Shows date, weight (kg), BMI value, and category status (color-coded). The category label is translated to the selected language.
 
-**Blood Sugar History**: Shows date, blood sugar (mg/dL), and conclusion (color-coded).
+**Blood Sugar History**: Shows date, blood sugar (mg/dL), conclusion (color-coded), and description sub-line. The conclusion and description are translated to the selected language.
 
-**Vital Signs History**: Shows date, BP with status flag, heart rate (HR), temperature (Temp), SpO2, and respiratory rate (Resp) with abbreviation labels and color-coded status badges (Low/Normal/High) on each data cell.
+**Vital Signs History**: Shows date, BP with status flag, heart rate (HR), temperature (Temp), SpO2, and respiratory rate (Resp) with abbreviation labels and color-coded status badges (Low/Normal/High) on each data cell. A **Status** badge column distinguishes current (highlighted row) from past readings. Every row is evaluated server-side using the patient's age and gender, so badges reflect age/gender-appropriate thresholds (e.g., pediatric PALS for BP, wider female HR band, elderly RR band).
 
 ### API Traffic Dashboard
 
@@ -240,7 +240,7 @@ Admin users can view API traffic statistics for the health monitoring system:
 
 ## Blood Sugar Check
 
-Blood sugar can also be recorded and tracked. The evaluation uses age-based thresholds:
+Blood sugar can also be recorded and tracked. The evaluation uses age-based thresholds (sex-independent; thresholds are identical for male and female patients):
 
 | Age | Normal Range |
 |-----|-------------|
@@ -251,6 +251,8 @@ Results:
 - **Rendah** (Low) - below 70 mg/dL
 - **Normal** - within the age-appropriate range
 - **Tinggi** (High) - above the threshold
+
+The conclusion and description labels follow the selected UI language (translated client-side from canonical Indonesian strings).
 
 ---
 
@@ -597,6 +599,8 @@ Non-admin users can only view their own patients' data. Admin can view all patie
 - View historical BMI, blood sugar, and vital signs records for a specific patient
 - Age is computed from the patient's identity birthdate at query time
 - **Ownership verified**: non-admin users can only access history for identities they own; admin can access all
+- BMI result labels and blood sugar conclusion/description labels are translated to the selected UI language (stored as Indonesian, translated client-side)
+- Blood sugar history includes a description sub-line explaining the conclusion (e.g., "Gula Darah Anda Rendah")
 
 ---
 
@@ -811,6 +815,9 @@ The app supports 5 languages:
 3. The language changes immediately
 4. Your preference is saved in localStorage and persists across sessions
 5. Default language is English (UK) (en-GB)
+
+### Health Label Translation
+Health evaluation labels — BMI status categories (Sangat kurus / Kurus / Normal / Gemuk / Obesitas), blood sugar conclusions (Rendah / Normal / Tinggi), and blood sugar descriptions (e.g., "Gula Darah Anda Rendah") — are stored as canonical Indonesian strings in the database and translated client-side to the selected language. Switching the UI language instantly translates all displayed health labels across the Health Monitor and History pages. If a label value is unrecognized, the raw database string is shown as a fallback.
 
 ---
 

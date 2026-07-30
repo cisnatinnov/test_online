@@ -4,6 +4,9 @@ const {
   hitungKriteriaGula,
   buildSugarCriteria,
   formatPatientResponse,
+  evalBloodPressure,
+  evalHeartRate,
+  evalRespiratoryRate,
 } = require('../utils/helpers');
 
 describe('calculateAge', () => {
@@ -60,6 +63,21 @@ describe('hitungKesimpulan', () => {
     const result = hitungKesimpulan(65, 170);
     expect(result.bmi).toMatch(/^\d+\.\d{2}$/);
   });
+
+  test('elderly (>= 60) uses 22-27 normal range', () => {
+    // BMI ~21: Normal for adults, Kurus for elderly
+    expect(hitungKesimpulan(60.7, 170, 65).status).toBe('Kurus');
+    // BMI ~26: Gemuk for adults, Normal for elderly
+    expect(hitungKesimpulan(75.2, 170, 70).status).toBe('Normal');
+  });
+
+  test('children (2-17) use sex-specific pediatric cutoffs', () => {
+    // BMI ~23 at age 14: above boys overweight cutoff (22.8), below girls (23.3)
+    expect(hitungKesimpulan(66.5, 170, 14, 'Male').status).toBe('Gemuk');
+    expect(hitungKesimpulan(66.5, 170, 14, 'Female').status).toBe('Normal');
+    // defaults to boys cutoffs when gender is not provided
+    expect(hitungKesimpulan(66.5, 170, 14).status).toBe('Gemuk');
+  });
 });
 
 describe('hitungKriteriaGula', () => {
@@ -95,6 +113,40 @@ describe('hitungKriteriaGula', () => {
     const result = hitungKriteriaGula(55, 115);
     expect(result.label).toBe('Tinggi');
     expect(result.colorClass).toBe('sugar-high');
+  });
+});
+
+describe('evalBloodPressure', () => {
+  test('adult bands unchanged when age provided', () => {
+    expect(evalBloodPressure(118, 75, 30).label).toBe('Normal');
+    expect(evalBloodPressure(85, 55, 30).label).toBe('Rendah');
+  });
+
+  test('children use PALS-based thresholds', () => {
+    // age 8: low < 86 systolic (70 + 2*8)
+    expect(evalBloodPressure(65, 40, 8).label).toBe('Rendah');
+    expect(evalBloodPressure(100, 60, 8).label).toBe('Normal');
+    // age 8: high > 116 systolic (100 + 2*8)
+    expect(evalBloodPressure(120, 60, 8).label).toBe('Tinggi');
+  });
+});
+
+describe('evalHeartRate', () => {
+  test('adult female normal band extends to 105', () => {
+    expect(evalHeartRate(102, 30, 'Female').label).toBe('Normal');
+    expect(evalHeartRate(102, 30, 'Male').label).toBe('Tinggi (Takikardia)');
+    expect(evalHeartRate(102, 30).label).toBe('Tinggi (Takikardia)');
+  });
+
+  test('child/infant bands unaffected by gender', () => {
+    expect(evalHeartRate(110, 5, 'Female').label).toBe('Normal');
+  });
+});
+
+describe('evalRespiratoryRate', () => {
+  test('elderly (>= 65) band extends to 24', () => {
+    expect(evalRespiratoryRate(22, 70).label).toBe('Normal');
+    expect(evalRespiratoryRate(22, 40).label).toBe('Tinggi (Takipnea)');
   });
 });
 

@@ -5,13 +5,15 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 ## Features
 
 ### Health Monitoring
-- **BMI Calculator**: Calculate and track Body Mass Index with category classification (Sangat kurus / Kurus / Normal / Gemuk / Obesitas)
-- **Blood Sugar Monitor**: Track blood sugar levels with age-based threshold evaluation
-- **Vital Signs Monitor**: Blood pressure (systolic/diastolic), heart rate, body temperature, SpO2, respiratory rate with clinical evaluation
+- **BMI Calculator**: Calculate and track Body Mass Index with age- and gender-based category classification — adult WHO (18-59), elderly normal range 22-27 (>=60), pediatric sex-specific Cole/IOTF cutoffs (2-17)
+- **Blood Sugar Monitor**: Track blood sugar levels with age-based threshold evaluation (sex-independent: age < 50 normal 70-100, age >= 50 normal 70-110)
+- **Vital Signs Monitor**: Blood pressure, heart rate, body temperature, SpO2, respiratory rate with age- and gender-based clinical evaluation — PALS pediatric BP thresholds (1-12), AHA adult BP bands, HR with wider adult female band (105 bpm upper), RR with elderly band (>=65)
 - **Health Risk Assessment**: Composite risk scoring from BMI, blood sugar, vital signs, and age factors
 - **Health Trend Analysis**: Track BMI, blood sugar, and vital signs trends over time per patient
 - **Health Alerts**: Flag patients with high-risk health status
 - **Population Statistics**: BMI, blood sugar, vital signs, and risk distribution across all patients
+- **Past/Current Vital Signs History**: Vital signs history rows show past/current status badges (current row highlighted); every row is evaluated server-side using the patient's age and gender
+- **i18n Health Labels**: BMI status, blood sugar conclusion, and blood sugar description are stored as canonical Indonesian strings and translated client-side to the selected language (all 5 locales)
 - **API Traffic Tracking**: Monitor API request logs with method, path, status, response time, and user info
 - **Accessible to All Users**: The Health Monitor page (`/health`) is accessible to all authenticated users (non-admin sees only own patients); API traffic dashboard section remains admin-only
 - **Sidebar Navigation**: All authenticated pages now use a unified sidebar navigation component (`Sidebar.vue`) with sectioned links (main menu, admin items, extra items), language switcher, and logout. Sidebar supports collapse/expand toggle (persisted in localStorage) for compact icon-only mode on desktop
@@ -20,6 +22,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **5 Language Options**: English (UK), English (US), Bahasa Indonesia, Espanol, Portugues
 - **Language Preference**: Saved in localStorage and persists across sessions
 - **Language Switcher**: Dropdown select component available on login, register, and sidebar on all authenticated pages
+- **Health Label Translation**: BMI status categories, blood sugar conclusions, and blood sugar descriptions translated in all 5 locales with unknown-value fallback
 
 ### Progressive Web App (PWA)
 - **Installable**: Can be installed on Android and iOS devices
@@ -44,6 +47,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 
 ### Input Validation
 - **Field Length Limits**: Username (50), email (255), password (128) max length validation
+- **Profile Identity Validation**: Name (required), NIK (1-20 digits), height (1-300 cm), birthdate (not in the future) — enforced on both frontend (live per-field) and backend (PUT /api/identities/:id)
+- **Change Password Validation**: Live per-field with full rules checklist (min 8, uppercase, lowercase, digit, symbol), strength progress bar, confirm-match check, and unchanged-password detection
 - **Chat Message Cap**: Chat messages limited to 5000 characters
 - **Room Membership Verification**: Verified before join/send operations
 
@@ -107,7 +112,7 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - PDF includes: summary (total expense, saving, balance), itemized tables with date, category, description, and amount
 
 ### Frontend (Vue 3 SPA)
-- **Health Monitor Page**: Record vitals (BP, HR, temp, SpO2, resp rate), BMI, and blood sugar via separate input cards; color-coded metric cards with previous data labels (low/yellow, normal/green, high/red); click on metric cards to toggle corresponding history sections (BMI, blood sugar, vital signs) — hidden by default, shown on click with chevron hint; BP status flags and color-coded status badges on each vital sign data cell (HR, Temp, SpO2, Resp: Low/Normal/High); API traffic dashboard with request logs, hourly charts, and status breakdowns (admin-only API traffic section). Patient auto-selected for non-admin users; `identity_id` auto-resolved from user's identity for non-admin. Accepts `?identity=` query param for admin direct navigation to a specific patient.
+- **Health Monitor Page**: Record vitals (BP, HR, temp, SpO2, resp rate), BMI, and blood sugar via separate input cards; color-coded metric cards with previous data labels (low/yellow, normal/green, high/red); click on metric cards to toggle corresponding history sections (BMI, blood sugar, vital signs) — hidden by default, shown on click with chevron hint; BP status flags and color-coded status badges on each vital sign data cell (HR, Temp, SpO2, Resp: Low/Normal/High); vital signs history includes a past/current Status badge column with the current row visually highlighted; every history row is evaluated server-side using the patient's age and gender and rendered with appropriate badges; patient name, age, and gender chip shown above the dashboard; API traffic dashboard with request logs, hourly charts, and status breakdowns (admin-only API traffic section). Patient auto-selected for non-admin users; `identity_id` auto-resolved from user's identity for non-admin. Accepts `?identity=` query param for admin direct navigation to a specific patient. Health status labels (BMI status, sugar conclusion/description) follow the selected UI language via client-side translation.
 - **Money Dashboard Page**: Expense/saving CRUD, category dropdowns (from Category API), category breakdowns, trend charts, financial summary
 - **Estate View Page**: Create estates, plant trees, view canvas visualization, stats, drone plans
 - **Chat Page**: Real-time messaging with chat rooms, online users, typing indicators
@@ -325,6 +330,7 @@ npm test
 | `npm run dev:all` | Both concurrently |
 | `npm run build:fe` | Build SPA to `client/dist/` |
 | `npm test` | Run backend unit tests |
+| `cd client && npm test` | Run frontend unit tests |
 
 Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://localhost:5173`. Vite proxies `/api` requests to `http://localhost:3000`.
 
@@ -491,6 +497,8 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 ## BMI Categories
 
+### Adults (18-59) — WHO
+
 | BMI Range | Category |
 |-----------|----------|
 | < 17 | Sangat kurus (Severely underweight) |
@@ -498,6 +506,18 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | 18.5 - < 25 | Normal |
 | 25 - 27 | Gemuk (Overweight) |
 | > 27 | Obesitas (Obese) |
+
+### Elderly (>=60)
+
+| BMI Range | Category |
+|-----------|----------|
+| < 22 | Outside normal |
+| 22 - 27 | Normal |
+| > 27 | Outside normal |
+
+### Children (2-17, sex-specific Cole/IOTF cutoffs)
+
+BMI classification uses age- and sex-specific percentile-based thresholds. The evaluation code interpolates Cole cutoffs per year of age for male and female separately. Evaluations return the same Indonesian labels. Falls back to adult WHO categories for age < 2.
 
 ## Blood Sugar Thresholds
 
@@ -508,7 +528,7 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 
 ## Vital Signs Reference
 
-### Blood Pressure (AHA Classification)
+### Blood Pressure (AHA Classification, 13+ years)
 
 | Category | Systolic (mmHg) | Diastolic (mmHg) |
 |----------|-----------------|-------------------|
@@ -519,13 +539,16 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 | High Stage 2 | 140-180 | 90-120 |
 | Crisis | > 180 | > 120 |
 
+**Children 1-12 yrs** use PALS hypotensive thresholds: systolic < 70 (age 1-10) or < 90 (age 11-12) flagged as Low; otherwise Normal.
+
 ### Heart Rate (bpm)
 
 | Age | Normal Range |
 |-----|-------------|
 | Infant (< 1 yr) | 100 - 160 |
 | Child (< 12 yrs) | 70 - 120 |
-| Adult | 60 - 100 |
+| Adult (male) | 60 - 100 |
+| Adult (female) | 60 - 105 |
 
 ### Body Temperature
 
@@ -551,7 +574,8 @@ Backend runs at `http://localhost:3000`. Frontend dev server runs at `http://loc
 |-----|-------------|
 | Infant (< 1 yr) | 30 - 60 |
 | Child (< 12 yrs) | 18 - 30 |
-| Adult | 12 - 20 |
+| Adult (13-64) | 12 - 20 |
+| Elderly (>= 65) | 12 - 24 |
 
 ## Health Risk Scoring
 
@@ -603,7 +627,7 @@ Risk score is calculated from combined BMI, blood sugar, vital signs, and age fa
 | `/register` | RegisterView | Public | Registration with patient identity |
 | `/verify-2fa` | Verify2FAView | Public | 2FA verification (email or WhatsApp) |
 | `/` | DashboardView | Public | Landing page / main hub. Welcome greeting with avatar, feature navigation cards (health, money, estate, chat, library, tools); admin-only "Patient Data" card when authenticated |
-| `/profile` | ProfileView | Auth | User profile: view and edit identity info (name, NIK, height, birthplace, birthdate, address, gender), change password with logout redirect |
+| `/profile` | ProfileView | Auth | User profile: view identity cards; per-card edit form with live input validation (name required, NIK 1-20 digits, height 1-300 cm, birthdate not future); change password with live strength checklist + progress bar + confirm-match validation; logout redirect |
 | `/health` | HealthMonitorView | Auth | Record vitals, BMI, and blood sugar via separate input cards with previous data labels; click metric cards to toggle history sections; admin API traffic dashboard; accepts `?identity=` query param |
 | `/money` | MoneyDashboardView | Auth | Expense/saving CRUD, category breakdowns, trend charts |
 | `/estate` | EstateView | Auth | Estate CRUD, tree planting, canvas visualization, drone plans |
@@ -619,19 +643,19 @@ Risk score is calculated from combined BMI, blood sugar, vital signs, and age fa
 npm test
 ```
 
-Runs 62 unit tests covering:
+Runs 69 unit tests covering:
 - Estate API (24 tests) - estate CRUD, tree CRUD, stats, drone plan, max_distance (SQLite in-memory)
-- Helper functions (BMI calculation, blood sugar evaluation, age calculation, formatting)
+- Helper functions (BMI calculation, blood sugar evaluation, vital sign evaluation, age/gender-based evaluation rules, formatting)
 - History date formatting
 - API response middleware
 - JWT authentication middleware
 - Role-based authorization middleware
 
 ```bash
-cd client && npx vitest run
+cd client && npm test
 ```
 
-Runs 8 frontend tests covering frontend helper functions.
+Runs 25 frontend tests covering frontend helper functions (validation, formatting, BMI/blood sugar label translation).
 
 ## License
 

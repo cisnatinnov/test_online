@@ -40,7 +40,7 @@ exports.getAllData = async (req, res) => {
       const bmiRow = bmiMap[identity.id];
       const sugarRow = sugarMap[identity.id];
       const age = calculateAge(identity.birthdate) ?? bmiRow?.age ?? sugarRow?.age ?? null;
-      const kes = hitungKesimpulan(Number(bmiRow?.weight), Number(identity.height));
+      const kes = hitungKesimpulan(Number(bmiRow?.weight), Number(identity.height), age, identity.gender);
       const sugarCriteria = buildSugarCriteria(sugarRow?.conclusion, sugarRow?.description);
       return formatPatientResponse(identity, bmiRow, sugarRow, kes, sugarCriteria);
     });

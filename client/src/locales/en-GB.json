@@ -83,6 +83,19 @@
     "passwordMismatch": "Passwords do not match",
     "passwordUnchanged": "New password must be different from current password"
   },
+  "healthStatus": {
+    "severelyUnderweight": "Severely underweight",
+    "underweight": "Underweight",
+    "normal": "Normal",
+    "overweight": "Overweight",
+    "obese": "Obese",
+    "sugarLow": "Low",
+    "sugarHigh": "High",
+    "none": "None",
+    "sugarLowDesc": "Your blood sugar is low.",
+    "sugarNormalDesc": "Your blood sugar is normal.",
+    "sugarHighDesc": "Your blood sugar is high."
+  },
   "passwordStrength": {
     "weak": "Weak",
     "medium": "Medium",
@@ -235,7 +248,9 @@
     "period7d": "7d",
     "period30d": "30d",
     "vitalHistory": "Vital Signs History",
-    "noVitalHistory": "No vital signs history yet"
+    "noVitalHistory": "No vital signs history yet",
+    "current": "Current",
+    "past": "Past"
   },
   "money": {
     "title": "Money Manager",

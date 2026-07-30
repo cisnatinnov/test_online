@@ -31,7 +31,7 @@ exports.createBMI = async (req, res) => {
     }
 
     const age = calculateAge(identity.birthdate);
-    const kesimpulan = hitungKesimpulan(Number(weight), Number(identity.height));
+    const kesimpulan = hitungKesimpulan(Number(weight), Number(identity.height), age, identity.gender);
 
     const bmi = await sequelize.transaction(async (t) => {
       await BMI.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' }, transaction: t });
@@ -73,7 +73,7 @@ exports.updateBMI = async (req, res) => {
     }
 
     const age = calculateAge(identity.birthdate);
-    const kesimpulan = hitungKesimpulan(Number(weight), Number(identity.height));
+    const kesimpulan = hitungKesimpulan(Number(weight), Number(identity.height), age, identity.gender);
 
     const bmi = await sequelize.transaction(async (t) => {
       await BMI.update({ status: 'past' }, { where: { id_identity: identity.id, status: 'current' }, transaction: t });
@@ -118,7 +118,7 @@ exports.getBMIList = async (req, res) => {
       const age = calculateAge(identity.birthdate) ?? bmiRow?.age ?? sugarRow?.age ?? null;
       const sugarCriteria = buildSugarCriteria(sugarRow?.conclusion, sugarRow?.description);
       if (bmiRow) {
-        const kes = hitungKesimpulan(Number(bmiRow.weight), Number(identity.height));
+        const kes = hitungKesimpulan(Number(bmiRow.weight), Number(identity.height), age, identity.gender);
         formattedData.push(formatPatientResponse(identity, bmiRow, sugarRow, kes, sugarCriteria));
       } else {
         formattedData.push(formatPatientResponse(identity, bmiRow, sugarRow, null, sugarCriteria));

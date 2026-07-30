@@ -83,6 +83,19 @@
     "passwordMismatch": "Kata sandi tidak cocok",
     "passwordUnchanged": "Kata sandi baru harus berbeda dari kata sandi saat ini"
   },
+  "healthStatus": {
+    "severelyUnderweight": "Sangat kurus",
+    "underweight": "Kurus",
+    "normal": "Normal",
+    "overweight": "Gemuk",
+    "obese": "Obesitas",
+    "sugarLow": "Rendah",
+    "sugarHigh": "Tinggi",
+    "none": "Tidak ada",
+    "sugarLowDesc": "Kadar gula Anda rendah.",
+    "sugarNormalDesc": "Kadar gula Anda normal.",
+    "sugarHighDesc": "Kadar gula Anda tinggi."
+  },
   "passwordStrength": {
     "weak": "Lemah",
     "medium": "Sedang",
@@ -229,7 +242,9 @@
     "period7d": "7h",
     "period30d": "30h",
     "vitalHistory": "Riwayat Tanda Vital",
-    "noVitalHistory": "Belum ada riwayat tanda vital"
+    "noVitalHistory": "Belum ada riwayat tanda vital",
+    "current": "Terkini",
+    "past": "Sebelumnya"
   },
   "money": {
     "title": "Manajer Keuangan",

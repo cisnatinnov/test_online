@@ -34,19 +34,21 @@
 3. **2FA Verification** (email or WhatsApp channel)
 4. **Dashboard** (public landing page) with sidebar navigation (Home, profile, health, money, estate, chat, library, categories, tools, language, logout) and welcome feature cards linking to each page; admin-only Patient Data card
 5. **Profile** (via `/profile` ProfileView):
-   - a. View and edit identity info (name, NIK, height, birthplace, birthdate, address, gender)
-   - b. Change password with logout redirect (password invalidated on all sessions)
-   - c. Personal health monitoring: BMI history, blood sugar history, vital signs history
-   - d. Color-coded metric cards for latest health data
+   - a. View identity cards (name, NIK, height, birthplace, birthdate, address, gender); per-card edit form with live input validation (name required, NIK 1-20 digits, height 1-300 cm, birthdate not in the future); save blocked while errors exist; `PUT /api/identities/:id` re-validates the same rules server-side
+   - b. Change password with live per-field validation (required fields, full password rules checklist + strength bar, confirm-match, new password must differ from current); logout redirect after success (password invalidated on all sessions)
 6. **Health Features** (via `/health` HealthMonitorView):
    - a. Record vitals (BP, heart rate, temperature, SpO2, respiratory rate), BMI (weight), and blood sugar via separate input cards
    - b. Each input card shows the most recent recorded value with a color-coded label (low/yellow, normal/green, high/red)
    - c. Patient auto-selected for non-admin users; admin sees patient dropdown; supports `?identity=` query param for direct navigation
    - d. Color-coded metric cards: green (normal), orange (low/underweight), red (high/overweight); click card to toggle history
    - e. History sections hidden by default; clicking the corresponding metric card reveals the last 10 readings for BMI, blood sugar, and vital signs separately with BP status flags (low/normal/high) and color-coded status badges on each vital sign data cell (HR, Temp, SpO2, Resp)
-   - f. System health checks (DB, memory, CPU, uptime)
-   - g. API traffic dashboard with request logs, hourly charts, status/method breakdowns
-6. **Blood Sugar** - track with age-based thresholds (Rendah/Normal/Tinggi)
+   - f. Vital signs history rows show a past/current status badge (current row highlighted); every row is evaluated server-side using the patient's age and gender
+   - g. Age- and gender-based evaluation: BMI uses sex-specific pediatric cutoffs (2-17, Cole-style interpolated), elderly (>= 60) normal range 22-27, and adult WHO-style categories; blood pressure uses PALS pediatric thresholds (1-12) and ACC/AHA adult bands; heart rate uses infant/child/adult bands with a slightly wider adult female band (60-105); respiratory rate adds an elderly band (12-24); blood sugar keeps the age >= 50 threshold (+10 mg/dL)
+   - h. Patient age and gender shown above the health dashboard
+   - i. BMI status, blood sugar conclusion, and blood sugar description are stored as canonical Indonesian strings and translated client-side to the selected language (all 5 locales) at display time
+   - j. System health checks (DB, memory, CPU, uptime)
+   - k. API traffic dashboard with request logs, hourly charts, status/method breakdowns
+15. **Blood Sugar** - track with age-based thresholds (Rendah/Normal/Tinggi; sex-independent; thresholds age-based: age < 50 normal 70-100, age >= 50 normal 70-110)
 7. **Money Management** (via `/money` MoneyDashboardView):
    - a. Expense CRUD with amount, category, description, date
    - b. Saving CRUD with amount, category, description, date
@@ -106,6 +108,16 @@
 - Login page only validates when input contains `@` (allows plain username login)
 - Real-time validation on blur and input with red border and error message
 
+## Profile Validation
+
+- **Name**: required, non-empty string
+- **NIK**: 1-20 digits only
+- **Height**: integer 1-300 cm
+- **Gender**: one of L/P (validated server-side only, uses HTML select client-side)
+- **Birthdate**: ISO date, must not be in the future
+
+Both client-side (ProfileView form) and server-side (`identityController.updateIdentity`) enforce these rules.
+
 ## Architecture
 
 - **ORM**: Sequelize (no raw queries)
@@ -128,7 +140,7 @@
 - **Category Management**: Spending/saving categories with CRUD operations, duplicate name prevention (unique constraint on name+type)
 - **PWA**: vite-plugin-pwa with Workbox, auto-update service worker, offline caching for static assets
 - **Separation**: FE and BE can run independently via `npm run dev` (BE) and `npm run dev:fe` (FE), or together via `npm run dev:all`
-- **Tests**: Jest + Supertest (62 backend tests), Vitest (8 frontend tests)
+- **Tests**: Jest + Supertest (69 backend tests), Vitest (25 frontend tests)
   - Estate tests use SQLite in-memory (no PostgreSQL dependency)
   - Other backend tests use mocked/unit-tested functions
 
@@ -186,11 +198,11 @@
 - `GET /stats?period=24h` - API traffic stats with period filtering (1h, 24h, 7d, 30d): total requests, avg response time, status breakdown, method breakdown, hourly traffic, 50 most recent requests with user info
 
 ### Vital Signs (`/api/vital-signs` - auth required, data isolation)
-- `POST /` - Create vital signs record (BP, heart rate, temp, SpO2, respiratory rate), marks previous as past; identity_id auto-resolved for non-admin users
-- `PUT /:identityId` - Update vital signs record
-- `GET /latest/:identityId` - Get latest vital signs with clinical evaluation
-- `GET /list` - List all patients with latest vital signs and evaluation
-- `GET /history/:identityId` - Vital signs history (ownership verified; admin sees all)
+- `POST /` - Create vital signs record (BP, heart rate, temp, SpO2, respiratory rate), marks previous as past; identity_id auto-resolved for non-admin users; response includes patient age + gender
+- `PUT /:identityId` - Update vital signs record; response includes patient age + gender
+- `GET /latest/:identityId` - Get latest vital signs with clinical evaluation; response includes patient age + gender
+- `GET /list` - List all patients with latest vital signs and evaluation; each entry includes patient age + gender
+- `GET /history/:identityId` - Vital signs history (ownership verified; admin sees all); each row includes `status` (current/past), server-side `evaluation` (BP, HR, RR, temp, SpO2), and `identity.age` + `identity.gender`
 
 ### Patient Health (`/api/patient-health` - auth required)
 - `GET /risk/:identityId` - Composite health risk score (0-10) from BMI, blood sugar, vital signs, and age. Levels: rendah (0-2), sedang (3-4), tinggi (5+)
@@ -287,7 +299,13 @@
 
 ## Vital Signs Evaluation
 
-### Blood Pressure (AHA)
+### Blood Pressure
+
+**Children (1-12 yrs, PALS hypotensive threshold)**
+- Hypotensive: systolic < 70 (age 1-10) or systolic < 90 (age 11-12)
+- Normal: systolic >= threshold and not hypotensive
+
+**Adults (13-59) and Elderly (>=60) — AHA**
 - Low: systolic < 90 or diastolic < 60
 - Normal: systolic 90-120 and diastolic 60-80
 - Elevated: systolic 121-129 and diastolic < 80
@@ -298,7 +316,8 @@
 ### Heart Rate
 - Infant (<1yr): 100-160 bpm
 - Child (<12yrs): 70-120 bpm
-- Adult: 60-100 bpm
+- Adult male: 60-100 bpm
+- Adult female: 60-105 bpm
 
 ### Body Temperature
 - Hypothermia: < 35.0C
@@ -315,15 +334,28 @@
 ### Respiratory Rate
 - Infant (<1yr): 30-60 /min
 - Child (<12yrs): 18-30 /min
-- Adult: 12-20 /min
+- Adult (13-64): 12-20 /min
+- Elderly (>=65): 12-24 /min
 
 ### BMI Categories
+
+**Adults (18-59)**
 - Sangat kurus: < 17
 - Kurus: 17 - 18.5
 - Normal: 18.5 - < 25
 - Gemuk: 25 - 27
 - Obesitas: > 27
 
+**Elderly (>=60)**
+- Normal: 22 - 27
+- Outside normal: < 22 or > 27
+
+**Children (2-17, sex-specific percentiles — Cole/IOTF)**
+- Male — Sangat kurus: BMI < 17.0 (age 16-17) / < 16.5 (age 14-15) / < 16.0 (age 12-13) / < 15.5 (age 10-11) / < 15.0 (age 8-9) / < 14.5 (age 6-7) / < 14.0 (age 4-5) / < 13.5 (age 2-3)
+- Female — Sangat kurus: BMI < 16.5 (age 16-17) / < 16.0 (age 14-15) / < 15.5 (age 12-13) / < 15.0 (age 10-11) / < 14.5 (age 8-9) / < 14.0 (age 6-7) / < 13.5 (age 4-5) / < 13.0 (age 2-3)
+- Kurus / Normal / Gemuk / Obesitas thresholds similarly use sex-specific Cole cutoffs per age band; pediatric results returned with the same Indonesian labels
+- Falls back to adult WHO categories if age < 2
+
 ### Blood Sugar Thresholds
-- Age < 50: Normal is 70-100 mg/dL
-- Age >= 50: Normal is 70-110 mg/dL
+- Age < 50: Normal is 70-100 mg/dL (sex-independent)
+- Age >= 50: Normal is 70-110 mg/dL (sex-independent)
