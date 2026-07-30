@@ -54,12 +54,12 @@ const statusColors = { borrowed: '#ff9800', returned: '#4caf50', overdue: '#f443
 async function loadBooks() {
   try {
     loading.value = true
-    const params = { page: page.value, limit: 20 }
+    const params = { page: page.value, limit: 10 }
     if (search.value) params.search = search.value
     if (filterCategory.value) params.category = filterCategory.value
     const { data: res } = await api.get('/library', { params })
     books.value = res.data.books
-    totalPages.value = Math.ceil(res.data.total / 20) || 1
+    totalPages.value = Math.ceil(res.data.total / 10) || 1
   } catch { books.value = [] }
   finally { loading.value = false }
 }
@@ -67,9 +67,9 @@ async function loadBooks() {
 async function loadBorrowings() {
   try {
     loading.value = true
-    const { data: res } = await api.get('/library/borrowings', { params: { page: page.value, limit: 20 } })
+    const { data: res } = await api.get('/library/borrowings', { params: { page: page.value, limit: 10 } })
     borrowings.value = res.data.borrowings
-    totalPages.value = Math.ceil(res.data.total / 20) || 1
+    totalPages.value = Math.ceil(res.data.total / 10) || 1
   } catch { borrowings.value = [] }
   finally { loading.value = false }
 }

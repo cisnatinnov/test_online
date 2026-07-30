@@ -1,5 +1,5 @@
 const ALLOWED_LIMITS = [5, 10, 25, 50, 100];
-const DEFAULT_LIMIT = 25;
+const DEFAULT_LIMIT = 10;
 
 function parsePagination(query) {
   let page = parseInt(query.page, 10) || 1;
