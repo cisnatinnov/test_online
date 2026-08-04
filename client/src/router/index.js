@@ -45,6 +45,7 @@ const routes = [
   { path: '/tools/shapes', name: 'tool-shapes', component: () => import('../views/tools/Shapes.vue'), meta: { auth: true } },
   { path: '/tools/text-summarizer', name: 'tool-text-summarizer', component: () => import('../views/tools/TextSummarizer.vue'), meta: { auth: true } },
   { path: '/tools/sentiment-analysis', name: 'tool-sentiment', component: () => import('../views/tools/SentimentAnalysis.vue'), meta: { auth: true } },
+  { path: '/tools/aksara-sunda', name: 'tool-aksara-sunda', component: () => import('../views/tools/AksaraSundaTranslator.vue'), meta: { auth: true } },
 ]
 
 const router = createRouter({ history: createWebHistory(), routes })

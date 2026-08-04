@@ -40,6 +40,12 @@ const categories = [
       { name: 'Text Summarizer', route: 'tool-text-summarizer' },
       { name: 'Sentiment Analysis', route: 'tool-sentiment' },
     ]
+  },
+  {
+    title: 'tools.languageTools',
+    items: [
+      { name: 'Aksara Sunda Translator', route: 'tool-aksara-sunda' },
+    ]
   }
 ]
 </script>

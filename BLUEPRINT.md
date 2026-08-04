@@ -88,6 +88,7 @@
     - b. Math: Shapes Calculator (2D/3D), Equation Grapher, Scientific Calculator, Statistics, Quadratic Function
     - c. NER: Text Summarizer, Sentiment Analysis
     - d. Sentiment Analysis uses the VADER algorithm (vader-sentiment) for real-time text sentiment scoring
+    - e. Aksara Sunda Translator
 16. **System Health Monitoring** (admin-only via FE, DB connectivity, memory usage, CPU usage, uptime, readiness/liveness probes)
 17. **API Traffic Tracking** (admin-only, logs all API requests with method, path, status, response time, user)
 
