@@ -11,11 +11,11 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['vite.svg', 'icons/icon.svg'],
+      includeAssets: ['icons/icon.svg'],
       manifest: {
-        name: 'VitaSuite - Health Monitoring',
-        short_name: 'VitaSuite',
-        description: 'Health monitoring web application with BMI tracking, blood sugar, vital signs, and more',
+        name: 'PEAS - Personal Everyday Assistant System',
+        short_name: 'PEAS',
+        description: 'Personal Everyday Assistant System: AI, health, finances, and everyday essentials',
         theme_color: '#0d1b2a',
         background_color: '#0d1b2a',
         display: 'standalone',
@@ -32,11 +32,7 @@ export default defineConfig({
         runtimeCaching: [
           {
             urlPattern: /^https?:\/\/.*\/api\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: { maxEntries: 100, maxAgeSeconds: 3600 },
-            },
+            handler: 'NetworkOnly',
           },
           {
             urlPattern: /^https?:\/\/.*\/socket\.io\/.*/i,

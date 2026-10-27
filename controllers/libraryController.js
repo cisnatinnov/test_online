@@ -109,7 +109,7 @@ exports.createBook = async (req, res) => {
     if (quantity != null && (!Number.isInteger(quantity) || quantity < 0)) {
       return apiResponse(res, { error: 'Jumlah harus bilangan bulat non-negatif', status: 400 });
     }
-    const qty = quantity || 1;
+    const qty = quantity ?? 1;
     const book = await Book.create({
       title, author, isbn, publisher, year, category, description,
       quantity: qty, available: qty, shelf, condition,
@@ -132,6 +132,9 @@ exports.updateBook = async (req, res) => {
       return apiResponse(res, { error: 'Jumlah harus bilangan bulat non-negatif', status: 400 });
     }
     const diff = quantity != null ? quantity - book.quantity : 0;
+    if (book.available + diff < 0) {
+      return apiResponse(res, { error: 'Jumlah tidak boleh kurang dari buku yang sedang dipinjam', status: 400 });
+    }
     await book.update({
       ...(title != null && { title }),
       ...(author != null && { author }),
@@ -157,7 +160,7 @@ exports.deleteBook = async (req, res) => {
   try {
     const book = await Book.findByPk(req.params.id);
     if (!book) return apiResponse(res, { error: 'Buku tidak ditemukan', status: 404 });
-    const activeBorrowing = await Borrowing.findOne({ where: { book_id: book.id, status: 'borrowed' } });
+    const activeBorrowing = await Borrowing.findOne({ where: { book_id: book.id, status: { [Op.in]: ['borrowed', 'overdue'] } } });
     if (activeBorrowing) {
       return apiResponse(res, { error: 'Buku sedang dipinjam dan tidak bisa dihapus', status: 400 });
     }
@@ -203,7 +206,7 @@ exports.borrowBook = async (req, res) => {
 exports.returnBook = async (req, res) => {
   try {
     const { id, borrowId } = req.params;
-    const borrowing = await Borrowing.findOne({ where: { id: borrowId, book_id: id, status: 'borrowed' } });
+    const borrowing = await Borrowing.findOne({ where: { id: borrowId, book_id: id, status: { [Op.in]: ['borrowed', 'overdue'] } } });
     if (!borrowing) return apiResponse(res, { error: 'Peminjaman tidak ditemukan atau sudah dikembalikan', status: 404 });
     if (req.user.role !== 'admin' && borrowing.user_id !== req.user.id) {
       return apiResponse(res, { error: 'Tidak memiliki akses', status: 403 });

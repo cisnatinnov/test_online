@@ -37,6 +37,9 @@ exports.register = async (req, res) => {
     if (!EMAIL_REGEX.test(email)) {
       return apiResponse(res, { error: 'Format email tidak valid', status: 400 });
     }
+    if (phone != null && phone !== '' && (typeof phone !== 'string' || !/^\+[1-9]\d{6,14}$/.test(phone))) {
+      return apiResponse(res, { error: 'Phone number must include a country code, for example +6281234567890', status: 400 });
+    }
     if (password.length < 8) {
       return apiResponse(res, { error: 'Password minimal 8 karakter', status: 400 });
     }
@@ -123,12 +126,12 @@ function get2FAMailContent(code, lang) {
   const l = (lang || 'en-GB').startsWith('id') ? 'id' : 'en';
   if (l === 'id') {
     return {
-      subject: 'Kode Verifikasi 2FA - VitaSuite',
+      subject: 'Kode Verifikasi 2FA - PEAS',
       html: `<h2>Kode Verifikasi 2FA</h2><p>Gunakan kode berikut untuk masuk:</p><h1 style="letter-spacing:5px;font-size:32px;">${code}</h1><p>Kode berlaku 5 menit.</p>`,
     };
   }
   return {
-    subject: '2FA Verification Code - VitaSuite',
+    subject: '2FA Verification Code - PEAS',
     html: `<h2>2FA Verification Code</h2><p>Use the following code to log in:</p><h1 style="letter-spacing:5px;font-size:32px;">${code}</h1><p>This code expires in 5 minutes.</p>`,
   };
 }
@@ -163,7 +166,7 @@ exports.send2FA = async (req, res) => {
       try {
         const mailContent = get2FAMailContent(code, lang);
         await mt.sendMail({
-          from: process.env.EMAIL_FROM || 'noreply@vitasuite.com',
+          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
           to: decoded.email,
           subject: mailContent.subject,
           html: mailContent.html,

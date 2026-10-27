@@ -1,14 +1,17 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import { postLoginPath } from '../utils/redirect'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { validateEmail, validatePassword, passwordStrength } from '../utils/helpers'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import AuthShell from '../components/AuthShell.vue'
 import api from '../api'
 
 const { t, locale } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
 const form = ref({ username: '', password: '' })
@@ -73,10 +76,10 @@ async function login() {
     const d = res.data
     if (d.require2fa) {
       auth.setTemp2FA(d.tempToken, d.channels)
-      router.push('/verify-2fa')
+      router.push({ path: '/verify-2fa', query: { redirect: postLoginPath(router, route.query.redirect) } })
     } else if (d.token) {
       auth.setAuth(d.token, d.user)
-      router.push('/')
+      router.push(postLoginPath(router, route.query.redirect))
     }
   } catch (e) {
     error.value = e.response?.data?.error || t('flash.loginFailed')
@@ -87,7 +90,7 @@ async function login() {
 </script>
 
 <template>
-  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+  <AuthShell>
     <div class="card" style="width:100%;max-width:400px">
       <div style="display:flex;justify-content:center;margin-bottom:12px"><LanguageSwitcher /></div>
       <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">{{ t('auth.loginTitle') }}</h2>
@@ -97,6 +100,8 @@ async function login() {
           <input
             ref="usernameInput"
             v-model="form.username"
+            :aria-label="t('auth.usernameOrEmail')"
+            autocomplete="username"
             :placeholder="t('auth.usernameOrEmail')"
             required
             :class="['input', touched.username && fieldErrors.username ? 'input-error' : '']"
@@ -110,6 +115,8 @@ async function login() {
           <div style="position:relative">
             <input
               v-model="form.password"
+              :aria-label="t('auth.password')"
+              autocomplete="current-password"
               :type="showPassword ? 'text' : 'password'"
               :placeholder="t('auth.password')"
               required
@@ -157,5 +164,5 @@ async function login() {
         {{ t('auth.noAccount') }} <router-link to="/register">{{ t('auth.signup') }}</router-link>
       </p>
     </div>
-  </div>
+  </AuthShell>
 </template>

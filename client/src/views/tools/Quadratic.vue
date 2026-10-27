@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { preparePlot, drawAxes, clipPlot, plotColors } from '../../utils/plotCanvas'
 
 const router = useRouter()
 const canvasRef = ref(null)
@@ -45,9 +46,7 @@ function calc() {
 
 function drawGraph(a, b, c, vx, vy, x1, x2) {
   const canvas = canvasRef.value; if (!canvas) return
-  const ctx = canvas.getContext('2d')
-  const W = canvas.width, H = canvas.height
-  ctx.clearRect(0, 0, W, H)
+  const { ctx, width: W, height: H } = preparePlot(canvas)
   let xMin, xMax
   if (x1 !== null && x2 !== null) { const sp = Math.abs(x2 - x1) * 0.5 || 2; xMin = Math.min(x1, x2) - sp; xMax = Math.max(x1, x2) + sp }
   else { xMin = vx - 5; xMax = vx + 5 }
@@ -57,68 +56,71 @@ function drawGraph(a, b, c, vx, vy, x1, x2) {
   let yMin = Math.min(...ys, -1); let yMax = Math.max(...ys, 1)
   if (yMax - yMin < 4) { yMin -= 2; yMax += 2 }
   const pad = 0.15 * (yMax - yMin); yMin -= pad; yMax += pad
-  const toX = v => ((v - xMin) / (xMax - xMin)) * W
-  const toY = v => H - ((v - yMin) / (yMax - yMin)) * H
-  ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1
-  const y0 = toY(0); if (y0 > 0 && y0 < H) { ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke() }
-  const x0 = toX(0); if (x0 > 0 && x0 < W) { ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0, H); ctx.stroke() }
-  ctx.fillStyle = '#666'; ctx.font = '11px sans-serif'
-  const xStep = Math.ceil((xMax - xMin) / 10)
-  for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x += xStep) { if (x === 0) continue; ctx.fillText(x, toX(x) + 2, y0 + 14) }
-  const yStep = Math.ceil((yMax - yMin) / 8)
-  for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y += yStep) { if (y === 0) continue; ctx.fillText(y, x0 + 5, toY(y) - 3) }
-  ctx.strokeStyle = '#007BFF'; ctx.lineWidth = 3; ctx.beginPath()
+  const plot = drawAxes(ctx, { width: W, height: H, xMin, xMax, yMin, yMax })
+  const { toX, toY } = plot
+  const y0 = toY(0)
+  clipPlot(ctx, plot)
+  ctx.strokeStyle = plotColors.curve; ctx.lineWidth = 3; ctx.beginPath()
   let started = false
   for (let px = 0; px < W; px++) {
     const x = xMin + (px / W) * (xMax - xMin)
     const py = toY(a * x * x + b * x + c)
     if (py < -100 || py > H + 100) { started = false; continue }
-    if (!started) { ctx.moveTo(px, py); started = true } else ctx.lineTo(px, py)
+    if (!started) { ctx.moveTo(toX(x), py); started = true } else ctx.lineTo(toX(x), py)
   }
   ctx.stroke()
-  ctx.fillStyle = '#e74c3c'
+  ctx.fillStyle = plotColors.vertex
   const vpx = toX(vx), vpy = toY(vy)
   ctx.beginPath(); ctx.arc(vpx, vpy, 6, 0, Math.PI * 2); ctx.fill()
-  ctx.font = 'bold 12px sans-serif'
-  ctx.fillText('Vertex (' + vx.toFixed(2) + ',' + vy.toFixed(2) + ')', vpx + 10, vpy - 10)
-  ctx.fillStyle = '#2ecc71'
+  ctx.font = 'bold 13px system-ui, sans-serif'
+  const vertexLabel = 'Vertex (' + vx.toFixed(2) + ', ' + vy.toFixed(2) + ')'
+  ctx.textAlign = 'left'
+  const labelX = Math.max(plot.left + 6, Math.min(vpx + 10, plot.right - ctx.measureText(vertexLabel).width - 6))
+  ctx.fillText(vertexLabel, labelX, Math.max(plot.top + 16, vpy - 12))
+  ctx.fillStyle = plotColors.root
   if (x1 !== null) { ctx.beginPath(); ctx.arc(toX(x1), y0, 5, 0, Math.PI * 2); ctx.fill() }
   if (x2 !== null) { ctx.beginPath(); ctx.arc(toX(x2), y0, 5, 0, Math.PI * 2); ctx.fill() }
-  ctx.strokeStyle = '#e74c3c44'; ctx.lineWidth = 2; ctx.setLineDash([5, 5])
-  ctx.beginPath(); ctx.moveTo(vpx, 0); ctx.lineTo(vpx, H); ctx.stroke()
+  ctx.strokeStyle = '#ff9d9d80'; ctx.lineWidth = 2; ctx.setLineDash([5, 5])
+  ctx.beginPath(); ctx.moveTo(vpx, plot.top); ctx.lineTo(vpx, plot.bottom); ctx.stroke()
   ctx.setLineDash([])
-  ctx.fillStyle = '#888'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center'
+  ctx.restore()
+  ctx.fillStyle = plotColors.text; ctx.font = '13px system-ui, sans-serif'; ctx.textAlign = 'center'
   ctx.fillText('f(x) = ' + a + 'x² + ' + b + 'x + ' + c, W / 2, 20)
 }
 
-onMounted(() => calc())
+onMounted(() => { calc(); window.addEventListener('resize', calc) })
+onUnmounted(() => window.removeEventListener('resize', calc))
 </script>
 
 <template>
-  <div style="max-width:700px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:700px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="router.push('/')">Home</button>
     </div>
     <h2 style="text-align:center">Quadratic Function</h2>
-    <p style="text-align:center;color:#888;font-size:14px">f(x) = ax² + bx + c</p>
-    <div style="display:grid;grid-template-columns:auto 1fr auto 1fr auto 1fr auto;gap:8px;align-items:center;margin:15px 0">
-      <label style="font-size:18px;font-weight:bold;color:#007BFF">f(x) =</label>
-      <input v-model.number="aVal" type="number" step="any" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:16px;box-sizing:border-box;text-align:center">
-      <label style="font-size:18px;font-weight:bold;color:#007BFF">x² +</label>
-      <input v-model.number="bVal" type="number" step="any" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:16px;box-sizing:border-box;text-align:center">
-      <label style="font-size:18px;font-weight:bold;color:#007BFF">x +</label>
-      <input v-model.number="cVal" type="number" step="any" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:16px;box-sizing:border-box;text-align:center">
-      <button @click="calc" style="padding:10px 18px">Graph</button>
+    <p style="text-align:center;color:var(--text-secondary);font-size:14px">f(x) = ax² + bx + c</p>
+    <div class="quadratic-controls">
+      <label>a<input v-model.number="aVal" aria-label="Coefficient a" type="number" step="any" class="input"></label>
+      <label>b<input v-model.number="bVal" aria-label="Coefficient b" type="number" step="any" class="input"></label>
+      <label>c<input v-model.number="cVal" aria-label="Coefficient c" type="number" step="any" class="input"></label>
+      <button @click="calc">Graph</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0">
-      <div v-for="card in infoCards" :key="card.label" style="background:#f8f9fa;padding:12px;border-radius:8px;border:1px solid #dee2e6">
-        <h4 style="margin:0 0 6px;font-size:13px;color:#666">{{ card.label }}</h4>
+      <div v-for="card in infoCards" :key="card.label" style="background:var(--bg-secondary);padding:12px;border-radius:8px;border:1px solid var(--border-color)">
+        <h4 style="margin:0 0 6px;font-size:13px;color:var(--text-secondary)">{{ card.label }}</h4>
         <p style="margin:2px 0;font-size:14px">{{ card.val }}</p>
       </div>
     </div>
-    <canvas ref="canvasRef" width="650" height="450"
-      style="display:block;margin:15px auto;border:2px solid #444;border-radius:8px;background:#fff"></canvas>
-    <div v-if="showSteps" style="background:#f8f9fa;padding:15px;border-radius:8px;margin:15px 0;line-height:1.8;font-size:14px" v-html="stepsHtml"></div>
+    <canvas ref="canvasRef" width="650" height="450" class="tool-plot" role="img" aria-label="Quadratic graph showing the curve, vertex, roots, and labelled axes"
+      style="display:block;margin:15px auto;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary)"></canvas>
+    <div v-if="showSteps" style="background:var(--bg-secondary);padding:15px;border-radius:8px;margin:15px 0;line-height:1.8;font-size:14px" v-html="stepsHtml"></div>
   </div>
 </template>
+
+<style scoped>
+.quadratic-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 10px; align-items: end; margin: 15px 0; }
+.quadratic-controls label { color: var(--text-secondary); font-size: 14px; }
+.quadratic-controls input { display: block; margin-top: 5px; min-width: 0; text-align: center; }
+@media (max-width: 420px) { .quadratic-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }.quadratic-controls button { grid-column: 1 / -1; } }
+</style>

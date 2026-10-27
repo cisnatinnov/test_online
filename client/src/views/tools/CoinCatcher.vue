@@ -89,7 +89,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div style="max-width:600px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:600px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="router.push('/')">Home</button>

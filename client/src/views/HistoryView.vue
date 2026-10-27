@@ -76,7 +76,7 @@ onMounted(() => { loadBmiHistory(1); loadSugarHistory(1) })
             <td>{{ s.result }}</td>
             <td>
               {{ translateSugarConclusion(s.conclusion, t) || '-' }}
-              <div v-if="s.description" style="font-size:11px;color:#888">{{ translateSugarDescription(s.description, t) }}</div>
+              <div v-if="s.description" style="font-size:11px;color:var(--text-secondary)">{{ translateSugarDescription(s.description, t) }}</div>
             </td>
           </tr>
         </tbody>

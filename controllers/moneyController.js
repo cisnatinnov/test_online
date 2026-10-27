@@ -47,6 +47,9 @@ exports.getExpenses = async (req, res) => {
 exports.updateExpense = async (req, res) => {
   const { id } = req.params;
   const { amount, category, description, date } = req.body;
+  if (amount != null && (!Number.isFinite(Number(amount)) || Number(amount) <= 0)) {
+    return apiResponse(res, { error: 'amount harus berupa angka positif', status: 400 });
+  }
   try {
     const where = { id, ...getUserIdFilter(req) };
     const expense = await Expense.findOne({ where });
@@ -122,6 +125,9 @@ exports.getSavings = async (req, res) => {
 exports.updateSaving = async (req, res) => {
   const { id } = req.params;
   const { amount, category, description, date } = req.body;
+  if (amount != null && (!Number.isFinite(Number(amount)) || Number(amount) <= 0)) {
+    return apiResponse(res, { error: 'amount harus berupa angka positif', status: 400 });
+  }
   try {
     const where = { id, ...getUserIdFilter(req) };
     const saving = await Saving.findOne({ where });

@@ -70,7 +70,7 @@ reset()
 </script>
 
 <template>
-  <div style="max-width:650px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:650px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="reset()">New Game</button>
@@ -88,7 +88,7 @@ reset()
       </div>
       <div style="background:#2a2a3e;padding:10px;border-radius:6px;text-align:center">
         <h4 style="margin:0;font-size:12px;color:#aaa">LVL</h4>
-        <div style="font-size:22px;font-weight:bold;color:#007BFF">{{ lvl }}</div>
+        <div style="font-size:22px;font-weight:bold;color:var(--accent-blue)">{{ lvl }}</div>
       </div>
     </div>
     <div id="raLog" style="height:300px;overflow-y:auto;background:#1a1a2e;color:#c8d6e5;padding:15px;border-radius:8px;margin:15px 0;font-size:14px;line-height:1.6" v-html="logHtml"></div>

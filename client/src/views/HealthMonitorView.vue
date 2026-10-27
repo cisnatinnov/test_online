@@ -484,8 +484,8 @@ function toggleHistory(type) {
                 <button v-for="per in trafficPeriods" :key="per.value" @click="trafficPeriod = per.value; loadTrafficStats()" :style="{ padding:'4px 10px', borderRadius:'6px', border:'none', cursor:'pointer', fontSize:'0.72rem', fontWeight:700, background: trafficPeriod === per.value ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.08)', color: trafficPeriod === per.value ? '#81c784' : '#999' }">{{ t(per.labelKey) }}</button>
               </div>
             </div>
-            <div v-if="trafficLoading" style="text-align:center;padding:20px;color:#666">{{ t('healthMonitor.loading') }}</div>
-            <div v-else-if="!trafficStats" style="text-align:center;padding:20px;color:#666">{{ t('healthMonitor.noData') }}</div>
+            <div v-if="trafficLoading" style="text-align:center;padding:20px;color:var(--text-secondary)">{{ t('healthMonitor.loading') }}</div>
+            <div v-else-if="!trafficStats" style="text-align:center;padding:20px;color:var(--text-secondary)">{{ t('healthMonitor.noData') }}</div>
             <div v-else-if="trafficStats">
               <div class="traffic-kpi-grid">
                 <div class="traffic-kpi">
@@ -501,20 +501,20 @@ function toggleHistory(type) {
                   <span class="traffic-kpi-label">{{ t('healthMonitor.ok200') }}</span>
                 </div>
                 <div class="traffic-kpi">
-                  <span class="traffic-kpi-val" style="color:#ef5350">{{ (trafficStats.statusBreakdown?.[400] || 0) + (trafficStats.statusBreakdown?.[401] || 0) + (trafficStats.statusBreakdown?.[403] || 0) + (trafficStats.statusBreakdown?.[404] || 0) + (trafficStats.statusBreakdown?.[500] || 0) }}</span>
+                  <span class="traffic-kpi-val" style="color:var(--accent-red)">{{ (trafficStats.statusBreakdown?.[400] || 0) + (trafficStats.statusBreakdown?.[401] || 0) + (trafficStats.statusBreakdown?.[403] || 0) + (trafficStats.statusBreakdown?.[404] || 0) + (trafficStats.statusBreakdown?.[500] || 0) }}</span>
                   <span class="traffic-kpi-label">{{ t('healthMonitor.errors') }}</span>
                 </div>
               </div>
 
               <div style="margin-top:14px">
-                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">{{ t('healthMonitor.requestsByMethod') }}</h4>
+                <h4 style="font-size:0.72rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">{{ t('healthMonitor.requestsByMethod') }}</h4>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                   <span v-for="(count, method) in trafficStats.methodBreakdown" :key="method" style="padding:4px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;background:rgba(255,255,255,0.06);color:#bbb">{{ method }}: {{ count }}</span>
                 </div>
               </div>
 
               <div style="margin-top:14px">
-                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">{{ t('healthMonitor.hourlyTraffic') }}</h4>
+                <h4 style="font-size:0.72rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">{{ t('healthMonitor.hourlyTraffic') }}</h4>
                 <div class="traffic-chart">
                   <div v-for="(h, idx) in trafficStats.hourlyTraffic" :key="idx" class="traffic-bar-wrap">
                     <div class="traffic-bar" :style="{ height: Math.max(4, (h.count / Math.max(...trafficStats.hourlyTraffic.map(x => x.count), 1)) * 80) + 'px' }">
@@ -526,7 +526,7 @@ function toggleHistory(type) {
               </div>
 
               <div style="margin-top:14px">
-                <h4 style="font-size:0.72rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">{{ t('healthMonitor.recentRequests') }}</h4>
+                <h4 style="font-size:0.72rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">{{ t('healthMonitor.recentRequests') }}</h4>
                 <div class="traffic-table-wrap">
                   <table class="traffic-table">
                     <thead>
@@ -670,7 +670,7 @@ function toggleHistory(type) {
 .form-stack { display: flex; flex-direction: column; gap: 8px; }
 .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .input-group { display: flex; flex-direction: column; gap: 3px; }
-.input-group label { font-size: 0.72rem; color: #888; font-weight: 600; }
+.input-group label { font-size: 0.72rem; color:var(--text-secondary); font-weight: 600; }
 .input-group input {
   padding: 9px 10px;
   background: rgba(0,0,0,0.3);
@@ -700,7 +700,7 @@ function toggleHistory(type) {
   letter-spacing: 0.5px;
   transition: all 0.2s;
 }
-.btn-primary { background: linear-gradient(135deg, #2e7d32, #66bb6a); color: #fff; }
+.btn-primary { background:var(--accent-green); color: #09231f; }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(46,125,50,0.4); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
@@ -714,7 +714,7 @@ function toggleHistory(type) {
   justify-content: center;
   height: 60vh;
   text-align: center;
-  color: #555;
+  color:var(--text-secondary);
 }
 .hero-icon {
   font-size: 2.5rem;
@@ -748,7 +748,7 @@ function toggleHistory(type) {
   letter-spacing: 0.5px;
 }
 .overall-badge.normal { background: rgba(76,175,80,0.2); color: #66bb6a; border: 1px solid rgba(76,175,80,0.3); }
-.overall-badge.risk { background: rgba(244,67,54,0.2); color: #ef5350; border: 1px solid rgba(244,67,54,0.3); }
+.overall-badge.risk { background: rgba(244,67,54,0.2); color:var(--accent-red); border: 1px solid rgba(244,67,54,0.3); }
 .overall-badge.unknown { background: rgba(158,158,158,0.2); color: #9e9e9e; border: 1px solid rgba(158,158,158,0.3); }
 
 .metrics-grid {
@@ -777,7 +777,7 @@ function toggleHistory(type) {
 }
 .metric-label { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .metric-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
-.metric-expand-hint { color: #555; opacity: 0; transition: opacity 0.2s, transform 0.2s; display: flex; align-items: center; }
+.metric-expand-hint { color:var(--text-secondary); opacity: 0; transition: opacity 0.2s, transform 0.2s; display: flex; align-items: center; }
 .metric-card:hover .metric-expand-hint { opacity: 1; transform: translateX(2px); }
 
 .metric-value { font-size: 1.6rem; font-weight: 800; line-height: 1; margin-bottom: 8px; }
@@ -791,7 +791,7 @@ function toggleHistory(type) {
 .empty-metrics {
   text-align: center;
   padding: 40px 20px;
-  color: #666;
+  color:var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -804,7 +804,7 @@ function toggleHistory(type) {
 .history-table th {
   padding: 10px 12px;
   text-align: left;
-  color: #888;
+  color:var(--text-secondary);
   font-weight: 600;
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -818,8 +818,8 @@ function toggleHistory(type) {
 }
 
 .history-val { font-weight: 700; }
-.history-desc { font-size: 0.72rem; color: #888; font-weight: 400; margin-top: 2px; }
-.vital-label { font-size: 0.65rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.history-desc { font-size: 0.72rem; color:var(--text-secondary); font-weight: 400; margin-top: 2px; }
+.vital-label { font-size: 0.65rem; color:var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
 .row-current { background: rgba(76,175,80,0.06); }
 
 .patient-chip {
@@ -855,10 +855,10 @@ function toggleHistory(type) {
 
 .sys-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .sys-item { display: flex; flex-direction: column; gap: 4px; }
-.sys-label { font-size: 0.72rem; color: #888; font-weight: 600; text-transform: uppercase; }
+.sys-label { font-size: 0.72rem; color:var(--text-secondary); font-weight: 600; text-transform: uppercase; }
 .sys-val { font-size: 0.9rem; font-weight: 700; }
 .sys-val.ok { color: #66bb6a; }
-.sys-val.bad { color: #ef5350; }
+.sys-val.bad { color:var(--accent-red); }
 
 .traffic-kpi-grid {
   display: grid;
@@ -875,22 +875,24 @@ function toggleHistory(type) {
   border-radius: 10px;
 }
 .traffic-kpi-val { font-size: 1.4rem; font-weight: 800; color: #e0e0e0; }
-.traffic-kpi-label { font-size: 0.68rem; color: #888; text-transform: uppercase; font-weight: 600; }
+.traffic-kpi-label { font-size: 0.68rem; color:var(--text-secondary); text-transform: uppercase; font-weight: 600; }
 
 .traffic-chart {
   display: flex;
   align-items: flex-end;
   gap: 4px;
-  height: 100px;
-  padding: 8px 0;
+  height: 140px;
+  padding: 20px 0 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .traffic-bar-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  flex: 1;
-  min-width: 0;
+  flex: 1 0 40px;
+  min-width: 40px;
 }
 .traffic-bar {
   width: 100%;
@@ -905,11 +907,11 @@ function toggleHistory(type) {
   top: -16px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   color: #999;
   white-space: nowrap;
 }
-.traffic-bar-label { font-size: 0.58rem; color: #666; }
+.traffic-bar-label { font-size: 0.75rem; color:var(--text-secondary); }
 
 .traffic-table-wrap { overflow-x: auto; }
 .traffic-table {
@@ -920,7 +922,7 @@ function toggleHistory(type) {
 .traffic-table th {
   padding: 8px 10px;
   text-align: left;
-  color: #888;
+  color:var(--text-secondary);
   font-weight: 600;
   font-size: 0.68rem;
   text-transform: uppercase;
@@ -942,7 +944,7 @@ function toggleHistory(type) {
 .method-badge.get { background: rgba(33,150,243,0.2); color: #64b5f6; }
 .method-badge.post { background: rgba(76,175,80,0.2); color: #81c784; }
 .method-badge.put { background: rgba(255,193,7,0.2); color: #ffd54f; }
-.method-badge.delete { background: rgba(244,67,54,0.2); color: #ef5350; }
+.method-badge.delete { background: rgba(244,67,54,0.2); color:var(--accent-red); }
 
 .status-badge {
   padding: 2px 8px;
@@ -951,7 +953,7 @@ function toggleHistory(type) {
   font-weight: 700;
 }
 .status-badge.ok { background: rgba(76,175,80,0.2); color: #66bb6a; }
-.status-badge.err { background: rgba(244,67,54,0.2); color: #ef5350; }
+.status-badge.err { background: rgba(244,67,54,0.2); color:var(--accent-red); }
 
 .pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 12px; }
 .page-info { font-size: 0.82rem; color: #999; }

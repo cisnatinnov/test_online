@@ -1,4 +1,4 @@
-# VitaSuite - User Guide
+# PEAS - User Guide
 
 Step-by-step guide for using the BMI health monitoring application with Vue 3 frontend.
 
@@ -410,7 +410,7 @@ Messages are analyzed in real-time using VADER sentiment analysis. Each message 
 - 😠 Negative (compound score ≤ -0.05)
 - 😐 Neutral (score between -0.05 and 0.05)
 
-Blocked messages containing toxic content are flagged by the server-side sentiment filter and cannot be sent.
+Messages containing blocked profanity are rejected by the server before saving or delivery. The input stays available for editing and a translated warning explains the rejection. Group names use the same filter. Sentiment icons are separate from moderation; ordinary negative feedback can still be sent.
 
 ---
 
@@ -633,7 +633,7 @@ An admin account is automatically created on first run using values from `.env`:
 
 ```
 ADMIN_USERNAME=admin
-ADMIN_EMAIL=admin@vitasuite.com
+ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=Admin@123
 ```
 

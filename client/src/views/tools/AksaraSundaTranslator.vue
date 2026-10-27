@@ -45,24 +45,24 @@ async function copyResult() {
 </script>
 
 <template>
-  <div style="max-width:700px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:700px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="router.push('/')">Home</button>
     </div>
     <h2 style="text-align:center">Aksara Sunda Translator</h2>
-    <p style="text-align:center;color:#888;font-size:13px;margin:6px 0 16px">Convert Latin text to Aksara Sunda (Sundanese script).</p>
+    <p style="text-align:center;color:var(--text-secondary);font-size:13px;margin:6px 0 16px">Convert Latin text to Aksara Sunda (Sundanese script).</p>
     <textarea v-model="input" style="width:100%;padding:12px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;resize:vertical;font-family:inherit;line-height:1.5" rows="5" placeholder="Type Indonesian / Sundanese text in Latin script, e.g. 'aku cinta sunda'"></textarea>
     <div style="display:flex;gap:10px;margin:10px 0">
       <button @click="translate">Translate</button>
       <button @click="loadExample">Load Example</button>
     </div>
     <p v-if="error" style="color:#e74c3c;font-size:13px">{{ error }}</p>
-    <div v-if="showResult" style="background:#f8f9fa;border-radius:8px;margin:15px 0;padding:20px;text-align:center">
-      <h4 style="margin:0 0 12px;color:#666;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">Aksara Sunda</h4>
-      <div style="font-size:34px;line-height:1.6;word-break:break-word;color:#1a1a2e" dir="ltr">{{ output }}</div>
+    <div v-if="showResult" style="background:var(--bg-secondary);border-radius:8px;margin:15px 0;padding:20px;text-align:center">
+      <h4 style="margin:0 0 12px;color:var(--text-secondary);font-size:12px;text-transform:uppercase;letter-spacing:0.5px">Aksara Sunda</h4>
+      <div style="font-size:34px;line-height:1.6;word-break:break-word;color:var(--text-primary)" dir="ltr">{{ output }}</div>
       <div style="margin-top:16px">
-        <button @click="copyResult" style="padding:6px 14px;border:none;border-radius:6px;background:#007BFF;color:#fff;font-size:13px;cursor:pointer">
+        <button @click="copyResult" style="padding:6px 14px;border:none;border-radius:6px;background:#1d4ed8;color:#fff;font-size:13px;cursor:pointer">
           {{ copied ? 'Copied!' : 'Copy' }}
         </button>
       </div>

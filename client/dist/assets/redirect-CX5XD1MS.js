@@ -1,0 +1,1 @@
+function e(e,t){if(typeof t!=`string`||!t.startsWith(`/`)||t.startsWith(`//`))return`/`;let n=e.resolve(t);return n.matched.length&&!n.meta.guest?n.fullPath:`/`}export{e as t};

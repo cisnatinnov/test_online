@@ -3,7 +3,8 @@ import { ref, computed } from 'vue'
 
 function decodeToken(t) {
   try {
-    return JSON.parse(atob(t.split('.')[1]))
+    const encoded = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '=')))
   } catch {
     return null
   }
@@ -11,16 +12,21 @@ function decodeToken(t) {
 
 function isTokenExpired(t) {
   const payload = decodeToken(t)
-  if (!payload?.exp) return true
+  if (typeof payload?.exp !== 'number' || !Number.isFinite(payload.exp)) return true
   return Date.now() >= payload.exp * 1000
+}
+
+function readStoredJson(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback }
+  catch { localStorage.removeItem(key); return fallback }
 }
 
 export const useAuthStore = defineStore('auth', () => {
   const storedToken = localStorage.getItem('token') || null
   const token = ref(storedToken && !isTokenExpired(storedToken) ? storedToken : null)
-  const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
+  const user = ref(readStoredJson('user', null))
   const tempToken = ref(localStorage.getItem('tempToken') || null)
-  const channels = ref(JSON.parse(localStorage.getItem('channels') || '[]'))
+  const channels = ref(readStoredJson('channels', []))
 
   if (storedToken && isTokenExpired(storedToken)) {
     localStorage.removeItem('token')
@@ -35,6 +41,8 @@ export const useAuthStore = defineStore('auth', () => {
       if (!e.newValue || isTokenExpired(e.newValue)) {
         token.value = null
         user.value = null
+        tempToken.value = null
+        channels.value = []
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         localStorage.removeItem('tempToken')

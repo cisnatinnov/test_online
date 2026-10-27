@@ -11,7 +11,7 @@ const fields2d = ref([])
 const fields3d = ref([])
 const fieldValues2d = ref({})
 const fieldValues3d = ref({})
-const resultsHtml = ref('<h4>Results</h4><p style="color:#aaa">Select a shape and enter dimensions</p>')
+const resultsHtml = ref('<h4>Results</h4><p>Select a shape and enter dimensions</p>')
 
 const FIELDS_2D = { circle: ['Radius'], rectangle: ['Width', 'Height'], triangle: ['Base', 'Height'], square: ['Side'], ellipse: ['Semi-major', 'Semi-minor'], trapezoid: ['Base1', 'Base2', 'Height'], parallelogram: ['Base', 'Height'] }
 const FIELDS_3D = { cube: ['Side'], sphere: ['Radius'], cylinder: ['Radius', 'Height'], cone: ['Radius', 'Height'], rectprism: ['Length', 'Width', 'Height'], pyramid: ['Base', 'Height'], torus: ['R', 'r'] }
@@ -88,7 +88,7 @@ update2dFields(); update3dFields()
 </script>
 
 <template>
-  <div style="max-width:600px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:600px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="router.push('/')">Home</button>
@@ -135,6 +135,24 @@ update2dFields(); update3dFields()
     <div style="display:flex;justify-content:center;margin:20px 0">
       <canvas ref="canvasRef" width="300" height="250" style="background:#1a1a2e;border-radius:8px"></canvas>
     </div>
-    <div style="background:#f8f9fa;padding:15px;border-radius:8px;margin:15px 0" v-html="resultsHtml"></div>
+    <div class="shape-results" role="status" aria-live="polite" v-html="resultsHtml"></div>
   </div>
 </template>
+
+<style scoped>
+.shape-results {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 15px 0;
+  font-size: 15px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.shape-results :deep(h4) { color: var(--accent-green); font-size: 18px; margin-bottom: 10px; }
+.shape-results :deep(p) { margin: 6px 0; }
+.shape-results :deep(strong) { color: var(--text-secondary); font-weight: 600; }
+</style>

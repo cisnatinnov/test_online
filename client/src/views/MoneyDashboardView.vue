@@ -416,21 +416,21 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
   display: flex; align-items: center; justify-content: center;
   font-size: 1.4rem; font-weight: 800;
 }
-.expense-card .summary-icon { background: rgba(244,67,54,0.2); color: #ef5350; }
+.expense-card .summary-icon { background: rgba(244,67,54,0.2); color:var(--accent-red); }
 .saving-card .summary-icon { background: rgba(76,175,80,0.2); color: #66bb6a; }
 .balance-card .summary-icon { background: rgba(33,150,243,0.2); color: #64b5f6; }
 .balance-card.positive .summary-icon { background: rgba(76,175,80,0.2); color: #66bb6a; }
-.balance-card.negative .summary-icon { background: rgba(244,67,54,0.2); color: #ef5350; }
+.balance-card.negative .summary-icon { background: rgba(244,67,54,0.2); color:var(--accent-red); }
 
 .summary-amount { font-size: 1.3rem; font-weight: 800; }
 .summary-label { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; }
-.summary-sub { font-size: 0.72rem; color: #666; }
+.summary-sub { font-size: 0.72rem; color:var(--text-secondary); }
 
 .tab-bar { display: flex; gap: 4px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 10px; }
 .tab {
   padding: 8px 20px; border: none; border-radius: 8px;
   cursor: pointer; font-size: 0.82rem; font-weight: 600;
-  background: transparent; color: #888; transition: all 0.2s;
+  background: transparent; color:var(--text-secondary); transition: all 0.2s;
 }
 .tab.active { background: rgba(255,193,7,0.2); color: #ffc107; }
 .tab:hover:not(.active) { color: #bbb; }
@@ -450,7 +450,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
 .period-btn {
   padding: 4px 12px; border: none; border-radius: 6px;
   cursor: pointer; font-size: 0.75rem; font-weight: 600;
-  background: rgba(255,255,255,0.06); color: #888; transition: all 0.2s;
+  background: rgba(255,255,255,0.06); color:var(--text-secondary); transition: all 0.2s;
 }
 .period-btn.active { background: rgba(255,193,7,0.2); color: #ffc107; }
 
@@ -471,7 +471,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
 }
 .expense-bar { background: linear-gradient(180deg, #f44336, #c62828); }
 .saving-bar { background: linear-gradient(180deg, #4caf50, #2e7d32); }
-.chart-label { font-size: 0.68rem; color: #666; margin-top: 6px; }
+.chart-label { font-size: 0.68rem; color:var(--text-secondary); margin-top: 6px; }
 
 .chart-legend { display: flex; gap: 16px; justify-content: center; margin-top: 12px; }
 .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #999; }
@@ -485,12 +485,12 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
 .cat-info { display: flex; align-items: center; gap: 8px; min-width: 140px; }
 .cat-dot { width: 10px; height: 10px; border-radius: 3px; }
 .cat-name { font-size: 0.85rem; font-weight: 600; }
-.cat-count { font-size: 0.72rem; color: #666; }
+.cat-count { font-size: 0.72rem; color:var(--text-secondary); }
 .cat-bar-wrap { flex: 1; height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden; }
 .cat-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
 .cat-amount { font-size: 0.82rem; font-weight: 700; min-width: 100px; text-align: right; }
 
-.empty-state { text-align: center; padding: 30px; color: #555; font-size: 0.88rem; }
+.empty-state { text-align: center; padding: 30px; color:var(--text-secondary); font-size: 0.88rem; }
 
 .detail-card { border-left: 4px solid; border-radius: 10px; padding: 14px; margin-bottom: 12px; background: rgba(255,255,255,0.02); }
 .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -505,11 +505,11 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: 
   border-radius: 6px; font-size: 0.82rem;
 }
 .item-desc { flex: 1; color: #bbb; }
-.item-date { color: #777; font-size: 0.75rem; }
+.item-date { color:var(--text-secondary); font-size: 0.75rem; }
 .item-amount { font-weight: 700; min-width: 90px; text-align: right; }
 .btn-del {
   width: 22px; height: 22px; border: none; border-radius: 4px;
-  background: rgba(244,67,54,0.2); color: #ef5350;
+  background: rgba(244,67,54,0.2); color:var(--accent-red);
   cursor: pointer; font-size: 0.7rem; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.2s;

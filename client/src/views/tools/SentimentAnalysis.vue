@@ -34,7 +34,7 @@ function analyze() {
   const s = scores.compound >= 0.05 ? 'positive' : scores.compound <= -0.05 ? 'negative' : 'neutral'
   sentimentEmoji.value = { positive: '😊', negative: '😠', neutral: '😐' }[s]
   sentimentLabel.value = { positive: 'Positive Sentiment', negative: 'Negative Sentiment', neutral: 'Neutral Sentiment' }[s]
-  sentimentColor.value = { positive: '#2ecc71', negative: '#e74c3c', neutral: '#f39c12' }[s]
+  sentimentColor.value = { positive: '#2ecc71', negative: '#ff9d9d', neutral: '#f39c12' }[s]
   const pos = Math.max(0, scores.compound)
   const neg = Math.max(0, -scores.compound)
   needlePos.value = 50 + (pos - neg) * 50
@@ -51,7 +51,7 @@ function analyze() {
 </script>
 
 <template>
-  <div style="max-width:700px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:700px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="router.push('/')">Home</button>
@@ -63,35 +63,35 @@ function analyze() {
       <button @click="loadExample">Load Example</button>
     </div>
     <div v-if="showOutput">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:5px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:5px">
         <span>Negative <small>({{ compoundScore.toFixed(2) }})</small></span><span>Neutral</span><span>Positive <small>({{ compoundScore.toFixed(2) }})</small></span>
       </div>
       <div style="height:30px;border-radius:15px;background:linear-gradient(to right,#e74c3c,#f39c12,#2ecc71);position:relative;margin:15px 0">
         <div :style="{ width: '4px', height: '40px', background: '#fff', border: '2px solid #333', position: 'absolute', top: '-5px', borderRadius: '2px', transition: 'left .5s', left: needlePos + '%' }"></div>
       </div>
-      <div style="text-align:center;padding:20px;background:#f8f9fa;border-radius:8px;margin:15px 0">
+      <div style="text-align:center;padding:20px;background:var(--bg-secondary);border-radius:8px;margin:15px 0">
         <div style="font-size:60px;margin:10px 0">{{ sentimentEmoji }}</div>
         <div :style="{ fontSize: '24px', fontWeight: 'bold', margin: '10px 0', color: sentimentColor }">{{ sentimentLabel }}</div>
-        <div style="font-size:13px;color:#666">Compound score: {{ compoundScore.toFixed(4) }}</div>
+        <div style="font-size:13px;color:var(--text-secondary)">Compound score: {{ compoundScore.toFixed(4) }}</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:15px 0">
-        <div style="text-align:center;padding:12px;border-radius:8px;background:#f8f9fa;border:1px solid #dee2e6;border-color:#e74c3c">
-          <h4 style="margin:0 0 5px;font-size:12px;color:#666">NEGATIVE</h4>
-          <div style="font-size:24px;font-weight:bold;color:#e74c3c">{{ negPct }}%</div>
+        <div style="text-align:center;padding:12px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border-color);border-color:#ff9d9d">
+          <h4 style="margin:0 0 5px;font-size:12px;color:var(--text-secondary)">NEGATIVE</h4>
+          <div style="font-size:24px;font-weight:bold;color:#ff9d9d">{{ negPct }}%</div>
         </div>
-        <div style="text-align:center;padding:12px;border-radius:8px;background:#f8f9fa;border:1px solid #dee2e6;border-color:#f39c12">
-          <h4 style="margin:0 0 5px;font-size:12px;color:#666">NEUTRAL</h4>
+        <div style="text-align:center;padding:12px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border-color);border-color:#f39c12">
+          <h4 style="margin:0 0 5px;font-size:12px;color:var(--text-secondary)">NEUTRAL</h4>
           <div style="font-size:24px;font-weight:bold;color:#f39c12">{{ neuPct }}%</div>
         </div>
-        <div style="text-align:center;padding:12px;border-radius:8px;background:#f8f9fa;border:1px solid #dee2e6;border-color:#2ecc71">
-          <h4 style="margin:0 0 5px;font-size:12px;color:#666">POSITIVE</h4>
+        <div style="text-align:center;padding:12px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border-color);border-color:#2ecc71">
+          <h4 style="margin:0 0 5px;font-size:12px;color:var(--text-secondary)">POSITIVE</h4>
           <div style="font-size:24px;font-weight:bold;color:#2ecc71">{{ posPct }}%</div>
         </div>
       </div>
       <h3>Word Analysis</h3>
       <div>
         <span v-for="(ws, i) in wordScores" :key="i"
-          :style="{ display: 'inline-block', padding: '3px 8px', margin: '2px', borderRadius: '4px', fontSize: '13px', background: ws.score > 0 ? '#2ecc7133' : ws.score < 0 ? '#e74c3c33' : '#f39c1233', color: ws.score > 0 ? '#2ecc71' : ws.score < 0 ? '#e74c3c' : '#888' }">
+          :style="{ display: 'inline-block', padding: '3px 8px', margin: '2px', borderRadius: '4px', fontSize: '13px', background: ws.score > 0 ? '#2ecc7133' : ws.score < 0 ? '#e74c3c33' : '#f39c1233', color: ws.score > 0 ? '#65e4ca' : ws.score < 0 ? '#ff9d9d' : '#cbd5e1' }">
           {{ ws.word }}
         </span>
       </div>

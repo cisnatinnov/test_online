@@ -31,7 +31,7 @@ function eval_() {
 </script>
 
 <template>
-  <div style="max-width:420px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:420px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="router.push('/')">Home</button>
@@ -49,29 +49,29 @@ function eval_() {
       <button @click="fn('ln')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#444;color:#fff;cursor:pointer">ln</button>
       <button @click="fn('sqrt')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#444;color:#fff;cursor:pointer">sqrt</button>
       <button @click="fn('cbrt')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#444;color:#fff;cursor:pointer">cbrt</button>
-      <button @click="ins('(')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#007BFF;color:#fff;cursor:pointer">(</button>
-      <button @click="ins(')')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#007BFF;color:#fff;cursor:pointer">)</button>
-      <button @click="ins('^')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#007BFF;color:#fff;cursor:pointer">^</button>
+      <button @click="ins('(')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#1d4ed8;color:#fff;cursor:pointer">(</button>
+      <button @click="ins(')')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#1d4ed8;color:#fff;cursor:pointer">)</button>
+      <button @click="ins('^')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#1d4ed8;color:#fff;cursor:pointer">^</button>
       <button @click="ins('pi')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#444;color:#fff;cursor:pointer">pi</button>
       <button @click="ins('e')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#444;color:#fff;cursor:pointer">e</button>
       <button @click="num('7')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">7</button>
       <button @click="num('8')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">8</button>
       <button @click="num('9')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">9</button>
-      <button @click="op('/')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#007BFF;color:#fff;cursor:pointer">/</button>
-      <button @click="del()" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#e74c3c;color:#fff;cursor:pointer">DEL</button>
+      <button @click="op('/')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#1d4ed8;color:#fff;cursor:pointer">/</button>
+      <button @click="del()" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#b91c1c;color:#fff;cursor:pointer">DEL</button>
       <button @click="num('4')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">4</button>
       <button @click="num('5')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">5</button>
       <button @click="num('6')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">6</button>
-      <button @click="op('*')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#007BFF;color:#fff;cursor:pointer">*</button>
-      <button @click="clear()" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#e74c3c;color:#fff;cursor:pointer">AC</button>
+      <button @click="op('*')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#1d4ed8;color:#fff;cursor:pointer">*</button>
+      <button @click="clear()" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#b91c1c;color:#fff;cursor:pointer">AC</button>
       <button @click="num('1')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">1</button>
       <button @click="num('2')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">2</button>
       <button @click="num('3')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">3</button>
-      <button @click="op('-')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#007BFF;color:#fff;cursor:pointer">-</button>
-      <button @click="eval_()" style="padding:14px 6px;font-size:18px;border:1px solid #333;border-radius:6px;background:#2ecc71;color:#fff;cursor:pointer;grid-column:span 2">=</button>
+      <button @click="op('-')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#1d4ed8;color:#fff;cursor:pointer">-</button>
+      <button @click="eval_()" style="padding:14px 6px;font-size:18px;border:1px solid #333;border-radius:6px;background:#2ecc71;color:#09231f;cursor:pointer;grid-column:span 2">=</button>
       <button @click="num('0')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">0</button>
       <button @click="ins('.')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#2a2a3e;color:#fff;cursor:pointer">.</button>
-      <button @click="op('+')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#007BFF;color:#fff;cursor:pointer">+</button>
+      <button @click="op('+')" style="padding:14px 6px;font-size:15px;border:1px solid #333;border-radius:6px;background:#1d4ed8;color:#fff;cursor:pointer">+</button>
     </div>
   </div>
 </template>

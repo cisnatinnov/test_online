@@ -191,7 +191,7 @@ async function deleteCategory(id) {
 .tab {
   padding: 8px 20px; border: none; border-radius: 8px;
   cursor: pointer; font-size: 0.82rem; font-weight: 600;
-  background: transparent; color: #888; transition: all 0.2s;
+  background: transparent; color:var(--text-secondary); transition: all 0.2s;
 }
 .tab.active { background: rgba(255,193,7,0.2); color: #ffc107; }
 .tab:hover:not(.active) { color: #bbb; }
@@ -206,7 +206,7 @@ async function deleteCategory(id) {
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .card-title { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1px; color: #ffc107; margin: 0; }
 
-.empty-state { text-align: center; padding: 30px; color: #555; font-size: 0.88rem; }
+.empty-state { text-align: center; padding: 30px; color:var(--text-secondary); font-size: 0.88rem; }
 
 .add-form { display: flex; gap: 8px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
 .form-input {
@@ -249,7 +249,7 @@ select.form-input option { background: #1a1a2e; color: #e0e0e0; }
 }
 .btn-edit { background: rgba(33,150,243,0.15); color: #64b5f6; }
 .btn-edit:hover { background: rgba(33,150,243,0.3); }
-.btn-delete { background: rgba(244,67,54,0.15); color: #ef5350; }
+.btn-delete { background: rgba(244,67,54,0.15); color:var(--accent-red); }
 .btn-delete:hover { background: rgba(244,67,54,0.3); }
 
 @media (max-width: 768px) {

@@ -14,7 +14,11 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
+    const status = err.response?.status
+    const invalidToken = status === 403 && err.response?.data?.error === 'Token tidak valid'
+    const expiredToken = status === 401 && err.response?.data?.error === 'Token kedaluwarsa'
+    const authEndpoint = /\/auth\//.test(err.config?.url || '')
+    if (invalidToken || expiredToken || (!authEndpoint && status === 401)) {
       const auth = useAuthStore()
       auth.logout()
       window.location.href = '/login'

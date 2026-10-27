@@ -19,7 +19,7 @@ function switchLang(e) {
 </script>
 
 <template>
-  <select class="lang-select" :value="locale" @change="switchLang">
+  <select class="lang-select" :aria-label="t('nav.language')" :value="locale" @change="switchLang">
     <option v-for="lang in languages" :key="lang.code" :value="lang.code">{{ lang.label }}</option>
   </select>
 </template>

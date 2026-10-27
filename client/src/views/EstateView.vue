@@ -437,16 +437,16 @@ loadEstates()
   letter-spacing: 0.5px;
 }
 
-.btn-primary { background: linear-gradient(135deg, #1976d2, #42a5f5); color: #fff; }
+.btn-primary { background:var(--accent-blue); color: #0a2038; }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(25,118,210,0.4); }
 
-.btn-green { background: linear-gradient(135deg, #2e7d32, #66bb6a); color: #fff; }
+.btn-green { background:var(--accent-green); color: #09231f; }
 .btn-green:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(46,125,50,0.4); }
 
-.btn-blue { background: linear-gradient(135deg, #1565c0, #42a5f5); color: #fff; }
+.btn-blue { background:var(--accent-blue); color: #0a2038; }
 .btn-blue:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(21,101,192,0.4); }
 
-.empty-state { color: #666; font-size: 0.85rem; text-align: center; padding: 12px 0; }
+.empty-state { color:var(--text-secondary); font-size: 0.85rem; text-align: center; padding: 12px 0; }
 
 .estate-item {
   display: flex;
@@ -486,7 +486,7 @@ loadEstates()
   justify-content: center;
   height: 60vh;
   text-align: center;
-  color: #666;
+  color:var(--text-secondary);
 }
 
 .hero-icon {
@@ -560,7 +560,7 @@ loadEstates()
 }
 
 .stat-count .stat-value { color: #64b5f6; }
-.stat-max .stat-value { color: #ef5350; }
+.stat-max .stat-value { color:var(--accent-red); }
 .stat-min .stat-value { color: #66bb6a; }
 .stat-median .stat-value { color: #ba68c8; }
 

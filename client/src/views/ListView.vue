@@ -153,8 +153,8 @@ function formatDate(d) {
 
 .app-content { padding: 24px; max-width: 800px; margin: 0 auto; }
 
-.loading-state { text-align: center; padding: 40px; color: #888; }
-.empty-state { text-align: center; padding: 40px; color: #666; font-size: 0.9rem; }
+.loading-state { text-align: center; padding: 40px; color:var(--text-secondary); }
+.empty-state { text-align: center; padding: 40px; color:var(--text-secondary); font-size: 0.9rem; }
 
 .input {
   width: 100%;
@@ -189,8 +189,8 @@ function formatDate(d) {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2e7d32, #66bb6a);
-  color: #fff;
+  background:var(--accent-green);
+  color: #09231f;
   font-size: 18px;
   font-weight: 800;
   display: flex;
@@ -228,9 +228,9 @@ function formatDate(d) {
 
 .identity-info { display: flex; flex-direction: column; gap: 2px; }
 .identity-name { font-size: 0.88rem; font-weight: 600; color: #e0e0e0; }
-.identity-detail { font-size: 0.72rem; color: #888; }
+.identity-detail { font-size: 0.72rem; color:var(--text-secondary); }
 
-.no-identities { padding: 8px 12px; font-size: 0.82rem; color: #666; }
+.no-identities { padding: 8px 12px; font-size: 0.82rem; color:var(--text-secondary); }
 
 .btn {
   padding: 8px 14px;
@@ -244,7 +244,7 @@ function formatDate(d) {
   transition: all 0.2s;
   white-space: nowrap;
 }
-.btn-primary { background: linear-gradient(135deg, #2e7d32, #66bb6a); color: #fff; }
+.btn-primary { background:var(--accent-green); color: #09231f; }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(46,125,50,0.4); }
 
 .pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 20px; margin-bottom: 20px; }

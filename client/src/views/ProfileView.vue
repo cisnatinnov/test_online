@@ -353,7 +353,7 @@ async function changePassword() {
 
 .app-content { padding: 24px; max-width: 700px; margin: 0 auto; }
 
-.loading-state { text-align: center; padding: 40px; color: #888; }
+.loading-state { text-align: center; padding: 40px; color:var(--text-secondary); }
 
 .card {
   background: rgba(255,255,255,0.05);
@@ -387,8 +387,8 @@ async function changePassword() {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2e7d32, #66bb6a);
-  color: #fff;
+  background:var(--accent-green);
+  color: #09231f;
   font-size: 24px;
   font-weight: 800;
   display: flex;
@@ -415,21 +415,21 @@ async function changePassword() {
 .identity-grid { display: flex; flex-direction: column; gap: 2px; }
 .identity-item { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .identity-item:last-child { border-bottom: none; }
-.identity-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.identity-label { font-size: 0.72rem; color:var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
 .identity-value { font-size: 0.92rem; color: #e0e0e0; font-weight: 500; }
 
 .edit-form { display: flex; flex-direction: column; gap: 10px; }
 
 .form-field { display: flex; flex-direction: column; gap: 4px; }
-.field-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
-.field-error { color: #ef5350; font-size: 11px; }
+.field-label { font-size: 0.72rem; color:var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.field-error { color:var(--accent-red); font-size: 11px; }
 
 .form-actions { display: flex; gap: 8px; margin-top: 4px; }
 
 .pw-form { display: flex; flex-direction: column; gap: 10px; }
 .pw-msg { padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; }
 .pw-msg.success { background: rgba(76,175,80,0.15); color: #81c784; }
-.pw-msg.error { background: rgba(244,67,54,0.15); color: #ef5350; }
+.pw-msg.error { background: rgba(244,67,54,0.15); color:var(--accent-red); }
 
 .pw-strength { margin-top: 2px; }
 .pw-strength-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
@@ -463,7 +463,7 @@ async function changePassword() {
   transition: all 0.2s;
 }
 .btn-sm { padding: 6px 12px; font-size: 0.72rem; }
-.btn-primary { background: linear-gradient(135deg, #2e7d32, #66bb6a); color: #fff; }
+.btn-primary { background:var(--accent-green); color: #09231f; }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(46,125,50,0.4); }
 .btn-edit { background: rgba(76,175,80,0.15); color: #81c784; }
 .btn-edit:hover { background: rgba(76,175,80,0.25); }
@@ -479,7 +479,7 @@ async function changePassword() {
   margin-bottom: 16px;
 }
 .flash-success { background: rgba(76,175,80,0.2); color: #81c784; border: 1px solid rgba(76,175,80,0.3); }
-.flash-error { background: rgba(244,67,54,0.2); color: #ef5350; border: 1px solid rgba(244,67,54,0.3); }
+.flash-error { background: rgba(244,67,54,0.2); color:var(--accent-red); border: 1px solid rgba(244,67,54,0.3); }
 
 @media (max-width: 768px) {
   .app-layout { margin-left: 0 !important; }

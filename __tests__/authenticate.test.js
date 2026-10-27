@@ -1,4 +1,4 @@
-process.env.JWT_SECRET = 'test-secret-key-vitasuite-2024';
+process.env.JWT_SECRET = 'test-secret-key-peas-2024';
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET;

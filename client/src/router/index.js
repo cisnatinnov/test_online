@@ -1,26 +1,28 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-import LoginView from '../views/LoginView.vue'
-import RegisterView from '../views/RegisterView.vue'
-import Verify2FAView from '../views/Verify2FAView.vue'
+const LoginView = () => import('../views/LoginView.vue')
+const RegisterView = () => import('../views/RegisterView.vue')
+const Verify2FAView = () => import('../views/Verify2FAView.vue')
 import DashboardView from '../views/DashboardView.vue'
-import ProfileView from '../views/ProfileView.vue'
-import ListView from '../views/ListView.vue'
-import HistoryView from '../views/HistoryView.vue'
-import ToolsView from '../views/ToolsView.vue'
-import EstateView from '../views/EstateView.vue'
-import HealthMonitorView from '../views/HealthMonitorView.vue'
-import MoneyDashboardView from '../views/MoneyDashboardView.vue'
-import ChatView from '../views/ChatView.vue'
-import LibraryView from '../views/LibraryView.vue'
-import CategoriesView from '../views/CategoriesView.vue'
+const ProfileView = () => import('../views/ProfileView.vue')
+const ListView = () => import('../views/ListView.vue')
+const HistoryView = () => import('../views/HistoryView.vue')
+const ToolsView = () => import('../views/ToolsView.vue')
+const EstateView = () => import('../views/EstateView.vue')
+const HealthMonitorView = () => import('../views/HealthMonitorView.vue')
+const MoneyDashboardView = () => import('../views/MoneyDashboardView.vue')
+const ChatView = () => import('../views/ChatView.vue')
+const LibraryView = () => import('../views/LibraryView.vue')
+const CategoriesView = () => import('../views/CategoriesView.vue')
+const AssistantView = () => import('../views/AssistantView.vue')
 
 const routes = [
   { path: '/login', name: 'login', component: LoginView, meta: { guest: true } },
   { path: '/register', name: 'register', component: RegisterView, meta: { guest: true } },
   { path: '/verify-2fa', name: 'verify-2fa', component: Verify2FAView, meta: { guest: true } },
   { path: '/', name: 'dashboard', component: DashboardView },
+  { path: '/assistant', name: 'assistant', component: AssistantView, meta: { auth: true } },
   { path: '/profile', name: 'profile', component: ProfileView, meta: { auth: true } },
   { path: '/list', name: 'list', component: ListView, meta: { auth: true, admin: true } },
   { path: '/history/:id', name: 'history', component: HistoryView, meta: { auth: true } },
@@ -54,7 +56,7 @@ router.beforeEach((to) => {
   const auth = useAuthStore()
   if (to.meta.auth && !auth.isLoggedIn) {
     auth.logout()
-    return { name: 'login' }
+    return { name: 'login', query: { redirect: to.fullPath } }
   }
   if (to.meta.guest && auth.isLoggedIn) return { name: 'dashboard' }
   if (to.meta.admin && auth.user?.role !== 'admin') return { name: 'dashboard' }

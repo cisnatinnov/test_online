@@ -1,13 +1,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import { postLoginPath } from '../utils/redirect'
 import { useAuthStore } from '../stores/auth'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import AuthShell from '../components/AuthShell.vue'
 import api from '../api'
 
 const { t, locale } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
 const code = ref('')
@@ -40,7 +43,7 @@ async function verify() {
     const { data: res } = await api.post('/auth/verify-2fa', { tempToken: auth.tempToken, code: code.value })
     auth.clearTemp2FA()
     auth.setAuth(res.data.token, res.data.user)
-    router.push('/')
+    router.push(postLoginPath(router, route.query.redirect))
   } catch (e) {
     error.value = e.response?.data?.error || t('flash.invalidCode')
   } finally {
@@ -50,7 +53,7 @@ async function verify() {
 </script>
 
 <template>
-  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+  <AuthShell>
     <div class="card" style="width:100%;max-width:400px">
       <div style="display:flex;justify-content:center;margin-bottom:12px"><LanguageSwitcher /></div>
       <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">{{ t('auth.verification') }}</h2>
@@ -58,7 +61,7 @@ async function verify() {
       <div v-if="error" class="flash flash-error">{{ error }}</div>
       <form @submit.prevent="verify">
         <div style="margin-bottom:16px">
-          <input ref="codeInput" v-model="code" :placeholder="t('auth.enterCode')" maxlength="6" required class="input" style="text-align:center;font-size:18px;letter-spacing:4px" />
+          <input ref="codeInput" v-model="code" :aria-label="t('auth.enterCode')" :placeholder="t('auth.enterCode')" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required class="input" style="text-align:center;font-size:18px;letter-spacing:4px" />
         </div>
         <button type="submit" :disabled="loading" class="btn btn-green btn-block">
           {{ loading ? t('auth.verifying') : t('auth.verify') }}
@@ -68,5 +71,5 @@ async function verify() {
         <a href="#" @click.prevent="router.push('/login')">{{ t('auth.backToLogin') }}</a>
       </p>
     </div>
-  </div>
+  </AuthShell>
 </template>

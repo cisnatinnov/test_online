@@ -54,9 +54,9 @@ exports.createIdentity = async (req, res) => {
     if (mt && targetUser.email && targetUser.email.includes('@')) {
       try {
         await mt.sendMail({
-          from: process.env.EMAIL_FROM || 'noreply@vitasuite.com',
+          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
           to: targetUser.email,
-          subject: 'Pasien Baru Terdaftar - VitaSuite',
+          subject: 'Pasien Baru Terdaftar - PEAS',
           html: `
             <h2>Pasien Baru Terdaftar</h2>
             <p>Halo <b>${targetUser.username}</b>,</p>

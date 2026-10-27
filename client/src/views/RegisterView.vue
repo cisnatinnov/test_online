@@ -5,7 +5,9 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { validateEmail, validatePassword, passwordStrength } from '../utils/helpers'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import AuthShell from '../components/AuthShell.vue'
 import api from '../api'
+import { phoneCountries, formatPhoneNumber, isValidPhoneNumber } from '../utils/phone'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -19,6 +21,32 @@ const touched = ref({ username: false, email: false, password: false })
 const fieldErrors = ref({ username: '', email: '', password: [] })
 const showPassword = ref(false)
 const usernameInput = ref(null)
+const phoneCountry = ref('ID')
+const nationalPhone = ref('')
+const selectedPhoneCountry = computed(() => phoneCountries.find(country => country.region === phoneCountry.value))
+const countryOptions = computed(() => {
+  const names = new Intl.DisplayNames([locale.value], { type: 'region' })
+  return phoneCountries.map(country => ({ ...country, name: names.of(country.region) }))
+})
+const phoneError = computed(() => isValidPhoneNumber(form.value.phone) ? '' : t('validation.phoneInvalid'))
+
+function updatePhone() {
+  form.value.phone = formatPhoneNumber(nationalPhone.value, selectedPhoneCountry.value)
+  const compact = nationalPhone.value.trim().replace(/[\s().-]/g, '')
+  if (compact.startsWith('+') || compact.startsWith('00')) {
+    const international = compact.startsWith('00') ? '+' + compact.slice(2) : compact
+    const match = [...phoneCountries].sort((a, b) => b.code.length - a.code.length)
+      .find(country => international.startsWith('+' + country.code))
+    if (match) {
+      if (selectedPhoneCountry.value.code !== match.code) phoneCountry.value = match.region
+      nationalPhone.value = international.slice(match.code.length + 1)
+    }
+  }
+}
+
+function changePhoneCountry() {
+  form.value.phone = formatPhoneNumber(nationalPhone.value, selectedPhoneCountry.value)
+}
 
 onMounted(() => { usernameInput.value?.focus() })
 
@@ -70,7 +98,8 @@ async function register() {
   validateField('username')
   validateField('email')
   validateField('password')
-  if (fieldErrors.value.username || fieldErrors.value.email || fieldErrors.value.password.length) return
+  updatePhone()
+  if (fieldErrors.value.username || fieldErrors.value.email || fieldErrors.value.password.length || phoneError.value) return
   loading.value = true
   try {
     const { data: res } = await api.post('/auth/register', form.value)
@@ -86,7 +115,7 @@ async function register() {
 </script>
 
 <template>
-  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+  <AuthShell>
     <div class="card" style="width:100%;max-width:520px">
       <div style="display:flex;justify-content:center;margin-bottom:12px"><LanguageSwitcher /></div>
       <h2 style="text-align:center;margin-bottom:20px;color:#fff;font-size:1.4rem">{{ t('auth.registerTitle') }}</h2>
@@ -145,7 +174,16 @@ async function register() {
             </div>
             <div v-if="touched.password && fieldErrors.password.length" style="color:var(--accent-red);font-size:11px;margin-top:2px">{{ fieldErrors.password.join('. ') }}</div>
           </div>
-          <input v-model="form.phone" :placeholder="t('auth.phone')" class="input" />
+          <div class="phone-field">
+            <label for="register-phone">{{ t('auth.phone') }}</label>
+            <div class="phone-controls">
+              <select v-model="phoneCountry" class="input phone-country" :aria-label="t('auth.countryCode')" autocomplete="tel-country-code" @change="changePhoneCountry">
+                <option v-for="country in countryOptions" :key="country.region" :value="country.region">{{ country.name }} (+{{ country.code }})</option>
+              </select>
+              <input id="register-phone" v-model="nationalPhone" type="tel" inputmode="tel" autocomplete="tel-national" :placeholder="t('auth.phoneNumber')" class="input" :class="{ 'input-error': phoneError }" :aria-invalid="!!phoneError" aria-describedby="phone-feedback" @input="updatePhone" />
+            </div>
+            <div id="phone-feedback" class="phone-feedback" :class="{ 'phone-error': phoneError }" aria-live="polite">{{ phoneError || form.phone || t('auth.phoneOptional') }}</div>
+          </div>
           <input v-model="form.name" :placeholder="t('auth.fullName')" class="input" />
           <input v-model="form.nik" :placeholder="t('auth.nik')" class="input" />
           <select v-model="form.gender" class="input">
@@ -166,5 +204,16 @@ async function register() {
         {{ t('auth.hasAccount') }} <router-link to="/login">{{ t('auth.signin') }}</router-link>
       </p>
     </div>
-  </div>
+  </AuthShell>
 </template>
+
+<style scoped>
+.phone-field { grid-column: span 2; min-width: 0; }
+.phone-field label { display: block; margin-bottom: 7px; color: var(--text-secondary); font-size: 12px; }
+.phone-controls { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 8px; }
+.phone-controls .input { min-width: 0; }
+.phone-country { text-overflow: ellipsis; }
+.phone-feedback { color: var(--text-muted); font-size: 11px; margin-top: 6px; overflow-wrap: anywhere; }
+.phone-error { color: var(--accent-red); }
+@media (max-width: 380px) { .phone-controls { grid-template-columns: minmax(0, 1fr); } }
+</style>

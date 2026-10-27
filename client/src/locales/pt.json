@@ -1,6 +1,7 @@
 {
-  "app": { "title": "VitaSuite" },
+  "app": { "title": "PEAS", "fullName": "Personal Everyday Assistant System" },
   "nav": {
+    "assistant": "Assistente de IA",
     "dashboard": "In\u00edcio",
     "health": "Saude",
     "money": "Dinheiro",
@@ -28,6 +29,11 @@
     "pt": "Português"
   },
   "auth": {
+    "countryCode": "Código do país",
+    "phoneNumber": "Número de telefone",
+    "phoneOptional": "Opcional. Inclua o código do país para WhatsApp.",
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha",
     "login": "Entrar",
     "register": "Cadastrar",
     "loginTitle": "Entrar",
@@ -66,6 +72,7 @@
     "chooseChannel": "Escolha um canal para receber seu codigo"
   },
   "validation": {
+    "phoneInvalid": "Insira um número válido de 7–15 dígitos, incluindo o código do país.",
     "minChars": "Minimo de 8 caracteres",
     "uppercase": "Pelo menos 1 letra maiuscula",
     "lowercase": "Pelo menos 1 letra minuscula",
@@ -321,6 +328,14 @@
     "forcedLanding": "Ponto de Pouso Forcado"
   },
   "chat": {
+    "inappropriateLanguage": "Remova a linguagem imprópria antes de enviar.",
+    "messageTooLong": "As mensagens devem ter no máximo 5.000 caracteres.",
+    "cannotSendHere": "Você não pode enviar mensagens para esta conversa.",
+    "offline": "O chat está desconectado. Reconecte e tente novamente.",
+    "sendTimeout": "A mensagem não foi confirmada. Verifique a conversa antes de tentar novamente.",
+    "invalidMessage": "Digite uma mensagem válida.",
+    "sendFailed": "Não foi possível enviar a mensagem. Tente novamente.",
+    "sendMessage": "Enviar mensagem",
     "title": "Chat",
     "conversations": "Conversas",
     "newDirectMessage": "Nova Mensagem Direta",
@@ -452,6 +467,10 @@
     "back": "Voltar"
   },
   "landing": {
+    "assistant": "Assistente de IA",
+    "assistantDesc": "Converse com a IA para planejar, aprender e explorar ideias.",
+    "chat": "Conversas",
+    "chatDesc": "Conecte-se com mensagens diretas e em grupo.",
     "title": "Suite Completa de Monitoramento de Sa\u00fade",
     "subtitle": "Acompanhe IMC, a\u00e7\u00facar no sangue e sinais vitais com facilidade. Gerencie seus dados de sa\u00fade em um s\u00f3 lugar.",
     "healthMonitoring": "Monitoramento de Sa\u00fade",
@@ -541,5 +560,58 @@
     "details": "Detalhes",
     "graph": "Grafico",
     "back": "Voltar"
+  },
+  "workspace": {
+    "eyebrow": "SEU DIA A DIA, CONECTADO",
+    "title": "Um espaço.",
+    "titleAccent": "Mais possibilidades.",
+    "description": "Sua saúde, suas finanças e o essencial do dia a dia. Tudo conectado em um espaço pessoal.",
+    "getStarted": "Crie seu espaço",
+    "explore": "Explorar módulos",
+    "caption": "Feito para você",
+    "connected": "TUDO EM ÓRBITA",
+    "yourSpace": "ESPAÇO PARA O QUE IMPORTA",
+    "modules": "Suas ferramentas diárias",
+    "modulesLabel": "módulos",
+    "openModule": "Abrir espaço",
+    "footer": "Um pouco mais conectado.",
+    "openMenu": "Abrir navegação",
+    "closeMenu": "Fechar navegação"
+  },
+  "assistant": {
+    "title": "Assistente de IA",
+    "open": "Falar com o PEAS",
+    "newChat": "Nova conversa",
+    "checking": "Verificando conexão",
+    "ready": "Pronto para conversar",
+    "offline": "IA desconectada",
+    "sessionOnly": "Somente nesta sessão",
+    "checkAgain": "Verificar conexão",
+    "conversation": "Conversa com o PEAS",
+    "eyebrow": "Seu parceiro de ideias diário",
+    "welcome": "Como posso ajudar?",
+    "intro": "Planeje seu dia, explore uma ideia ou resolva uma dúvida. Vamos pensar juntos.",
+    "planPrompt": "Ajude-me a planejar um dia equilibrado e produtivo.",
+    "budgetPrompt": "Ajude-me a criar um orçamento mensal simples.",
+    "learnPrompt": "Ensine-me algo útil em cinco minutos.",
+    "you": "Você",
+    "thinking": "Pensando",
+    "stopped": "Resposta interrompida.",
+    "incomplete": "Resposta incompleta.",
+    "inputLabel": "Mensagem para o PEAS",
+    "placeholder": "Pergunte ao PEAS…",
+    "enterHint": "Enter para enviar · Shift+Enter para nova linha",
+    "stop": "Parar",
+    "send": "Enviar",
+    "privacy": "Somente esta conversa é enviada à IA. Seus registros não são compartilhados automaticamente. A conversa é apagada ao sair.",
+    "notConfigured": "A IA ainda não está conectada. Peça ao administrador para configurar o serviço.",
+    "unavailable": "Não foi possível conectar à IA. Tente novamente.",
+    "busyError": "Uma resposta já está sendo gerada. Aguarde ou interrompa a resposta atual.",
+    "rateLimit": "Muitas solicitações. Aguarde um momento e tente novamente.",
+    "connectionError": "A conexão de IA precisa de atenção. Contate o administrador.",
+    "interrupted": "A resposta foi interrompida. Tente novamente.",
+    "timeout": "A IA demorou demais para responder. Tente novamente.",
+    "sessionExpired": "Sua sessão expirou. Entre novamente para continuar.",
+    "invalidMessages": "Não foi possível enviar a conversa. Inicie uma nova e tente novamente."
   }
 }

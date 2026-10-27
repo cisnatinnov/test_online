@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const { User, ChatRoom, ChatMessage, ChatParticipant } = require('../models');
 const { apiResponse } = require('../middlewares/apiResponse');
 const { parsePagination, paginateResponse } = require('../utils/pagination');
+const { containsProfanity } = require('../utils/chatModeration');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -51,30 +52,29 @@ function initSocket(socketIo) {
       socket.leave(`room:${roomId}`);
     });
 
-    socket.on('chat:send', async (data) => {
-      const { roomId, content } = data;
-      if (!content || !content.trim()) return;
-      const trimmedContent = content.trim().slice(0, MAX_MESSAGE_LENGTH);
-
-      const participant = await ChatParticipant.findOne({ where: { room_id: roomId, user_id: userId } });
-      if (!participant) return;
-
-      const message = await ChatMessage.create({
-        room_id: roomId,
-        user_id: userId,
-        content: trimmedContent,
-      });
-
-      const fullMessage = {
-        id: message.id,
-        roomId,
-        userId,
-        username: socket.user.username,
-        content: trimmedContent,
-        createdAt: message.createdAt,
+    socket.on('chat:send', async (data, acknowledge) => {
+      const reject = (code, message) => {
+        socket.emit('chat:error', { code, message });
+        if (typeof acknowledge === 'function') acknowledge({ success: false, code });
       };
-
-      io.to(`room:${roomId}`).emit('chat:message', fullMessage);
+      try {
+        const roomId = Number(data?.roomId);
+        const content = data?.content;
+        if (!Number.isSafeInteger(roomId) || roomId < 1 || typeof content !== 'string' || !content.trim()) {
+          return reject('CHAT_INVALID_MESSAGE', 'Enter a valid message.');
+        }
+        if (content.length > MAX_MESSAGE_LENGTH) return reject('CHAT_MESSAGE_TOO_LONG', 'Messages must be 5000 characters or fewer.');
+        const participant = await ChatParticipant.findOne({ where: { room_id: roomId, user_id: userId } });
+        if (!participant) return reject('CHAT_FORBIDDEN', 'You are not a member of this conversation.');
+        if (containsProfanity(content)) return reject('CHAT_PROFANITY', 'Please remove inappropriate language before sending.');
+        const trimmedContent = content.trim();
+        const message = await ChatMessage.create({ room_id: roomId, user_id: userId, content: trimmedContent });
+        const fullMessage = { id: message.id, roomId, userId, username: socket.user.username, content: trimmedContent, createdAt: message.createdAt };
+        io.to(`room:${roomId}`).emit('chat:message', fullMessage);
+        if (typeof acknowledge === 'function') acknowledge({ success: true, message: fullMessage });
+      } catch {
+        reject('CHAT_SEND_FAILED', 'The message could not be sent. Please try again.');
+      }
     });
 
     socket.on('chat:typing', (data) => {
@@ -169,6 +169,7 @@ exports.createRoom = async (req, res) => {
       if (!name || !name.trim()) {
         return apiResponse(res, { error: 'Group name is required', status: 400 });
       }
+      if (containsProfanity(name)) return apiResponse(res, { error: 'CHAT_PROFANITY', status: 400 });
       const room = await ChatRoom.create({ name: name.trim(), type: 'group', created_by: userId });
       await ChatParticipant.create({ room_id: room.id, user_id: userId, role: 'admin' });
 

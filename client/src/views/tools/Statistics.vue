@@ -1,18 +1,20 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { preparePlot, drawAxes, plotColors } from '../../utils/plotCanvas'
 
 const router = useRouter()
 const input = ref('')
 const cards = ref([])
 const details = ref('')
 const canvasRef = ref(null)
+let histogramData = []
 
 function loadExample() { input.value = '12, 15, 18, 20, 22, 22, 25, 28, 30, 35, 40, 45, 50, 55, 60' }
 
 function clearAll() {
   input.value = ''; cards.value = []; details.value = ''
-  const c = canvasRef.value; if (c) c.getContext('2d').clearRect(0, 0, 600, 250)
+  drawHist([])
 }
 
 function calc() {
@@ -44,30 +46,35 @@ function calc() {
 
 function drawHist(nums) {
   const c = canvasRef.value; if (!c) return
-  const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height)
+  histogramData = nums
+  const { ctx, width, height } = preparePlot(c)
+  if (!nums.length) {
+    ctx.fillStyle = plotColors.text; ctx.textAlign = 'center'
+    ctx.fillText('Calculate to view the distribution', width / 2, height / 2)
+    return
+  }
   const min = Math.min(...nums), max = Math.max(...nums)
   const bins = 10; const binW = (max - min) / bins || 1
   const counts = Array(bins).fill(0)
   nums.forEach(v => { let idx = Math.floor((v - min) / binW); if (idx >= bins) idx = bins - 1; counts[idx]++ })
-  const maxC = Math.max(...counts); const barW = (c.width - 60) / bins
-  for (let i = 0; i <= bins; i++) {
-    const x = 30 + i * barW
-    ctx.beginPath(); ctx.moveTo(x, 10); ctx.lineTo(x, c.height - 30); ctx.strokeStyle = '#eee'; ctx.stroke()
-  }
-  const maxH = c.height - 50
+  const maxC = Math.max(...counts)
+  const plot = drawAxes(ctx, { width, height, xMin: min, xMax: min + bins * binW, yMin: 0, yMax: maxC + Math.max(1, maxC * .2) })
+  const barW = (plot.right - plot.left) / bins
   counts.forEach((count, i) => {
-    const h = maxC > 0 ? (count / maxC) * maxH : 0
-    const x = 30 + i * barW + 2
-    ctx.fillStyle = '#007BFF'; ctx.fillRect(x, c.height - 30 - h, barW - 4, h)
-    ctx.fillStyle = '#333'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'
-    ctx.fillText((min + i * binW).toFixed(1), x + barW / 2 - 2, c.height - 15)
-    if (count > 0) ctx.fillText(count, x + barW / 2 - 2, c.height - 35 - h)
+    const x = plot.left + i * barW + 2
+    const y = plot.toY(count)
+    ctx.fillStyle = plotColors.curve; ctx.fillRect(x, y, Math.max(1, barW - 4), plot.bottom - y)
+    ctx.fillStyle = plotColors.text; ctx.font = '13px system-ui, sans-serif'; ctx.textAlign = 'center'
+    if (count > 0) ctx.fillText(count, x + barW / 2 - 2, y - 7)
   })
 }
+function redraw() { drawHist(histogramData) }
+onMounted(() => { redraw(); window.addEventListener('resize', redraw) })
+onUnmounted(() => window.removeEventListener('resize', redraw))
 </script>
 
 <template>
-  <div style="max-width:650px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:650px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="router.push('/')">Home</button>
@@ -77,17 +84,17 @@ function drawHist(nums) {
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
       <button @click="calc">Calculate</button>
       <button @click="loadExample">Load Example</button>
-      <button @click="clearAll" style="background:#e74c3c">Clear</button>
+      <button @click="clearAll" style="background:#b91c1c">Clear</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:15px 0">
-      <div v-for="card in cards" :key="card.label" style="background:#f8f9fa;padding:15px;border-radius:8px;text-align:center;border:1px solid #dee2e6">
-        <h4 style="margin:0 0 5px;font-size:12px;color:#666">{{ card.label }}</h4>
-        <div style="font-size:22px;font-weight:bold;color:#007BFF">{{ card.val }}</div>
+    <div class="tool-stat-grid">
+      <div v-for="card in cards" :key="card.label" style="background:var(--bg-secondary);padding:15px;border-radius:8px;text-align:center;border:1px solid var(--border-color)">
+        <h4 style="margin:0 0 5px;font-size:12px;color:var(--text-secondary)">{{ card.label }}</h4>
+        <div style="font-size:22px;font-weight:bold;color:var(--accent-blue)">{{ card.val }}</div>
       </div>
     </div>
     <h3>Distribution</h3>
-    <canvas ref="canvasRef" width="600" height="250" style="display:block;margin:15px auto;border:1px solid #ddd;border-radius:8px;background:#fff"></canvas>
+    <canvas ref="canvasRef" width="600" height="300" class="tool-plot" role="img" aria-label="Data distribution with value and frequency labels" style="display:block;margin:15px auto;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary)"></canvas>
     <h3>Details</h3>
-    <div style="background:#f8f9fa;padding:15px;border-radius:8px" v-html="details"></div>
+    <div style="background:var(--bg-secondary);padding:15px;border-radius:8px" v-html="details"></div>
   </div>
 </template>

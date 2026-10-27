@@ -17,6 +17,7 @@ const showAgainBtn = ref(false)
 
 const COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22']
 const NAMES = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange']
+const TEXT_COLORS = ['#07131f', '#07131f', '#07131f', '#07131f', '#fff', '#07131f']
 let turtles = []
 let positions = []
 let running = false
@@ -50,7 +51,9 @@ function loop() {
     ctx.fillStyle = '#1a3a15'; ctx.fillRect(0, i * trackH, c.width, trackH)
     ctx.fillStyle = turtles[i].color
     ctx.fillRect(positions[i] * 5 + 5, i * trackH + trackH / 2 - 10, 30, 20)
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'
+    ctx.strokeStyle = '#07131f'; ctx.lineWidth = 3
+    ctx.strokeText(turtles[i].name, positions[i] * 5 + 20, i * trackH + trackH / 2 + 4)
     ctx.fillText(turtles[i].name, positions[i] * 5 + 20, i * trackH + trackH / 2 + 4)
     if (!running) continue
     positions[i] += turtles[i].speed * (0.3 + Math.random() * 0.7)
@@ -80,7 +83,7 @@ init()
 </script>
 
 <template>
-  <div style="max-width:700px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:700px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="router.push('/')">Home</button>
@@ -94,7 +97,7 @@ init()
       <p style="text-align:center">Pick your turtle and place a bet:</p>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0">
         <button v-for="(t, i) in turtles" :key="i" @click="selectTurtle(i)"
-          :style="{ background: t.color, color: '#fff', border: selected === i ? '3px solid #fff' : '3px solid transparent', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }">
+          :style="{ background: t.color, color: TEXT_COLORS[i], border: selected === i ? '3px solid #fff' : '3px solid transparent', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }">
           {{ t.name }}
         </button>
       </div>

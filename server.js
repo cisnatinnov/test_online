@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
+const { createCorsOptions } = require('./config/cors');
 const helmet = require('helmet');
 const path = require('path');
 const jwt = require('jsonwebtoken');
@@ -32,21 +33,12 @@ const chatRoutes = require('./routes/chatRoutes');
 const libraryRoutes = require('./routes/libraryRoutes');
 const healthTrafficRoutes = require('./routes/healthTrafficRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const assistantRoutes = require('./routes/assistantRoutes');
 const healthTrafficMiddleware = require('./middlewares/healthTraffic');
 
 const app = express();
 app.use(helmet());
-const corsOrigin = process.env.CORS_ORIGIN;
-const allowedCorsOrigins = corsOrigin === '*' ? [] : (corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : []);
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (allowedCorsOrigins.length === 0) return callback(null, true);
-    if (!allowedCorsOrigins.includes(origin)) return callback(new Error('CORS origin not allowed'), false);
-    callback(null, true);
-  },
-  credentials: true,
-};
+const corsOptions = createCorsOptions(process.env.CORS_ORIGIN);
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
 const clientDist = path.join(__dirname, 'client', 'dist');
@@ -95,6 +87,7 @@ app.use('/api/estate', apiLimiter, estateRoutes);
 app.use('/api/chat', apiLimiter, chatRoutes);
 app.use('/api/library', apiLimiter, libraryRoutes);
 app.use('/api/categories', apiLimiter, categoryRoutes);
+app.use('/api/assistant', assistantRoutes);
 
 app.get('/api/history/:identityId/bmi', authenticateToken, bmiController.getHistoryBMI);
 app.get('/api/history/:identityId/bloodsugar', authenticateToken, bloodSugarController.getHistoryBloodSugar);

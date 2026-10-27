@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { preparePlot, drawAxes, clipPlot } from '../../utils/plotCanvas'
 
 const router = useRouter()
 const canvasRef = ref(null)
@@ -8,8 +9,9 @@ const eqInput = ref('sin(x)')
 const xMinVal = ref(-10)
 const xMaxVal = ref(10)
 const legendItems = ref([])
+const graphError = ref('')
 
-const COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c', '#e91e63']
+const COLORS = ['#ff9d9d', '#78ceff', '#65e4ca', '#f6d775', '#c5a3ff', '#ffc08a', '#75e1ed', '#ff9dcc']
 let equations = []
 
 function eqEval(expr, x) {
@@ -38,12 +40,14 @@ function clearEqs() { equations = []; draw() }
 function draw() {
   const canvas = canvasRef.value
   if (!canvas) return
-  const ctx = canvas.getContext('2d')
-  const W = canvas.width, H = canvas.height
-  const xMin = parseFloat(xMinVal.value) || -10
-  const xMax = parseFloat(xMaxVal.value) || 10
-  ctx.clearRect(0, 0, W, H)
-  const toX = v => (v - xMin) / (xMax - xMin) * W
+  const { ctx, width: W, height: H } = preparePlot(canvas)
+  const xMin = Number(xMinVal.value)
+  const xMax = Number(xMaxVal.value)
+  graphError.value = ''
+  if (!Number.isFinite(xMin) || !Number.isFinite(xMax) || xMax <= xMin) {
+    graphError.value = 'Enter a valid X range with the maximum greater than the minimum.'
+    return
+  }
   let yMin = -10, yMax = 10
   const pts = []
   equations.forEach(eq => {
@@ -58,22 +62,14 @@ function draw() {
     yMin = Math.min(...ys) - 1; yMax = Math.max(...ys) + 1
     if (yMax - yMin < 2) { yMin -= 1; yMax += 1 }
   }
-  const toY = v => H - ((v - yMin) / (yMax - yMin)) * H
-  ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1
-  if (yMin <= 0 && yMax >= 0) { const y0 = toY(0); ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke() }
-  if (xMin <= 0 && xMax >= 0) { const x0 = toX(0); ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0, H); ctx.stroke() }
-  ctx.fillStyle = '#888'; ctx.font = '11px sans-serif'
-  for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) {
-    if (x === 0) continue; const px = toX(x); ctx.fillText(x, px + 2, toY(0) + 12)
-  }
-  for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) {
-    if (y === 0) continue; const py = toY(y); ctx.fillText(y, toX(0) + 4, py - 4)
-  }
+  const plot = drawAxes(ctx, { width: W, height: H, xMin, xMax, yMin, yMax })
+  const { toY } = plot
+  clipPlot(ctx, plot)
   equations.forEach(eq => {
     ctx.strokeStyle = eq.color; ctx.lineWidth = 2.5; ctx.beginPath()
     let started = false
-    for (let px = 0; px < W; px += 1) {
-      const x = xMin + (px / W) * (xMax - xMin)
+    for (let px = plot.left; px <= plot.right; px += 1) {
+      const x = xMin + ((px - plot.left) / (plot.right - plot.left)) * (xMax - xMin)
       const y = eqEval(eq.expr, x)
       if (y === null || !isFinite(y) || y < yMin - 50 || y > yMax + 50) { started = false; continue }
       const py = toY(y)
@@ -81,14 +77,16 @@ function draw() {
     }
     ctx.stroke()
   })
+  ctx.restore()
   legendItems.value = equations.map(eq => ({ expr: eq.expr, color: eq.color }))
 }
 
-onMounted(() => draw())
+onMounted(() => { draw(); window.addEventListener('resize', draw) })
+onUnmounted(() => window.removeEventListener('resize', draw))
 </script>
 
 <template>
-  <div style="max-width:700px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:700px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="router.push('/')">Home</button>
@@ -97,7 +95,7 @@ onMounted(() => draw())
     <div style="margin:15px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <input v-model="eqInput" type="text" placeholder="e.g. sin(x), x^2, 2*x+1, log(x)" style="flex:1;min-width:250px;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:15px">
       <button @click="addEq">Plot</button>
-      <button @click="clearEqs" style="background:#e74c3c">Clear All</button>
+      <button @click="clearEqs" style="background:#b91c1c">Clear All</button>
     </div>
     <div style="margin:15px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <label style="white-space:nowrap">X range:</label>
@@ -111,8 +109,9 @@ onMounted(() => draw())
         {{ eq.expr }}
       </span>
     </div>
-    <canvas ref="canvasRef" width="660" height="500"
-      style="display:block;margin:0 auto;border:2px solid #444;border-radius:8px;background:#fff"></canvas>
+    <p v-if="graphError" class="flash flash-error" role="alert">{{ graphError }}</p>
+    <canvas ref="canvasRef" width="660" height="500" class="tool-plot" role="img" aria-label="Equation graph with labelled X and Y axes"
+      style="display:block;margin:0 auto;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary)"></canvas>
     <p style="color:#aaa;font-size:12px;text-align:center;margin-top:5px">Supports: x^2, sin(x), cos(x), tan(x), log(x), sqrt(x), abs(x), exp(x), pi, e. Use * for multiply.</p>
   </div>
 </template>

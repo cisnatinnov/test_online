@@ -43,7 +43,7 @@ function summarize() {
 </script>
 
 <template>
-  <div style="max-width:700px;margin:0 auto;padding:20px">
+  <div class="tool-page" style="max-width:700px;margin:0 auto;padding:20px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <button class="link-btn" @click="router.push('/tools')">Back</button>
       <button class="link-btn" @click="router.push('/')">Home</button>
@@ -59,11 +59,11 @@ function summarize() {
       </select></label>
       <button @click="loadExample">Load Example</button>
     </div>
-    <div v-if="stats" style="display:flex;gap:20px;margin:10px 0;font-size:13px;color:#666">{{ stats }}</div>
-    <div v-if="showResult" style="background:#f8f9fa;padding:15px;border-radius:8px;margin:15px 0;line-height:1.8">
+    <div v-if="stats" style="display:flex;gap:20px;margin:10px 0;font-size:13px;color:var(--text-secondary)">{{ stats }}</div>
+    <div v-if="showResult" style="background:var(--bg-secondary);padding:15px;border-radius:8px;margin:15px 0;line-height:1.8">
       <h4>Summary ({{ topIndices.size }} of {{ sentences.length }} sentences)</h4>
       <div v-for="(s, i) in sentences" :key="i"
-        :style="{ padding: '8px 12px', margin: '4px 0', borderRadius: '6px', borderLeft: '4px solid #007BFF', background: topIndices.has(i) ? '#fff3cd' : '#f0f7ff', fontWeight: topIndices.has(i) ? 'bold' : 'normal', borderColor: topIndices.has(i) ? '#f1c40f' : '#007BFF' }">
+        :style="{ padding: '8px 12px', margin: '4px 0', borderRadius: '6px', borderLeft: '4px solid #007BFF', background: topIndices.has(i) ? '#3a3017' : '#152638', fontWeight: topIndices.has(i) ? 'bold' : 'normal', borderColor: topIndices.has(i) ? '#f1c40f' : '#007BFF' }">
         {{ s.trim() }}
       </div>
     </div>

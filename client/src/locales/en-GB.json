@@ -1,6 +1,7 @@
 {
-  "app": { "title": "VitaSuite" },
+  "app": { "title": "PEAS", "fullName": "Personal Everyday Assistant System" },
   "nav": {
+    "assistant": "AI Assistant",
     "dashboard": "Home",
     "health": "Health",
     "money": "Money",
@@ -28,6 +29,11 @@
     "pt": "Portuguese"
   },
   "auth": {
+    "countryCode": "Country code",
+    "phoneNumber": "Phone number",
+    "phoneOptional": "Optional. Include your country code for WhatsApp.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "login": "Login",
     "register": "Register",
     "loginTitle": "Login",
@@ -66,6 +72,7 @@
     "chooseChannel": "Choose a channel to receive your code"
   },
   "validation": {
+    "phoneInvalid": "Enter a valid phone number with 7–15 digits, including the country code.",
     "minChars": "Minimum 8 characters",
     "uppercase": "At least 1 uppercase letter",
     "lowercase": "At least 1 lowercase letter",
@@ -337,6 +344,14 @@
     "createEstateBtn": "Create Estate"
   },
   "chat": {
+    "inappropriateLanguage": "Please remove inappropriate language before sending.",
+    "messageTooLong": "Messages must be 5,000 characters or fewer.",
+    "cannotSendHere": "You cannot send messages to this conversation.",
+    "offline": "Chat is disconnected. Reconnect and try again.",
+    "sendTimeout": "The message was not confirmed. Check the conversation before trying again.",
+    "invalidMessage": "Enter a valid message.",
+    "sendFailed": "The message could not be sent. Please try again.",
+    "sendMessage": "Send message",
     "title": "Chat",
     "conversations": "Conversations",
     "newDirectMessage": "New Direct Message",
@@ -484,6 +499,10 @@
     "back": "Back"
   },
   "landing": {
+    "assistant": "AI Assistant",
+    "assistantDesc": "Talk with AI to plan your day, learn, and explore ideas.",
+    "chat": "Conversations",
+    "chatDesc": "Keep in touch with direct and group messaging.",
     "title": "Your Complete Health Monitoring Suite",
     "subtitle": "Track BMI, blood sugar, and vital signs with ease. Manage your health data in one place.",
     "healthMonitoring": "Health Monitoring",
@@ -573,5 +592,58 @@
     "details": "Details",
     "graph": "Graph",
     "back": "Back"
+  },
+  "workspace": {
+    "eyebrow": "YOUR EVERYDAY, CONNECTED",
+    "title": "One space.",
+    "titleAccent": "More possibilities.",
+    "description": "Your health, finances, and everyday essentials. Thoughtfully connected in one personal workspace.",
+    "getStarted": "Create your workspace",
+    "explore": "Explore modules",
+    "caption": "Built around you",
+    "connected": "EVERYTHING IN ORBIT",
+    "yourSpace": "MAKE ROOM FOR WHAT MATTERS",
+    "modules": "Your everyday toolkit",
+    "modulesLabel": "modules",
+    "openModule": "Open workspace",
+    "footer": "A little more connected.",
+    "openMenu": "Open navigation",
+    "closeMenu": "Close navigation"
+  },
+  "assistant": {
+    "title": "AI Assistant",
+    "open": "Talk to PEAS",
+    "newChat": "New chat",
+    "checking": "Checking connection",
+    "ready": "Ready to chat",
+    "offline": "AI not connected",
+    "sessionOnly": "This session only",
+    "checkAgain": "Check connection",
+    "conversation": "Conversation with PEAS",
+    "eyebrow": "Your everyday thinking partner",
+    "welcome": "What can I help you with?",
+    "intro": "Plan your day, explore an idea, or work through a question. Let’s figure it out together.",
+    "planPrompt": "Help me plan a balanced, productive day.",
+    "budgetPrompt": "Help me create a simple monthly budget.",
+    "learnPrompt": "Teach me something useful in five minutes.",
+    "you": "You",
+    "thinking": "Thinking",
+    "stopped": "Response stopped.",
+    "incomplete": "Response incomplete.",
+    "inputLabel": "Message PEAS",
+    "placeholder": "Ask PEAS anything…",
+    "enterHint": "Enter to send · Shift+Enter for a new line",
+    "stop": "Stop",
+    "send": "Send",
+    "privacy": "Only this conversation is sent to AI. Your app records are not shared automatically. This chat clears when you leave.",
+    "notConfigured": "AI is not connected yet. Ask your administrator to configure the AI service.",
+    "unavailable": "The AI service could not be reached. Please try again.",
+    "busyError": "A reply is already being generated. Wait a moment or stop the current reply.",
+    "rateLimit": "Too many requests. Please wait a moment and try again.",
+    "connectionError": "The AI connection needs attention. Please contact your administrator.",
+    "interrupted": "The reply was interrupted. Please try again.",
+    "timeout": "The AI took too long to respond. Please try again.",
+    "sessionExpired": "Your session has expired. Sign in again to continue.",
+    "invalidMessages": "The conversation could not be sent. Start a new chat and try again."
   }
 }

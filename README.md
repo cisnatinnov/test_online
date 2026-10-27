@@ -1,4 +1,9 @@
-# VitaSuite
+# PEAS — Personal Everyday Assistant System
+
+PEAS brings everyday tools and a live AI assistant into one workspace.
+The AI assistant supports streamed text replies, conversation context, Stop,
+and New chat. See [AI setup](AI_SETUP.md) to configure server-side credentials.
+An API key is required for live replies; no simulated answers are shown.
 
 A health monitoring web application with BMI tracking, blood sugar monitoring, vital signs monitoring, patient health risk assessment, money management, palm oil estate management, real-time chat, and library management. Built with Node.js, Express, Sequelize ORM, PostgreSQL, and Vue 3.
 
@@ -88,7 +93,8 @@ A health monitoring web application with BMI tracking, blood sugar monitoring, v
 - **Online Users**: Track which users are currently online
 - **Typing Indicators**: See when other users are typing
 - **Participant Management**: Add/remove users from group chats
-- **Message Sentiment**: Real-time sentiment analysis using VADER; each message shows a sentiment icon (😊 positive, 😠 negative, 😐 neutral); toxic messages are blocked server-side
+- **Message Sentiment**: Real-time sentiment analysis using VADER; each message shows a sentiment icon (😊 positive, 😠 negative, 😐 neutral).
+- **Chat Word Filter**: Server-side profanity checks reject inappropriate messages and group names before saving or broadcasting them. Common English, Indonesian, Spanish, and Portuguese terms and common spelling disguises are checked. Ordinary negative feedback is allowed. Rejected drafts remain editable. Add extra comma-separated terms with `CHAT_BLOCKED_WORDS` in the server environment. This is a word filter, not a general toxicity classifier.
 
 ### Library Management
 - **Book Management**: CRUD for books with title, author, ISBN, publisher, year, category, description, quantity, and shelf location

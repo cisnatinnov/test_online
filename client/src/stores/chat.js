@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, markRaw } from 'vue'
 import { io } from 'socket.io-client'
 import { useAuthStore } from './auth'
 
@@ -14,30 +14,37 @@ export const useChatStore = defineStore('chat', () => {
   const onlineUserIds = ref(new Set())
   const typingUsers = ref({})
   const connected = ref(false)
-let pendingMessageId = null
+  const sending = ref(false)
+  const sendError = ref('')
+  let sendAttempt = 0
 
   const currentRoomMessages = computed(() => messages.value)
 
   function connect() {
-    if (socket.value?.connected) return
+    if (socket.value) return
     const s = io(window.location.origin, {
       auth: { token: auth.token },
       path: '/socket.io',
     })
 
-    s.on('connect', () => { connected.value = true })
+    s.on('connect', () => {
+      connected.value = true
+      if (currentRoom.value) s.emit('chat:join', { roomId: currentRoom.value.id })
+    })
     s.on('disconnect', () => { connected.value = false })
 
-    s.on('chat:message', (msg) => {
-      pendingMessageId = null
+    s.on('chat:message', receiveMessage)
+    s.on('chat:error', ({ code }) => { sendError.value = code || 'CHAT_SEND_FAILED' })
+
+    function receiveMessage(msg) {
       if (msg.roomId === currentRoom.value?.id) {
-        messages.value.push(msg)
+        if (!messages.value.some(m => m.id === msg.id)) messages.value.push(msg)
       }
       const room = rooms.value.find(r => r.id === msg.roomId)
       if (room) {
         room.lastMessage = { content: msg.content, username: msg.username, createdAt: msg.createdAt }
       }
-    })
+    }
 
     s.on('user:online', ({ userId }) => {
       onlineUserIds.value.add(userId)
@@ -46,6 +53,11 @@ let pendingMessageId = null
 
     s.on('user:offline', ({ userId }) => {
       onlineUserIds.value.delete(userId)
+      updateRoomOnlineStatus()
+    })
+
+    s.on('chat:users', ({ users }) => {
+      users.forEach(id => onlineUserIds.value.add(id))
       updateRoomOnlineStatus()
     })
 
@@ -58,24 +70,25 @@ let pendingMessageId = null
       }, 3500)
     })
 
-    s.on('chat:error', ({ message }) => {
-      if (pendingMessageId) {
-        messages.value = messages.value.filter(m => m.id !== pendingMessageId)
-        pendingMessageId = null
-      }
-    })
-
     s.on('chat:room:updated', () => {
       loadRooms()
     })
 
-    socket.value = s
+    socket.value = markRaw(s)
   }
 
   function disconnect() {
+    sendAttempt++
+    sending.value = false
+    sendError.value = ''
     socket.value?.disconnect()
     socket.value = null
     connected.value = false
+    currentRoom.value = null
+    messages.value = []
+    rooms.value = []
+    onlineUserIds.value = new Set()
+    typingUsers.value = {}
   }
 
   function updateRoomOnlineStatus() {
@@ -88,7 +101,7 @@ let pendingMessageId = null
   }
 
   function handleFetchAuth(res) {
-    if (res.status === 401 || res.status === 403) {
+    if (res.status === 401) {
       auth.logout()
       window.location.href = '/login'
       return null
@@ -115,11 +128,15 @@ let pendingMessageId = null
       })
       if (!handleFetchAuth(res)) return
       const json = await res.json()
-      messages.value = json.data || []
+      if (currentRoom.value?.id !== roomId || !res.ok) return
+      const history = json.data || []
+      const ids = new Set(history.map(m => m.id))
+      messages.value = [...history, ...messages.value.filter(m => !ids.has(m.id))]
     } catch (e) { console.error(e) }
   }
 
   async function createRoom(type, name, participantIds) {
+    sendError.value = ''
     try {
       const res = await fetch(`${API_BASE}/chat/rooms`, {
         method: 'POST',
@@ -128,6 +145,7 @@ let pendingMessageId = null
       })
       if (!handleFetchAuth(res)) return
       const json = await res.json()
+      if (!res.ok) { sendError.value = json.error === 'CHAT_PROFANITY' ? json.error : 'CHAT_SEND_FAILED'; return null }
       await loadRooms()
       return json.data
     } catch (e) { console.error(e) }
@@ -135,20 +153,41 @@ let pendingMessageId = null
 
   async function selectRoom(room) {
     if (currentRoom.value?.id === room.id) return
+    sendAttempt++
+    sending.value = false
+    sendError.value = ''
     if (currentRoom.value) socket.value?.emit('chat:leave', { roomId: currentRoom.value.id })
     currentRoom.value = room
     messages.value = []
-    await loadMessages(room.id)
     socket.value?.emit('chat:join', { roomId: room.id })
+    await loadMessages(room.id)
   }
 
-  function sendMessage(content) {
-    if (!currentRoom.value || !content.trim()) return
-    const id = Date.now()
-    const optimistic = { id, roomId: currentRoom.value.id, userId: auth.user?.id, username: auth.user?.username, content, createdAt: new Date().toISOString() }
-    pendingMessageId = id
-    messages.value.push(optimistic)
-    socket.value?.emit('chat:send', { roomId: currentRoom.value.id, content })
+  async function sendMessage(content) {
+    if (sending.value || !currentRoom.value || !content.trim()) return false
+    if (!connected.value) { sendError.value = 'CHAT_OFFLINE'; return false }
+    if (content.length > 5000) { sendError.value = 'CHAT_MESSAGE_TOO_LONG'; return false }
+    const attempt = ++sendAttempt
+    const roomId = currentRoom.value.id
+    sending.value = true
+    sendError.value = ''
+    try {
+      const result = await new Promise(resolve => {
+        socket.value.timeout(10000).emit('chat:send', { roomId, content }, (error, response) => {
+          resolve(error ? { success: false, code: 'CHAT_SEND_TIMEOUT' } : response)
+        })
+      })
+      if (attempt !== sendAttempt) return false
+      if (!result?.success) { sendError.value = result?.code || 'CHAT_SEND_FAILED'; return false }
+      const message = result.message
+      if (message && currentRoom.value?.id === message.roomId && !messages.value.some(item => item.id === message.id)) messages.value.push(message)
+      return true
+    } catch {
+      if (attempt === sendAttempt) sendError.value = 'CHAT_SEND_FAILED'
+      return false
+    } finally {
+      if (attempt === sendAttempt) sending.value = false
+    }
   }
 
   function sendTyping() {
@@ -169,7 +208,7 @@ let pendingMessageId = null
 
   return {
     socket, rooms, currentRoom, messages: currentRoomMessages,
-    onlineUserIds, typingUsers, connected,
+    onlineUserIds, typingUsers, connected, sending, sendError,
     connect, disconnect, loadRooms, loadMessages, createRoom,
     selectRoom, sendMessage, sendTyping, loadUsers,
   }

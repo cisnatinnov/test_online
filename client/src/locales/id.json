@@ -1,6 +1,7 @@
 {
-  "app": { "title": "VitaSuite" },
+  "app": { "title": "PEAS", "fullName": "Personal Everyday Assistant System" },
   "nav": {
+    "assistant": "Asisten AI",
     "dashboard": "Beranda",
     "health": "Kesehatan",
     "money": "Keuangan",
@@ -28,6 +29,11 @@
     "pt": "Portugis"
   },
   "auth": {
+    "countryCode": "Kode negara",
+    "phoneNumber": "Nomor telepon",
+    "phoneOptional": "Opsional. Sertakan kode negara untuk WhatsApp.",
+    "showPassword": "Tampilkan kata sandi",
+    "hidePassword": "Sembunyikan kata sandi",
     "login": "Masuk",
     "register": "Daftar",
     "loginTitle": "Masuk",
@@ -66,6 +72,7 @@
     "chooseChannel": "Pilih saluran untuk menerima kode"
   },
   "validation": {
+    "phoneInvalid": "Masukkan nomor telepon valid dengan 7–15 digit, termasuk kode negara.",
     "minChars": "Minimal 8 karakter",
     "uppercase": "Setidaknya 1 huruf kapital",
     "lowercase": "Setidaknya 1 huruf kecil",
@@ -321,6 +328,14 @@
     "forcedLanding": "Titik Pendaratan Paksa"
   },
   "chat": {
+    "inappropriateLanguage": "Hapus kata-kata tidak pantas sebelum mengirim.",
+    "messageTooLong": "Pesan maksimal 5.000 karakter.",
+    "cannotSendHere": "Anda tidak dapat mengirim pesan ke percakapan ini.",
+    "offline": "Chat terputus. Hubungkan kembali dan coba lagi.",
+    "sendTimeout": "Pesan belum dikonfirmasi. Periksa percakapan sebelum mencoba lagi.",
+    "invalidMessage": "Masukkan pesan yang valid.",
+    "sendFailed": "Pesan tidak dapat dikirim. Silakan coba lagi.",
+    "sendMessage": "Kirim pesan",
     "title": "Obrolan",
     "conversations": "Percakapan",
     "newDirectMessage": "Pesan Langsung Baru",
@@ -452,6 +467,10 @@
     "back": "Kembali"
   },
   "landing": {
+    "assistant": "Asisten AI",
+    "assistantDesc": "Berbincang dengan AI untuk merencanakan, belajar, dan menjelajahi ide.",
+    "chat": "Percakapan",
+    "chatDesc": "Tetap terhubung dengan pesan pribadi dan grup.",
     "title": "Suite Pemantauan Kesehatan Lengkap",
     "subtitle": "Pantau BMI, gula darah, dan tanda vital dengan mudah. Kelola data kesehatan Anda dalam satu tempat.",
     "healthMonitoring": "Pemantauan Kesehatan",
@@ -541,5 +560,58 @@
     "details": "Detail",
     "graph": "Grafik",
     "back": "Kembali"
+  },
+  "workspace": {
+    "eyebrow": "KESEHARIAN ANDA, TERHUBUNG",
+    "title": "Satu ruang.",
+    "titleAccent": "Lebih banyak peluang.",
+    "description": "Kesehatan, keuangan, dan kebutuhan sehari-hari Anda. Terhubung dalam satu ruang pribadi.",
+    "getStarted": "Buat ruang Anda",
+    "explore": "Jelajahi modul",
+    "caption": "Dirancang untuk Anda",
+    "connected": "SEMUA TERHUBUNG",
+    "yourSpace": "RUANG UNTUK YANG BERARTI",
+    "modules": "Perangkat keseharian Anda",
+    "modulesLabel": "modul",
+    "openModule": "Buka ruang",
+    "footer": "Lebih terhubung.",
+    "openMenu": "Buka navigasi",
+    "closeMenu": "Tutup navigasi"
+  },
+  "assistant": {
+    "title": "Asisten AI",
+    "open": "Bicara dengan PEAS",
+    "newChat": "Percakapan baru",
+    "checking": "Memeriksa koneksi",
+    "ready": "Siap berbincang",
+    "offline": "AI belum terhubung",
+    "sessionOnly": "Hanya sesi ini",
+    "checkAgain": "Periksa koneksi",
+    "conversation": "Percakapan dengan PEAS",
+    "eyebrow": "Teman berpikir sehari-hari",
+    "welcome": "Apa yang bisa saya bantu?",
+    "intro": "Rencanakan hari Anda, jelajahi ide, atau bahas pertanyaan. Mari mencari solusinya bersama.",
+    "planPrompt": "Bantu saya merencanakan hari yang seimbang dan produktif.",
+    "budgetPrompt": "Bantu saya membuat anggaran bulanan sederhana.",
+    "learnPrompt": "Ajari saya sesuatu yang berguna dalam lima menit.",
+    "you": "Anda",
+    "thinking": "Sedang berpikir",
+    "stopped": "Respons dihentikan.",
+    "incomplete": "Respons belum lengkap.",
+    "inputLabel": "Pesan untuk PEAS",
+    "placeholder": "Tanyakan apa saja kepada PEAS…",
+    "enterHint": "Enter untuk kirim · Shift+Enter untuk baris baru",
+    "stop": "Hentikan",
+    "send": "Kirim",
+    "privacy": "Hanya percakapan ini yang dikirim ke AI. Data aplikasi Anda tidak dibagikan secara otomatis. Percakapan dihapus saat Anda meninggalkan halaman.",
+    "notConfigured": "AI belum terhubung. Minta administrator mengatur layanan AI.",
+    "unavailable": "Layanan AI tidak dapat dihubungi. Silakan coba lagi.",
+    "busyError": "Respons masih dibuat. Tunggu sebentar atau hentikan respons saat ini.",
+    "rateLimit": "Terlalu banyak permintaan. Tunggu sebentar dan coba lagi.",
+    "connectionError": "Koneksi AI perlu diperiksa. Hubungi administrator.",
+    "interrupted": "Respons terputus. Silakan coba lagi.",
+    "timeout": "AI terlalu lama merespons. Silakan coba lagi.",
+    "sessionExpired": "Sesi Anda telah berakhir. Masuk kembali untuk melanjutkan.",
+    "invalidMessages": "Percakapan tidak dapat dikirim. Mulai percakapan baru dan coba lagi."
   }
 }

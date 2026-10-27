@@ -23,8 +23,8 @@ const selectedUsers = ref([])
 const availableUsers = ref([])
 const searchQuery = ref('')
 const messagesEl = ref(null)
-const typingTimeout = ref(null)
-const blockedMsg = ref('')
+const errorKeys = { CHAT_PROFANITY: 'inappropriateLanguage', CHAT_MESSAGE_TOO_LONG: 'messageTooLong', CHAT_FORBIDDEN: 'cannotSendHere', CHAT_OFFLINE: 'offline', CHAT_SEND_TIMEOUT: 'sendTimeout', CHAT_INVALID_MESSAGE: 'invalidMessage' }
+const blockedMsg = computed(() => chat.sendError ? t('chat.' + (errorKeys[chat.sendError] || 'sendFailed')) : '')
 
 function getSentimentIcon(text) {
   if (!text) return ''
@@ -56,10 +56,6 @@ onMounted(async () => {
   chat.connect()
   await chat.loadRooms()
   availableUsers.value = await chat.loadUsers()
-  chat.socket.value?.on('chat:error', ({ message }) => {
-    blockedMsg.value = message || 'Message was blocked'
-    setTimeout(() => { blockedMsg.value = '' }, 3000)
-  })
 })
 
 onUnmounted(() => {
@@ -80,10 +76,10 @@ function selectRoom(room) {
   chat.selectRoom(room)
 }
 
-function send() {
-  if (!inputMsg.value.trim()) return
-  chat.sendMessage(inputMsg.value)
-  inputMsg.value = ''
+async function send() {
+  if (!inputMsg.value.trim() || chat.sending) return
+  const draft = inputMsg.value
+  if (await chat.sendMessage(draft) && inputMsg.value === draft) inputMsg.value = ''
 }
 
 function onKeydown() {
@@ -91,6 +87,7 @@ function onKeydown() {
 }
 
 function openNewRoom(type) {
+  chat.sendError = ''
   newRoomType.value = type
   newRoomName.value = ''
   selectedUsers.value = []
@@ -110,6 +107,7 @@ async function createRoom() {
 
   if (newRoomType.value === 'direct') {
     const room = await chat.createRoom('direct', null, [selectedUsers.value[0]])
+    if (!room) return
     if (room) {
       await chat.loadRooms()
       const joined = chat.rooms.find(r => r.id === room.id)
@@ -117,6 +115,7 @@ async function createRoom() {
     }
   } else {
     const room = await chat.createRoom('group', newRoomName.value, selectedUsers.value)
+    if (!room) return
     if (room) {
       await chat.loadRooms()
       const joined = chat.rooms.find(r => r.id === room.id)
@@ -227,14 +226,14 @@ function getOtherUser(room) {
 
           <div class="typing-bar" v-if="typingInRoom">{{ typingInRoom }}</div>
 
-          <div v-if="blockedMsg" class="blocked-msg">
+          <div v-if="blockedMsg" class="blocked-msg" role="alert">
             ⚠️ {{ blockedMsg }}
           </div>
 
           <div class="chat-input">
-            <input v-model="inputMsg" @keydown.enter="send" @keydown="onKeydown"
-              :placeholder="t('chat.typeMessage')" class="msg-input" />
-            <button class="send-btn" @click="send">
+            <input v-model="inputMsg" @keydown.enter="!$event.isComposing && send()" @keydown="onKeydown"
+              :placeholder="t('chat.typeMessage')" :aria-label="t('chat.typeMessage')" maxlength="5000" class="msg-input" />
+            <button class="send-btn" :disabled="chat.sending || !chat.connected || !inputMsg.trim()" :aria-label="t('chat.sendMessage')" @click="send">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
           </div>
@@ -253,6 +252,7 @@ function getOtherUser(room) {
     <div v-if="showNewRoom" class="modal-overlay" @click.self="showNewRoom = false">
       <div class="modal">
         <h3>{{ newRoomType === 'group' ? t('chat.newGroup') : t('chat.newDirectMessage') }}</h3>
+        <div v-if="blockedMsg" class="blocked-msg" role="alert">{{ blockedMsg }}</div>
         <div v-if="newRoomType === 'group'" class="form-group">
           <label>{{ t('chat.groupName') }}</label>
           <input v-model="newRoomName" :placeholder="t('chat.groupNamePlaceholder')" class="modal-input" />
@@ -270,7 +270,7 @@ function getOtherUser(room) {
                 <div class="user-email">{{ user.email }}</div>
               </div>
             </div>
-            <div v-if="!filteredUsers.length" style="padding:12px;text-align:center;color:#666">{{ t('chat.noUsersFound') }}</div>
+            <div v-if="!filteredUsers.length" style="padding:12px;text-align:center;color:var(--text-secondary)">{{ t('chat.noUsersFound') }}</div>
           </div>
         </div>
         <div class="modal-actions">
@@ -415,9 +415,9 @@ function getOtherUser(room) {
 
 .room-info { flex: 1; min-width: 0; }
 .room-name { font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.room-last { font-size: 0.76rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.room-last { font-size: 0.76rem; color:var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 
-.empty-sidebar { padding: 24px; text-align: center; color: #555; font-size: 0.82rem; }
+.empty-sidebar { padding: 24px; text-align: center; color:var(--text-secondary); font-size: 0.82rem; }
 
 .chat-main { display: flex; flex-direction: column; height: calc(100vh - 54px); }
 
@@ -430,7 +430,7 @@ function getOtherUser(room) {
 }
 .chat-header-info { display: flex; align-items: center; gap: 10px; }
 .chat-header-info h3 { margin: 0; font-size: 1rem; }
-.participant-count { font-size: 0.76rem; color: #888; }
+.participant-count { font-size: 0.76rem; color:var(--text-secondary); }
 .online-dot {
   width: 8px;
   height: 8px;
@@ -483,7 +483,7 @@ function getOtherUser(room) {
 }
 .msg-time { font-size: 0.65rem; opacity: 0.5; margin-top: 4px; text-align: right; }
 
-.empty-chat { text-align: center; color: #555; margin-top: 40px; }
+.empty-chat { text-align: center; color:var(--text-secondary); margin-top: 40px; }
 
 .typing-bar {
   padding: 4px 20px;
@@ -517,8 +517,8 @@ function getOtherUser(room) {
   height: 42px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, #2e7d32, #66bb6a);
-  color: #fff;
+  background:var(--accent-green);
+  color: #09231f;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -533,7 +533,7 @@ function getOtherUser(room) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #555;
+  color:var(--text-secondary);
 }
 .empty-icon { margin-bottom: 16px; opacity: 0.3; }
 .empty-main h2 { margin: 0 0 6px; }
@@ -561,7 +561,7 @@ function getOtherUser(room) {
 .modal h3 { margin: 0 0 16px; color: #81c784; }
 
 .form-group { margin-bottom: 14px; }
-.form-group label { display: block; font-size: 0.78rem; color: #888; margin-bottom: 6px; font-weight: 600; }
+.form-group label { display: block; font-size: 0.78rem; color:var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
 
 .modal-input {
   width: 100%;
@@ -609,7 +609,7 @@ function getOtherUser(room) {
   flex-shrink: 0;
 }
 .user-name { font-size: 0.85rem; font-weight: 600; }
-.user-email { font-size: 0.72rem; color: #888; }
+.user-email { font-size: 0.72rem; color:var(--text-secondary); }
 
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 .btn-cancel {
@@ -625,8 +625,8 @@ function getOtherUser(room) {
   padding: 8px 16px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #2e7d32, #66bb6a);
-  color: #fff;
+  background:var(--accent-green);
+  color: #09231f;
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 600;
